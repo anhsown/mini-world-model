@@ -100,7 +100,16 @@ class JWM(nn.Module):
 
         # --- embeddings ---
         self.tok_emb = nn.Embedding(cfg.vocab_size, d)
-        self.patch_embed = nn.Linear(cfg.patch * cfg.patch * 3, d)
+        # vision stem: linear patch embed, or hierarchical MLP over merged
+        # patches (Inkling-style: large effective patch + deep per-patch MLP)
+        in_dim = getattr(cfg, "img_tok_dim", cfg.patch * cfg.patch * 3)
+        if getattr(cfg, "vision_mlp_layers", 1) > 1:
+            layers = [nn.Linear(in_dim, d)]
+            for _ in range(cfg.vision_mlp_layers - 1):
+                layers += [nn.SiLU(), nn.Linear(d, d)]
+            self.patch_embed = nn.Sequential(*layers)
+        else:
+            self.patch_embed = nn.Linear(in_dim, d)
         self.e_img = nn.Parameter(torch.zeros(d))       # modality embeddings (Cosmos §2.1)
         self.e_lat = nn.Parameter(torch.zeros(d))
         self.e_act = nn.Parameter(torch.zeros(d))
@@ -170,7 +179,7 @@ class JWM(nn.Module):
     def _img_tokens(self, img: torch.Tensor) -> torch.Tensor:
         c = self.cfg
         B = img.shape[0]
-        p = c.patch
+        p = c.patch * getattr(c, "patch_merge", 1)     # effective patch after merge
         g = c.img_grid
         x = img.view(B, 3, g, p, g, p).permute(0, 2, 4, 1, 3, 5).reshape(B, g * g, 3 * p * p)
         return self.patch_embed(x) + self.e_img

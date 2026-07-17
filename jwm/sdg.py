@@ -164,8 +164,10 @@ def synth_background(rng: random.Random, size: int = CANVAS) -> Image.Image:
 # camera degradation (validated against real frames)
 # ----------------------------------------------------------------------------
 
-def camera_degrade(img: Image.Image, cam: CameraParams, rng: random.Random) -> Image.Image:
-    """Apply the webcam model at OUT resolution. Order: blur -> photometric -> noise -> jpeg."""
+def camera_degrade(img: Image.Image, cam: CameraParams, rng: random.Random,
+                   out_size: int = OUT) -> Image.Image:
+    """Apply the webcam model at out_size. Order: blur -> photometric -> noise -> jpeg."""
+    OUT = out_size  # noqa: N806 — keep the body identical for any output size
     img = img.resize((OUT, OUT), Image.LANCZOS)
     if cam.blur_sigma > 0:
         img = img.filter(ImageFilter.GaussianBlur(radius=cam.blur_sigma * rng.uniform(0.6, 1.4)))

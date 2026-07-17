@@ -232,3 +232,21 @@ def psnr(a: torch.Tensor, b: torch.Tensor, max_val: float = 1.0) -> torch.Tensor
 def sqrt_len_normalize(loss_sum: torch.Tensor, n_tokens: torch.Tensor) -> torch.Tensor:
     """Cosmos reasoner loss weighting: per-sample token-loss-sum / sqrt(n_tokens)."""
     return loss_sum / n_tokens.clamp(min=1).float().sqrt()
+
+
+def char_error_rate(pred: str, ref: str) -> float:
+    """CER = levenshtein(pred, ref) / len(ref) — the standard OCR metric.
+
+    Computed on unicode characters (not bytes) so one wrong Vietnamese
+    diacritic counts as one error, not multiple byte errors.
+    """
+    a, b = list(pred), list(ref)
+    if not b:
+        return 0.0 if not a else 1.0
+    prev = list(range(len(b) + 1))
+    for i, ca in enumerate(a, 1):
+        cur = [i]
+        for j, cb in enumerate(b, 1):
+            cur.append(min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (ca != cb)))
+        prev = cur
+    return prev[-1] / len(b)

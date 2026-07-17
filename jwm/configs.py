@@ -40,6 +40,19 @@ def pipeline_scale_moe() -> JWMConfig:
                      reasoner_moe=True, moe_experts=32, moe_topk=4, moe_shared=1)
 
 
+def reader_scale() -> JWMConfig:
+    """JWM-Read — document/text reading on OUR architecture, sized for Kaggle T4 16GB.
+
+    768px input, patch-16 + 2x2 merge -> 24x24 = 576 visual tokens, hierarchical
+    MLP vision stem (Inkling-style), MoE reasoner, byte answers up to 192B.
+    READ is just QA-mode with a bigger eye — no new mode machinery needed.
+    """
+    return JWMConfig(d_model=512, n_layers=10, n_heads=16, ffn_hidden=1408,
+                     reasoner_moe=True, moe_experts=32, moe_topk=4, moe_shared=1,
+                     image_size=768, patch=16, patch_merge=2, vision_mlp_layers=2,
+                     max_q_bytes=96, max_a_bytes=224)
+
+
 def pipeline_scale() -> JWMConfig:
     """ACTIVE scale for the staged pipeline.
 

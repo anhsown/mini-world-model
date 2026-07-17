@@ -19,7 +19,7 @@ import torch.nn.functional as F
 
 from .config import JWMConfig
 from .data import ModeBatcher, imgs_to_float, pad_text
-from .mathx import bbox_iou, expected_calibration_error, psnr
+from .mathx import bbox_iou, char_error_rate, expected_calibration_error, psnr
 from .model import JWM, ConvAE, merge_latent, unmerge_latent
 
 
@@ -62,15 +62,17 @@ def train_stage(
     steps: int, lr: float, batch_size: int = 32,
     mode_probs: dict | None = None, warmup: int = 100,
     seed: int = 0, log_every: int = 50, log=print, use_amp: bool = True,
-    ckpt_fn=None, ckpt_every: int = 500,
+    ckpt_fn=None, ckpt_every: int = 500, batcher=None,
 ):
     """One curriculum stage. Returns per-step history for plotting.
 
     ckpt_fn(steps_done): optional periodic-checkpoint callback (every ckpt_every
     steps and once at the end) — makes long runs survive machine shutdowns.
+    batcher: override the default ModeBatcher (e.g. read_data.LazyReadBatcher,
+    which renders images at batch time; pass split=None and ae=None with it).
     """
     mode_probs = mode_probs or {"qa": 0.45, "ground": 0.35, "fd": 0.20}
-    batcher = ModeBatcher(split, cfg, seed=seed)
+    batcher = batcher if batcher is not None else ModeBatcher(split, cfg, seed=seed)
     model.to(device).train()
     opt = torch.optim.AdamW(model.parameters(), lr=lr, betas=(0.9, 0.95), weight_decay=0.05)
 
@@ -162,6 +164,69 @@ def eval_qa(model: JWM, split: dict, cfg: JWMConfig, device, n: int = 200, log=p
     log(f"  QA exact-match: {acc:.3f} on {n} | per-kind: "
         + " ".join(f"{k}={v:.2f}" for k, v in kinds.items()))
     return {"acc": acc, "per_kind": kinds, "preds": preds}
+
+
+@torch.no_grad()
+def eval_read(model: JWM, eval_set: list, cfg: JWMConfig, device,
+              fonts=None, corpus=None, cam=None, batch: int = 8, log=print):
+    """JWM-Read eval: CER (character error rate) + exact-match, per kind.
+
+    eval_set: descriptors from read_data.build_eval_set — synth items are
+    re-rendered deterministically from their stored seed, doc items load from disk.
+    """
+    import random as _random
+
+    import numpy as np
+    from PIL import Image
+
+    from .read_data import READ_QUESTIONS, letterbox, render_read_sample
+
+    model.eval()
+    per_kind: dict[str, list] = {}
+    rows = []
+    for i0 in range(0, len(eval_set), batch):
+        chunk = eval_set[i0 : i0 + batch]
+        imgs, qs, refs, kinds = [], [], [], []
+        for it in chunk:
+            if it["kind"] == "doc":
+                try:
+                    im = Image.open(it["img"]).convert("RGB")
+                except Exception:
+                    continue
+                imgs.append(np.asarray(letterbox(im, cfg.image_size), dtype=np.uint8))
+                qs.append(it["q"])
+                refs.append(it["a"])
+            else:
+                rng = _random.Random(it["seed"])
+                arr, text = render_read_sample(rng, it["level"], fonts, corpus,
+                                               size=cfg.image_size, cam=cam)
+                imgs.append(arr)
+                qs.append(READ_QUESTIONS[0])
+                refs.append(text)
+            kinds.append(it["kind"])
+        if not imgs:
+            continue
+        img = torch.from_numpy(np.stack(imgs)).permute(0, 3, 1, 2).float().div(255.0).to(device)
+        q_ids, q_valid = pad_text(qs, cfg.max_q_bytes)
+        preds = model.generate_answer(img, q_ids.to(device), q_valid.to(device))
+        for kind, ref, pred in zip(kinds, refs, preds):
+            ref_n = " ".join(ref.split())
+            pred_n = " ".join(pred.split())
+            cer = char_error_rate(pred_n, ref_n)
+            per_kind.setdefault(kind, []).append((cer, pred_n == ref_n))
+            rows.append({"kind": kind, "ref": ref_n, "pred": pred_n, "cer": cer})
+    out = {}
+    for kind, vals in sorted(per_kind.items()):
+        cer = sum(v[0] for v in vals) / len(vals)
+        em = sum(v[1] for v in vals) / len(vals)
+        out[kind] = {"cer": cer, "exact": em, "n": len(vals)}
+        log(f"  READ {kind}: CER={cer:.3f} exact={em:.2f} (n={len(vals)})")
+    all_vals = [v for vals in per_kind.values() for v in vals]
+    out["overall"] = {"cer": sum(v[0] for v in all_vals) / max(1, len(all_vals)),
+                      "exact": sum(v[1] for v in all_vals) / max(1, len(all_vals)),
+                      "n": len(all_vals)}
+    log(f"  READ overall: CER={out['overall']['cer']:.3f} exact={out['overall']['exact']:.2f}")
+    return {"per_kind": out, "rows": rows}
 
 
 @torch.no_grad()

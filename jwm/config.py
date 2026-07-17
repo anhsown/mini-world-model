@@ -27,6 +27,8 @@ class JWMConfig:
     # vision
     image_size: int = 64
     patch: int = 8                          # -> 8x8 = 64 AR image tokens
+    patch_merge: int = 1                    # NxN patch merge (Reader: 2 -> 4x fewer tokens)
+    vision_mlp_layers: int = 1              # 1 = linear embed; 2+ = hierarchical MLP stem
     # conv-AE latent (frozen after pretrain)
     z_ch: int = 8                           # 8x8x8 latent
     lat_merge: int = 2                      # 2x2 merge -> 4x4 = 16 DM tokens, dim z_ch*4 = 32
@@ -61,11 +63,15 @@ class JWMConfig:
 
     @property
     def n_img_tokens(self) -> int:
-        return (self.image_size // self.patch) ** 2
+        return self.img_grid ** 2
 
     @property
     def img_grid(self) -> int:
-        return self.image_size // self.patch
+        return self.image_size // self.patch // self.patch_merge
+
+    @property
+    def img_tok_dim(self) -> int:
+        return 3 * (self.patch * self.patch_merge) ** 2
 
     @property
     def n_lat_tokens(self) -> int:
