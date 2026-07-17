@@ -102,14 +102,15 @@ def run(force: bool = False, log=print) -> dict:
         "reference": {"v1_10.7M": {"qa": 0.564, "miou": 0.201, "ece": 0.0396},
                       "v2_28M": "superseded mid-training"},
     }
-    # deployable brain artifact
+    # deployable brain artifact (v4 = MoE-reasoner generation, v3 = dense)
+    gen = "jwm_v4" if getattr(r.cfg, "reasoner_moe", False) else "jwm_v3"
     torch.save({"model": model.state_dict(), "ae": ae.state_dict(),
                 "cfg": r.cfg.__dict__, "camera": cam.to_dict(),
                 "calibration": cal, "metrics": metrics, "flags": flags},
-               CKPT_DIR / "jwm_v3.pt")
-    json.dump(metrics, (CKPT_DIR / "metrics_v3.json").open("w", encoding="utf-8"),
+               CKPT_DIR / f"{gen}.pt")
+    json.dump(metrics, (CKPT_DIR / f"metrics_{gen.split('_')[1]}.json").open("w", encoding="utf-8"),
               ensure_ascii=False, indent=1)
-    log("  [g5] deployable brain -> jwm_v3.pt (+ metrics_v3.json)")
+    log(f"  [g5] deployable brain -> {gen}.pt")
     r.finish(model, ae, cam, flags,
              {"steps": STEPS, "lr": LR, "policy_steps": POLICY_STEPS,
               "val_ece_calibrated": ece_v, "test_qa_acc": qa_t["acc"],

@@ -147,12 +147,17 @@ class JWM(nn.Module):
         """Cosmos §4 initialization: the generator tower starts as a WEIGHT COPY
         of the (pre-trained) reasoner tower, transferring semantic knowledge into
         the synthesis pathway. AdaLN stays zero-init, so right after the copy the
-        generator is a gated-closed identical twin."""
+        generator is a gated-closed identical twin.
+
+        MoE-aware: when the reasoner FFN is an MoE (Inkling-mini) and the
+        generator FFN is dense, only attention + norms transfer (the semantic
+        bulk); the dense generator FFN keeps its own init."""
         for blk in self.blocks:
             blk.g_norm1.load_state_dict(blk.r_norm1.state_dict())
             blk.g_attn.load_state_dict(blk.r_attn.state_dict())
             blk.g_norm2.load_state_dict(blk.r_norm2.state_dict())
-            blk.g_ffn.load_state_dict(blk.r_ffn.state_dict())
+            if type(blk.g_ffn) is type(blk.r_ffn):
+                blk.g_ffn.load_state_dict(blk.r_ffn.state_dict())
             nn.init.zeros_(blk.adaln.weight)
             nn.init.zeros_(blk.adaln.bias)
         self.g_final.load_state_dict(self.r_final.state_dict())

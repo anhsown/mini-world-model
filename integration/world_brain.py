@@ -32,7 +32,7 @@ _ROOT = Path(__file__).resolve().parents[1]
 def _latest_checkpoint() -> Path:
     """Prefer the newest model generation available (v2 > v1)."""
     ckpt_dir = _ROOT / "jwm" / "checkpoints"
-    for name in ("jwm_v3.pt", "jwm_v2.pt", "jwm_v1.pt"):
+    for name in ("jwm_v4.pt", "jwm_v3.pt", "jwm_v2.pt", "jwm_v1.pt"):
         if (ckpt_dir / name).exists():
             return ckpt_dir / name
     return ckpt_dir / "jwm_v1.pt"
