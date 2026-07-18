@@ -65,26 +65,61 @@ Answered with design, not a new mode — READ is just QA-mode with a bigger eye:
 - Notebook stays local, never pushed (privacy rule); source pushed to both
   remotes: celesnity (`32e658f`) + anhsown
 
-## 5. The commit run in flight (as of writing)
+## 5. Run complete — jwm_read_v1.pt (671MB)
 
 - Stage 0: tok_acc 0→**0.62** over 1500 steps · Stage 1: 0.51→**0.71** over 4000 ·
-  Stage 2 (50% real docs): at **0.75-0.80** by step 4250/6000, still climbing, 0.7 it/s
+  Stage 2 (50% real docs): →**~0.80** over 6000, 0.7 it/s, clean run
 - `moe_aux` flat at ~0.090 = balanced router, no dead experts; the `float(la)`
   warning was audited — metric-only, aux gradients still flow (line 333)
-- Results will be read via CER, not exact-match (Day-1 law:
-  exact ≈ tok_acc^answer_byte_length — 50-200-byte answers make low exact physics)
+- Kaggle eval: doc CER 0.78; synthetic CER **inverted vs difficulty** (L1 29.9 →
+  L4 0.82) — the first hint of something bigger (see §6)
 
-## 6. Side incident — colleagues' sessions appearing in the app
+## 6. Benchmarks — the model does not read, caught red-handed
+
+User: "run benchmarks, find the dead point." Research: MTVQA (ByteDance, public)
+usable; ViTextVQA/ViOCRVQA/5CD-AI all gated; VinText needs detection. Built 3
+benchmarks + 1 control (`scripts/bench_read_v1.py`, `bench_read_blind.py`):
+
+**Synthetic ladder (108 samples, seed 2026):**
+
+| Test | CER md | Exact | Contains | Stops (EOS) |
+|---|---|---|---|---|
+| T0 single char 200px | 52.0 | 0 | 0.17≈chance | 0 |
+| T1 single word (120→28px) | 12-15 | 0 | **0** | 0 |
+| T2 line / T3 paragraph | 2.3 / 0.82 | 0 | 0 | 0 |
+| T4 word 80px + camera noise | 14.8 | 0 | 0 | 0 |
+
+**VietDocVQA held-out (40 pages):** CER md 0.70, exact 0, stop rate **0.80**.
+**MTVQA-VI (50 samples):** CER md 2.36, exact 0, contains 0 — answers match the
+question *type* (brand question → "The brand of this product is...") with fully
+hallucinated content.
+
+**Blind-image control (decisive):** teacher-forced tok_acc with correct vs
+SHUFFLED images: synth 0.6068 vs 0.6073, doc 0.7878 vs 0.7879 — **Δ ≈ 0.000,
+the model never uses the image when generating text**. The run's 0.78 tok_acc
+was 100% language modeling.
+
+**Root cause — shortcut learning from a curriculum design mistake**: v3/v4 were
+forced to look because color/shape/position answers are unpredictable from
+language; JWM-Read trained on **real Vietnamese words** — highly predictable
+from language alone → gradient took the easy path and sat in the parroting
+minimum for all 11.5K steps. The only visual signal learned: image-*type*
+classification (stops 80% on real docs vs 0% on synthetic). The "CER improves
+with length" pattern (52→0.82) is a denominator illusion, not ability.
+
+## 7. Side incident — colleagues' sessions appearing in the app
 
 Shared company Claude account; colleagues enabled remote control → their sessions
 appear on every machine on that account. Verified this project's session is
 **purely local, no remote control** (no hover label, absent from claude.ai/code).
 Recommendation sent: separate accounts per person.
 
-## Day 4 agenda
+## Day 4 agenda — fix the root cause, retake the same exam
 
-1. Download `jwm_read_v1.pt` + `metrics_read_v1.json` → read the per-level CER table
-2. Wire the Reader into WorldBrain (checkpoint router: v4 for scenes, read_v1 for text?)
-3. Real reading trials through the webcam (signs, book pages held up to camera)
-4. Standing backlog: KV cache for generate_answer, batched expert GEMM, ECE
-   recalibration, FD vs copy-baseline
+1. **Anti-shortcut data**: core curriculum = RANDOM char/word sequences
+   (language-unpredictable → scoring requires looking); real text returns later
+2. **Stage gating by free-running CER** — tok_acc fooled us for an entire run
+3. EOS: dense short answers + upweight the stop token
+4. KV cache for generate_answer (108-sample benchmark took 40 min — need 10×)
+5. Train v2 on Kaggle → rerun the exact 3 fixed-seed benchmarks, measure the delta
+6. Standing backlog: batched expert GEMM, ECE recalibration, FD vs copy-baseline
