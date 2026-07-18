@@ -324,6 +324,9 @@ class JWM(nn.Module):
         lg = logits[:, S - Amax - 1 : S - 1, :]
         ce = F.cross_entropy(lg.reshape(-1, V), a_ids.reshape(-1), reduction="none").view(B, Amax)
         ce = ce * a_valid.float()
+        ew = getattr(self.cfg, "eos_loss_weight", 1.0)
+        if ew != 1.0:
+            ce = torch.where(a_ids == tok.EOS, ce * ew, ce)
         loss = sqrt_len_normalize(ce.sum(dim=1), a_valid.sum(dim=1)).mean()
         # MoE load-balancing aux (reasoner tower only trains through this loss)
         aux = 0.0
@@ -483,10 +486,58 @@ class JWM(nn.Module):
     # ------------------------------------------------------------------
 
     @torch.no_grad()
-    def generate_answer(self, img, q_ids, q_valid, max_new: int | None = None) -> list[str]:
+    def generate_answer(self, img, q_ids, q_valid, max_new: int | None = None,
+                        use_cache: bool = True) -> list[str]:
+        """Greedy byte decoding. use_cache=True runs the reasoner once over the
+        prefix then one incremental step per byte (O(S) per byte instead of a
+        full O(S^2) re-forward — the Day-3 8.3s/trial fix). use_cache=False is
+        the reference path kept for the equivalence test."""
         c, dev = self.cfg, img.device
         B = img.shape[0]
         max_new = max_new or c.max_a_bytes
+        if not use_cache:
+            return self._generate_answer_ref(img, q_ids, q_valid, max_new)
+
+        emb, coords, valid = self._build_ar(img, q_ids, q_valid, tok.BOA, None, None)
+        S = emb.shape[1]
+        ang = mrope_angles(coords, c.rope_sections, c.rope_base)
+        ar_mask = build_ar_mask(valid)
+        h = emb
+        caches = []
+        for blk in self.blocks:
+            h, k, v = blk.forward_ar(h, ang, ar_mask)
+            caches.append([k, v])
+        logits = self.lm_head(self.r_final(h)[:, -1])
+
+        out = [[] for _ in range(B)]
+        done = torch.zeros(B, dtype=torch.bool, device=dev)
+        for i in range(max_new):
+            nxt = logits.argmax(-1)                                    # (B,)
+            nxt = torch.where(done, torch.full_like(nxt, tok.PAD), nxt)
+            for b in range(B):
+                if not done[b] and int(nxt[b]) not in (tok.EOS, tok.PAD):
+                    out[b].append(int(nxt[b]))
+            done = done | (nxt == tok.EOS)
+            if bool(done.all()) or i == max_new - 1:
+                break
+            p = float(S + i)
+            co = torch.tensor([[[p, p, p]]], dtype=torch.float32, device=dev).expand(B, 1, 3)
+            ang_new = mrope_angles(co, c.rope_sections, c.rope_base)
+            key_valid = torch.cat(
+                [valid, torch.ones(B, i + 1, dtype=torch.bool, device=dev)], dim=1)
+            mask = key_valid[:, None, None, :]                          # (B,1,1,S+i+1)
+            h_new = self.tok_emb(nxt.unsqueeze(1))
+            for blk, cache in zip(self.blocks, caches):
+                h_new, k, v = blk.forward_ar_step(h_new, ang_new, cache[0], cache[1], mask)
+                cache[0] = torch.cat([cache[0], k], dim=1)
+                cache[1] = torch.cat([cache[1], v], dim=1)
+            logits = self.lm_head(self.r_final(h_new)[:, -1])
+        return [tok.decode(o) for o in out]
+
+    @torch.no_grad()
+    def _generate_answer_ref(self, img, q_ids, q_valid, max_new: int) -> list[str]:
+        c, dev = self.cfg, img.device
+        B = img.shape[0]
         out = [[] for _ in range(B)]
         done = torch.zeros(B, dtype=torch.bool, device=dev)
         a_ids = torch.full((B, 0), tok.PAD, dtype=torch.long, device=dev)

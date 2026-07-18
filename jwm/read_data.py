@@ -74,6 +74,24 @@ def _phrase(rng: random.Random, corpus: list[str], n_words: int) -> str:
     return " ".join(rng.choice(_WORDS) for _ in range(n_words))
 
 
+# Anti-shortcut alphabet: Vietnamese letters (with diacritics), digits, few marks.
+# Random strings from it are language-UNPREDICTABLE — a language-model shortcut
+# scores ~0 on them, so CE gradient is forced through the vision stem (the Day-3
+# jwm_read_v1 post-mortem: real-word curriculum let the model parrot to 0.78
+# tok_acc while never looking at the image).
+_RAND_CHARS = ("aăâbcdđeghiklmnopqrstuvxy"
+               "áàảãạắằẳẵặấầẩẫậéèẻẽẹếềểễệíìỉĩịóòỏõọốồổỗộớờởỡợúùủũụứừửữựýỳỷỹỵ"
+               "0123456789")
+
+
+def random_word(rng: random.Random, lo: int = 2, hi: int = 6) -> str:
+    return "".join(rng.choice(_RAND_CHARS) for _ in range(rng.randint(lo, hi)))
+
+
+def random_phrase(rng: random.Random, n_words: int) -> str:
+    return " ".join(random_word(rng) for _ in range(n_words))
+
+
 # ----------------------------------------------------------------------------
 # synthetic text rendering (curriculum L1..L4)
 # ----------------------------------------------------------------------------
@@ -89,11 +107,17 @@ CURRICULUM = {
 
 def render_read_sample(rng: random.Random, level: int, fonts: list[str],
                        corpus: list[str], size: int = 768,
-                       cam: CameraParams | None = None) -> tuple[np.ndarray, str]:
-    """One synthetic sample: rendered Vietnamese text image + ground-truth text."""
+                       cam: CameraParams | None = None,
+                       random_text: bool = False) -> tuple[np.ndarray, str]:
+    """One synthetic sample: rendered text image + ground-truth transcript.
+
+    random_text=True renders language-unpredictable random strings (anti-shortcut
+    core curriculum); False renders natural Vietnamese (only safe once the eye works).
+    """
     (l_lo, l_hi), (w_lo, w_hi), (f_lo, f_hi) = CURRICULUM[level]
     n_lines = rng.randint(l_lo, l_hi)
-    lines = [_phrase(rng, corpus, rng.randint(w_lo, w_hi)) for _ in range(n_lines)]
+    maker = random_phrase if random_text else (lambda r, n: _phrase(r, corpus, n))
+    lines = [maker(rng, rng.randint(w_lo, w_hi)) for _ in range(n_lines)]
     text = "\n".join(lines)
 
     bg = rng.randint(232, 252)
@@ -215,7 +239,7 @@ class LazyReadBatcher:
     def __init__(self, cfg: JWMConfig, doc_pairs: list[dict], fonts: list[str],
                  corpus: list[str], cam: CameraParams | None,
                  synth_ratio: float = 0.5, levels: tuple = (1, 2, 3, 4),
-                 seed: int = 0):
+                 seed: int = 0, random_text_ratio: float = 0.0):
         self.cfg = cfg
         self.doc = doc_pairs
         self.fonts = fonts
@@ -224,25 +248,28 @@ class LazyReadBatcher:
         self.synth_ratio = synth_ratio
         self.levels = levels
         self.rng = random.Random(seed)
+        self.random_text_ratio = random_text_ratio
 
     def pick_mode(self, probs: dict) -> str:
         return "qa"
 
+    def _synth(self) -> tuple[np.ndarray, str, str]:
+        s = self.cfg.image_size
+        level = self.rng.choice(self.levels)
+        rnd = self.rng.random() < self.random_text_ratio
+        img, text = render_read_sample(self.rng, level, self.fonts, self.corpus,
+                                       size=s, cam=self.cam, random_text=rnd)
+        return img, self.rng.choice(READ_QUESTIONS), text
+
     def _one(self) -> tuple[np.ndarray, str, str]:
         s = self.cfg.image_size
         if not self.doc or self.rng.random() < self.synth_ratio:
-            level = self.rng.choice(self.levels)
-            img, text = render_read_sample(self.rng, level, self.fonts,
-                                           self.corpus, size=s, cam=self.cam)
-            return img, self.rng.choice(READ_QUESTIONS), text
+            return self._synth()
         p = self.rng.choice(self.doc)
         try:
             im = Image.open(p["img"]).convert("RGB")
         except Exception:
-            level = self.rng.choice(self.levels)
-            img, text = render_read_sample(self.rng, level, self.fonts,
-                                           self.corpus, size=s, cam=self.cam)
-            return img, self.rng.choice(READ_QUESTIONS), text
+            return self._synth()
         return np.asarray(letterbox(im, s), dtype=np.uint8), p["q"], p["a"]
 
     def batch_qa(self, n: int, device):
@@ -295,13 +322,21 @@ class PrefetchBatcher:
 
 
 def build_eval_set(cfg: JWMConfig, doc_pairs: list[dict], fonts, corpus, cam,
-                   n_synth_per_level: int = 12, n_doc: int = 60, seed: int = 999) -> list[dict]:
-    """Fixed held-out eval samples (descriptors; images realized at eval time)."""
+                   n_synth_per_level: int = 12, n_doc: int = 60, seed: int = 999,
+                   n_rand_per_level: int = 0) -> list[dict]:
+    """Fixed held-out eval samples (descriptors; images realized at eval time).
+
+    randL* kinds render language-unpredictable strings — the honest reading
+    probe (a parroting model scores CER ~1+ on them, see Day-3 post-mortem).
+    """
     rng = random.Random(seed)
     out = []
     for level in (1, 2, 3, 4):
         for _ in range(n_synth_per_level):
             out.append({"kind": f"synthL{level}", "level": level, "seed": rng.random()})
+        for _ in range(n_rand_per_level):
+            out.append({"kind": f"randL{level}", "level": level, "seed": rng.random(),
+                        "random_text": True})
     for p in rng.sample(doc_pairs, min(n_doc, len(doc_pairs))):
         out.append({"kind": "doc", **p})
     return out

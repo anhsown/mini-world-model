@@ -113,6 +113,87 @@ def test_letterbox_preserves_aspect():
     assert (arr[32] == (255, 0, 0)).all(axis=-1).any()   # content in the middle
 
 
+# ------------------------------------------------------- Day-4: KV cache + EOS
+
+def test_kv_cache_equivalence():
+    """Cached greedy decoding must produce byte-identical output to the
+    full-reforward reference path (causality guarantees identical states)."""
+    torch.manual_seed(3)
+    c = tiny_reader_cfg()
+    m = JWM(c).eval()
+    img = torch.rand(3, 3, 64, 64)
+    q = torch.randint(0, 200, (3, 8))
+    qv = torch.ones(3, 8, dtype=torch.bool)
+    qv[1, 5:] = False                      # ragged padding must be respected
+    fast = m.generate_answer(img, q, qv, max_new=12, use_cache=True)
+    slow = m.generate_answer(img, q, qv, max_new=12, use_cache=False)
+    assert fast == slow, f"{fast} != {slow}"
+
+
+def test_kv_cache_equivalence_moe():
+    torch.manual_seed(4)
+    c = tiny_reader_cfg(reasoner_moe=True, moe_experts=4, moe_topk=2, moe_shared=1)
+    m = JWM(c).eval()
+    img = torch.rand(2, 3, 64, 64)
+    q = torch.randint(0, 200, (2, 8))
+    qv = torch.ones(2, 8, dtype=torch.bool)
+    fast = m.generate_answer(img, q, qv, max_new=10, use_cache=True)
+    slow = m.generate_answer(img, q, qv, max_new=10, use_cache=False)
+    assert fast == slow
+
+
+def test_eos_loss_weight_changes_loss():
+    from jwm import tokenizer as tok
+    torch.manual_seed(5)
+    img = torch.rand(2, 3, 64, 64)
+    q = torch.randint(0, 200, (2, 8))
+    qv = torch.ones(2, 8, dtype=torch.bool)
+    a = torch.randint(0, 200, (2, 10))
+    a[:, 5] = tok.EOS
+    av = torch.ones(2, 10, dtype=torch.bool)
+    torch.manual_seed(6)
+    m1 = JWM(tiny_reader_cfg())
+    torch.manual_seed(6)
+    m2 = JWM(tiny_reader_cfg(eos_loss_weight=5.0))
+    l1 = m1.loss_qa(img, q, qv, a, av)[0]
+    l2 = m2.loss_qa(img, q, qv, a, av)[0]
+    assert float(l2) > float(l1)           # upweighted EOS -> strictly larger CE
+
+
+# ------------------------------------------------------ Day-4: anti-shortcut text
+
+def test_random_phrase_charset_and_shape():
+    from jwm.read_data import random_phrase, _RAND_CHARS
+    rng = random.Random(0)
+    p = random_phrase(rng, 4)
+    words = p.split(" ")
+    assert len(words) == 4
+    assert all(2 <= len(w) <= 6 for w in words)
+    assert all(ch in _RAND_CHARS for w in words for ch in w)
+
+
+def test_random_text_render_and_batcher():
+    fonts = find_fonts()
+    arr, text = render_read_sample(random.Random(1), 2, fonts, [], size=128,
+                                   random_text=True)
+    assert arr.shape == (128, 128, 3) and text.strip()
+    c = tiny_reader_cfg()
+    b = LazyReadBatcher(c, [], fonts, [], None, synth_ratio=1.0, levels=(1,),
+                        seed=0, random_text_ratio=1.0)
+    img, q_ids, q_valid, a_ids, a_valid = b.batch_qa(2, "cpu")
+    assert img.shape == (2, 3, 64, 64)
+
+
+def test_eval_set_includes_rand_kinds():
+    from jwm.read_data import build_eval_set
+    c = tiny_reader_cfg()
+    es = build_eval_set(c, [], find_fonts(), [], None,
+                        n_synth_per_level=1, n_doc=0, n_rand_per_level=2)
+    kinds = {e["kind"] for e in es}
+    assert "randL1" in kinds and "synthL4" in kinds
+    assert sum(k.startswith("rand") for k in (e["kind"] for e in es)) == 8
+
+
 # -------------------------------------------------------------------- batcher
 
 def test_lazy_batcher_shapes_synth_only():

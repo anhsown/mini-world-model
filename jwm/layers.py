@@ -136,6 +136,22 @@ class MoTBlock(nn.Module):
         h_ar = h_ar + self.r_ffn(self.r_norm2(h_ar))
         return h_ar, k.detach(), v.detach()
 
+    def forward_ar_step(self, h_new, ang_new, k_cache, v_cache, attn_mask):
+        """Incremental reasoner step for KV-cached decoding (DESIGN §6 note).
+
+        h_new: (B, 1, d) — the single new token. k_cache/v_cache: (B, S_past, H, Dh)
+        already-roped K/V of every previous position. attn_mask: (B, 1, 1, S_past+1)
+        bool over [past ; self]. Numerically identical to the last row of a full
+        causal forward because earlier positions never attend to later ones.
+        Returns (h_new_out, k_new, v_new) for cache append.
+        """
+        q, k, v = self.r_attn.qkv(self.r_norm1(h_new), ang_new)
+        k_all = torch.cat([k_cache, k], dim=1)
+        v_all = torch.cat([v_cache, v], dim=1)
+        h_new = h_new + self.r_attn.wo(_sdpa(q, k_all, v_all, attn_mask))
+        h_new = h_new + self.r_ffn(self.r_norm2(h_new))
+        return h_new, k, v
+
     def forward_dm(self, h_dm, ka, va, ang_dm, sig_emb, dm_mask):
         """Generator pathway: AdaLN-zero modulated, joint attention over [AR; DM]."""
         sh1, sc1, g1, sh2, sc2, g2 = self.adaln(sig_emb).chunk(6, dim=-1)

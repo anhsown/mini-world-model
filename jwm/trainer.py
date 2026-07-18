@@ -199,7 +199,8 @@ def eval_read(model: JWM, eval_set: list, cfg: JWMConfig, device,
             else:
                 rng = _random.Random(it["seed"])
                 arr, text = render_read_sample(rng, it["level"], fonts, corpus,
-                                               size=cfg.image_size, cam=cam)
+                                               size=cfg.image_size, cam=cam,
+                                               random_text=it.get("random_text", False))
                 imgs.append(arr)
                 qs.append(READ_QUESTIONS[0])
                 refs.append(text)

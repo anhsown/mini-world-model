@@ -33,6 +33,10 @@ class JWMConfig:
     z_ch: int = 8                           # 8x8x8 latent
     lat_merge: int = 2                      # 2x2 merge -> 4x4 = 16 DM tokens, dim z_ch*4 = 32
 
+    # QA loss shaping — Day-4 fix: 1 EOS byte among ~200 answer slots is too
+    # thin a stop signal; >1 upweights the EOS position in the answer CE
+    eos_loss_weight: float = 1.0
+
     # Inkling-mini MoE for the REASONER tower (INKLING_MINI.md; generator stays dense)
     reasoner_moe: bool = False
     moe_experts: int = 32                   # Inkling: 256
