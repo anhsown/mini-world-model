@@ -21,6 +21,7 @@ import math
 import os
 from pathlib import Path
 import random
+import shutil
 import sys
 import time
 
@@ -132,8 +133,17 @@ def broadcast_bool(value: bool, device, world) -> bool:
 
 def atomic_torch_save(payload, path: Path):
     tmp = path.with_suffix(path.suffix + ".tmp")
-    torch.save(payload, tmp)
-    os.replace(tmp, path)
+    try:
+        torch.save(payload, tmp)
+        os.replace(tmp, path)
+    except Exception as exc:
+        # A partial zip checkpoint is never resumable. Remove it immediately so
+        # it cannot consume the remaining Kaggle disk or be mistaken as valid.
+        tmp.unlink(missing_ok=True)
+        free = shutil.disk_usage(path.parent).free / 2**30
+        raise RuntimeError(
+            f"checkpoint write failed ({free:.2f} GiB free at {path.parent}); "
+            "delete extracted source tar shards or increase free disk") from exc
 
 
 def write_json(obj, path: Path):
@@ -241,6 +251,16 @@ def main():
     if rank == 0:
         out.mkdir(parents=True, exist_ok=True)
     barrier(world)
+
+    disk_ok = True
+    if rank == 0:
+        free_gb = shutil.disk_usage(out).free / 2**30
+        print(f"disk free before training: {free_gb:.2f} GiB", flush=True)
+        # Atomic save temporarily needs old checkpoint + new checkpoint. Four
+        # GiB leaves room for optimizer state, deploy weights and JSON outputs.
+        disk_ok = free_gb >= 4.0
+    if not broadcast_bool(disk_ok, device, world):
+        raise RuntimeError("Need at least 4 GiB free for atomic Reader-v3 checkpoints")
 
     cfg = reader_scale_v3()
     if args.quick:

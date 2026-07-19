@@ -68,12 +68,29 @@ JSONL = DATA / 'data' / 'vdoc.jsonl'
 assert JSONL.exists()
 print('dataset downloaded:', DATA)
 """),
-    code("""# 4) Extract image shards (resume-safe: each tar gets a .done marker)
+    code("""# 4) Extract image shards, then remove redundant tar archives
 from jwm.read_data import extract_tars
+import shutil
 extract_tars(str(DATA / 'shards'), str(DATA), log=print)
 first = next(DATA.glob('images/**/*.jpg'), None)
 assert first is not None, 'No extracted image found.'
 print('first image:', first)
+
+# Checkpoints need 1–2 GB of temporary atomic-save headroom. Keeping both the
+# extracted images and their ~9 GB source tars can fill /kaggle/working.
+tars = sorted((DATA / 'shards').glob('images-*.tar'))
+for tar in tars:
+    marker = DATA / f'{tar.stem}.done'
+    assert marker.exists(), f'Refusing to delete unextracted shard: {tar.name}'
+freed = sum(p.stat().st_size for p in tars)
+for tar in tars:
+    tar.unlink()
+partial = Path('/kaggle/working/jwm_read_v3/jwm_read_v3_resume.pt.tmp')
+partial.unlink(missing_ok=True)
+usage = shutil.disk_usage('/kaggle/working')
+print(f'removed {freed / 2**30:.2f} GiB redundant tars')
+print(f'free disk: {usage.free / 2**30:.2f} GiB')
+assert usage.free / 2**30 >= 4.0, 'Need >=4 GiB free for atomic checkpoints.'
 """),
     code("""# 5) Validate data hypotheses BEFORE spending GPU training time
 from jwm.read_data import find_fonts, load_corpus_lines, load_doc_pairs
