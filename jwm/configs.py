@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from .config import JWMConfig
+from . import tokenizer as tok
 
 
 def scale_v1() -> JWMConfig:
@@ -51,6 +52,29 @@ def reader_scale() -> JWMConfig:
                      reasoner_moe=True, moe_experts=32, moe_topk=4, moe_shared=1,
                      image_size=768, patch=16, patch_merge=2, vision_mlp_layers=2,
                      max_q_bytes=96, max_a_bytes=224)
+
+
+def reader_scale_v3() -> JWMConfig:
+    """JWM-Read v3 for Kaggle T4x2.
+
+    Portrait 1024x768 input. Patch-16 local reasoning happens on a 64x48 grid;
+    learned 2x2 post-encoder merge yields 32x24 = 768 MoT visual tokens.
+    The 16-expert top-2 router gives each expert more OCR updates than v2's
+    32/top-4 setup while retaining sparse capacity.
+    """
+    return JWMConfig(
+        d_model=512, n_layers=10, n_heads=16, ffn_hidden=1408,
+        vocab_size=tok.VI_CHAR_VOCAB_SIZE, tokenizer_mode="vi_char",
+        reasoner_moe=True, moe_experts=16, moe_topk=2, moe_shared=1,
+        image_size=768, image_height=1024, image_width=768,
+        patch=16, patch_merge=2, vision_stem="local", vision_mlp_layers=1,
+        vision_local_layers=2, vision_local_heads=8, vision_window=8,
+        vision_grad_checkpoint=True,
+        max_q_bytes=112, max_a_bytes=176,
+        eos_loss_weight=4.0, answer_input_corrupt=0.12,
+        vision_contrast_alpha=0.15, vision_contrast_margin=0.20,
+        reader_ctc_weight=1.0, reader_box_weight=0.35,
+    )
 
 
 def pipeline_scale() -> JWMConfig:

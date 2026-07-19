@@ -10,23 +10,25 @@ from . import tokenizer as tok
 from .config import JWMConfig
 
 
-def pad_text(texts: list[str], max_len: int) -> tuple[torch.Tensor, torch.Tensor]:
+def pad_text(texts: list[str], max_len: int,
+             tokenizer_mode: str = "byte") -> tuple[torch.Tensor, torch.Tensor]:
     """Encode UTF-8 bytes, truncate/pad to max_len. Returns (ids, valid)."""
     ids = torch.full((len(texts), max_len), tok.PAD, dtype=torch.long)
     valid = torch.zeros(len(texts), max_len, dtype=torch.bool)
     for i, t in enumerate(texts):
-        b = tok.encode(t)[:max_len]
+        b = tok.encode(t, mode=tokenizer_mode)[:max_len]
         ids[i, : len(b)] = torch.tensor(b, dtype=torch.long)
         valid[i, : len(b)] = True
     return ids, valid
 
 
-def pad_answers(texts: list[str], max_len: int) -> tuple[torch.Tensor, torch.Tensor]:
+def pad_answers(texts: list[str], max_len: int,
+                tokenizer_mode: str = "byte") -> tuple[torch.Tensor, torch.Tensor]:
     """Answers get an EOS appended (the model must learn to stop)."""
     ids = torch.full((len(texts), max_len), tok.PAD, dtype=torch.long)
     valid = torch.zeros(len(texts), max_len, dtype=torch.bool)
     for i, t in enumerate(texts):
-        b = tok.encode(t)[: max_len - 1] + [tok.EOS]
+        b = tok.encode(t, mode=tokenizer_mode)[: max_len - 1] + [tok.EOS]
         ids[i, : len(b)] = torch.tensor(b, dtype=torch.long)
         valid[i, : len(b)] = True
     return ids, valid
@@ -75,15 +77,18 @@ class ModeBatcher:
         d = self.split["qa"]
         idx = [self.rng.randrange(len(d["q"])) for _ in range(n)]
         img = imgs_to_float(d["img"][idx], device)
-        q_ids, q_valid = pad_text([d["q"][i] for i in idx], self.cfg.max_q_bytes)
-        a_ids, a_valid = pad_answers([d["a"][i] for i in idx], self.cfg.max_a_bytes)
+        q_ids, q_valid = pad_text([d["q"][i] for i in idx], self.cfg.max_q_bytes,
+                                  self.cfg.tokenizer_mode)
+        a_ids, a_valid = pad_answers([d["a"][i] for i in idx], self.cfg.max_a_bytes,
+                                     self.cfg.tokenizer_mode)
         return img, q_ids.to(device), q_valid.to(device), a_ids.to(device), a_valid.to(device)
 
     def batch_ground(self, n: int, device):
         d = self.split["ground"]
         idx = [self.rng.randrange(len(d["q"])) for _ in range(n)]
         img = imgs_to_float(d["img"][idx], device)
-        q_ids, q_valid = pad_text([d["q"][i] for i in idx], self.cfg.max_q_bytes)
+        q_ids, q_valid = pad_text([d["q"][i] for i in idx], self.cfg.max_q_bytes,
+                                  self.cfg.tokenizer_mode)
         q_ids, q_valid = self._maybe_drop_text(q_ids, q_valid)
         bbox = d["bbox"][idx].to(device)
         return img, q_ids.to(device), q_valid.to(device), bbox
@@ -93,7 +98,8 @@ class ModeBatcher:
         idx = [self.rng.randrange(len(d["q"])) for _ in range(n)]
         img = imgs_to_float(d["img"][idx], device)
         img1 = imgs_to_float(d["img1"][idx], device)
-        q_ids, q_valid = pad_text([d["q"][i] for i in idx], self.cfg.max_q_bytes)
+        q_ids, q_valid = pad_text([d["q"][i] for i in idx], self.cfg.max_q_bytes,
+                                  self.cfg.tokenizer_mode)
         q_ids, q_valid = self._maybe_drop_text(q_ids, q_valid)
         return img, img1, q_ids.to(device), q_valid.to(device)
 
@@ -101,6 +107,7 @@ class ModeBatcher:
         d = self.split["t2i"]
         idx = [self.rng.randrange(len(d["q"])) for _ in range(n)]
         img = imgs_to_float(d["img"][idx], device)         # target image -> AE outside
-        q_ids, q_valid = pad_text([d["q"][i] for i in idx], self.cfg.max_q_bytes)
+        q_ids, q_valid = pad_text([d["q"][i] for i in idx], self.cfg.max_q_bytes,
+                                  self.cfg.tokenizer_mode)
         q_ids, q_valid = self._maybe_drop_text(q_ids, q_valid)
         return img, q_ids.to(device), q_valid.to(device)

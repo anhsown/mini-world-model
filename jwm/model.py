@@ -100,16 +100,27 @@ class JWM(nn.Module):
 
         # --- embeddings ---
         self.tok_emb = nn.Embedding(cfg.vocab_size, d)
-        # vision stem: linear patch embed, or hierarchical MLP over merged
-        # patches (Inkling-style: large effective patch + deep per-patch MLP)
-        in_dim = getattr(cfg, "img_tok_dim", cfg.patch * cfg.patch * 3)
-        if getattr(cfg, "vision_mlp_layers", 1) > 1:
-            layers = [nn.Linear(in_dim, d)]
-            for _ in range(cfg.vision_mlp_layers - 1):
-                layers += [nn.SiLU(), nn.Linear(d, d)]
-            self.patch_embed = nn.Sequential(*layers)
+        # Reader-v3 performs spatial reasoning BEFORE token merge. Legacy
+        # checkpoints retain the original merged-pixel MLP path.
+        if getattr(cfg, "vision_stem", "mlp") == "local":
+            from .vision_v3 import DocumentVisionStem
+            self.vision_stem = DocumentVisionStem(
+                d=d, patch=cfg.patch, merge=cfg.patch_merge,
+                layers=cfg.vision_local_layers, heads=cfg.vision_local_heads,
+                window=cfg.vision_window, ffn_hidden=cfg.ffn_hidden,
+                grad_checkpoint=cfg.vision_grad_checkpoint,
+            )
+            self.patch_embed = nn.Identity()
         else:
-            self.patch_embed = nn.Linear(in_dim, d)
+            self.vision_stem = None
+            in_dim = getattr(cfg, "img_tok_dim", cfg.patch * cfg.patch * 3)
+            if getattr(cfg, "vision_mlp_layers", 1) > 1:
+                layers = [nn.Linear(in_dim, d)]
+                for _ in range(cfg.vision_mlp_layers - 1):
+                    layers += [nn.SiLU(), nn.Linear(d, d)]
+                self.patch_embed = nn.Sequential(*layers)
+            else:
+                self.patch_embed = nn.Linear(in_dim, d)
         self.e_img = nn.Parameter(torch.zeros(d))       # modality embeddings (Cosmos §2.1)
         self.e_lat = nn.Parameter(torch.zeros(d))
         self.e_act = nn.Parameter(torch.zeros(d))
@@ -132,6 +143,16 @@ class JWM(nn.Module):
         self.g_final = RMSNorm(d)
         self.lm_head = nn.Linear(d, cfg.vocab_size, bias=False)
         self.lm_head.weight = self.tok_emb.weight       # weight tying
+
+        # Reader-v3 auxiliary heads. CTC directly supervises pixel->grapheme;
+        # four learned queries emit x1,y1,x2,y2 coordinate tokens in parallel.
+        self.reader_enabled = getattr(cfg, "vision_stem", "mlp") == "local" or \
+            cfg.reader_ctc_weight > 0 or cfg.reader_box_weight > 0
+        if self.reader_enabled:
+            self.ocr_head = nn.Linear(d, cfg.vocab_size + 1)  # last id = CTC blank
+            self.box_queries = nn.Parameter(torch.randn(4, d) * 0.02)
+            self.box_attn = nn.MultiheadAttention(d, cfg.n_heads, batch_first=True)
+            self.coord_head = nn.Linear(d, cfg.reader_coord_bins)
 
         self.apply(self._init)
         # re-zero AdaLN after generic init (zero-init is a hard requirement)
@@ -179,16 +200,22 @@ class JWM(nn.Module):
     def _img_tokens(self, img: torch.Tensor) -> torch.Tensor:
         c = self.cfg
         B = img.shape[0]
+        if self.vision_stem is not None:
+            if img.shape[-2:] != (c.input_height, c.input_width):
+                raise ValueError(f"expected image {c.input_height}x{c.input_width}, "
+                                 f"got {img.shape[-2]}x{img.shape[-1]}")
+            return self.vision_stem(img) + self.e_img
         p = c.patch * getattr(c, "patch_merge", 1)     # effective patch after merge
-        g = c.img_grid
-        x = img.view(B, 3, g, p, g, p).permute(0, 2, 4, 1, 3, 5).reshape(B, g * g, 3 * p * p)
+        gh, gw = c.img_grid_h, c.img_grid_w
+        x = (img.view(B, 3, gh, p, gw, p).permute(0, 2, 4, 1, 3, 5)
+             .reshape(B, gh * gw, 3 * p * p))
         return self.patch_embed(x) + self.e_img
 
     def _ar_coords(self, S_text_after_img: int, device) -> torch.Tensor:
         """Coordinates for [BOS][IMG grid][text slots...] per DESIGN §4 table."""
         c = self.cfg
         parts = [torch.tensor([[0.0, 0.0, 0.0]], device=device)]              # BOS p=0
-        parts.append(grid_coords(1.0, c.img_grid, c.img_grid).to(device))     # IMG t=1
+        parts.append(grid_coords(1.0, c.img_grid_h, c.img_grid_w).to(device)) # IMG t=1
         p0 = 2.0
         p = torch.arange(S_text_after_img, dtype=torch.float32, device=device) + p0
         parts.append(torch.stack([p, p, p], dim=-1))
@@ -202,12 +229,13 @@ class JWM(nn.Module):
         trigger: int,                     # tok.BOA or tok.BOG
         a_ids: torch.Tensor | None = None,   # (B, Amax) padded (answer + EOS)
         a_valid: torch.Tensor | None = None,
+        img_tokens: torch.Tensor | None = None,
     ):
         c, dev = self.cfg, img.device
         B, Qmax = q_ids.shape
         pieces = [
             self.tok_emb(torch.full((B, 1), tok.BOS, device=dev)),
-            self._img_tokens(img),
+            self._img_tokens(img) if img_tokens is None else img_tokens,
             self.tok_emb(torch.full((B, 1), tok.BOQ, device=dev)),
             self.tok_emb(q_ids.clamp(max=c.vocab_size - 1)),
             self.tok_emb(torch.full((B, 1), trigger, device=dev)),
@@ -313,9 +341,17 @@ class JWM(nn.Module):
     # losses
     # ------------------------------------------------------------------
 
-    def loss_qa(self, img, q_ids, q_valid, a_ids, a_valid):
-        """AR cross-entropy on answer slots with sqrt-length normalization."""
-        emb, coords, valid = self._build_ar(img, q_ids, q_valid, tok.BOA, a_ids, a_valid)
+    def _answer_inputs(self, a_ids, a_valid):
+        """Noisy teacher forcing: hide some previous answer tokens, never targets."""
+        p = getattr(self.cfg, "answer_input_corrupt", 0.0)
+        if not self.training or p <= 0:
+            return a_ids
+        mask = (torch.rand_like(a_ids.float()) < p) & a_valid & (a_ids != tok.EOS)
+        return torch.where(mask, torch.full_like(a_ids, tok.PAD), a_ids)
+
+    def _qa_ce_from_vis(self, img, vis, q_ids, q_valid, a_ids, a_valid, a_input):
+        emb, coords, valid = self._build_ar(
+            img, q_ids, q_valid, tok.BOA, a_input, a_valid, img_tokens=vis)
         h, _ = self._run(emb, coords, valid)
         logits = self.lm_head(h)
         B, S, V = logits.shape
@@ -328,19 +364,99 @@ class JWM(nn.Module):
         if ew != 1.0:
             ce = torch.where(a_ids == tok.EOS, ce * ew, ce)
         loss = sqrt_len_normalize(ce.sum(dim=1), a_valid.sum(dim=1)).mean()
-        # MoE load-balancing aux (reasoner tower only trains through this loss)
+        with torch.no_grad():
+            acc = ((lg.argmax(-1) == a_ids) & a_valid).sum() / a_valid.sum().clamp(min=1)
+        return loss, acc
+
+    def _qa_objective(self, img, q_ids, q_valid, a_ids, a_valid):
+        vis = self._img_tokens(img)
+        a_input = self._answer_inputs(a_ids, a_valid)
+        qa, acc = self._qa_ce_from_vis(img, vis, q_ids, q_valid, a_ids, a_valid, a_input)
+        loss = qa
+        # MoE load-balancing aux (reasoner tower only trains through this loss).
         aux = 0.0
         for blk in self.blocks:
             la = getattr(blk.r_ffn, "last_aux_loss", None)
             if la is not None:
                 loss = loss + la
-                aux = aux + float(la)
-        with torch.no_grad():
-            acc = ((lg.argmax(-1) == a_ids) & a_valid).sum() / a_valid.sum().clamp(min=1)
-        m = {"qa_ce": float(loss), "qa_tok_acc": float(acc)}
+                aux = aux + float(la.detach())
+
+        contrast = None
+        alpha = getattr(self.cfg, "vision_contrast_alpha", 0.0)
+        if self.training and alpha > 0 and img.shape[0] > 1:
+            bad_vis = vis.roll(1, dims=0)
+            bad, _ = self._qa_ce_from_vis(
+                img, bad_vis, q_ids, q_valid, a_ids, a_valid, a_input)
+            margin = getattr(self.cfg, "vision_contrast_margin", 0.2)
+            contrast = F.relu(margin + qa - bad)
+            loss = loss + alpha * contrast
+
+        m = {"qa_ce": float(qa.detach()), "qa_tok_acc": float(acc)}
         if aux:
             m["moe_aux"] = aux
-        return loss, m
+        if contrast is not None:
+            m["vision_margin"] = float((bad - qa).detach())
+            m["vision_hinge"] = float(contrast.detach())
+        return loss, m, vis
+
+    def loss_qa(self, img, q_ids, q_valid, a_ids, a_valid):
+        """AR answer loss with optional anti-shortcut/noisy-teacher objectives."""
+        loss, metrics, _ = self._qa_objective(img, q_ids, q_valid, a_ids, a_valid)
+        return loss, metrics
+
+    def _box_logits(self, vis: torch.Tensor) -> torch.Tensor:
+        b = vis.shape[0]
+        q = self.box_queries.unsqueeze(0).expand(b, -1, -1)
+        h, _ = self.box_attn(q, vis, vis, need_weights=False)
+        return self.coord_head(h)  # B,4,bins
+
+    def loss_read_v3(self, img, q_ids, q_valid, a_ids, a_valid,
+                     bbox, ctc_mask, box_mask):
+        """Joint QA + CTC transcription + parallel coordinate-token loss.
+
+        CTC/box masks are true only when the labels are geometrically valid
+        (synthetic OCR samples). Real document QA still contributes QA and the
+        correct-vs-shuffled image objective without pretending its answer is a
+        full-page transcription.
+        """
+        loss, metrics, vis = self._qa_objective(img, q_ids, q_valid, a_ids, a_valid)
+
+        ctc_mask = ctc_mask.bool()
+        if bool(ctc_mask.any()) and self.cfg.reader_ctc_weight > 0:
+            ids = a_ids[ctc_mask]
+            valid = a_valid[ctc_mask] & (ids != tok.EOS) & (ids != tok.PAD)
+            lengths = valid.sum(dim=1)
+            usable = (lengths > 0) & (lengths <= vis.shape[1])
+            if bool(usable.any()):
+                ids, valid, lengths = ids[usable], valid[usable], lengths[usable]
+                targets = torch.cat([row[m] for row, m in zip(ids, valid)], dim=0)
+                lp = self.ocr_head(vis[ctc_mask][usable]).log_softmax(-1).transpose(0, 1)
+                input_lengths = torch.full_like(lengths, lp.shape[0])
+                ctc = F.ctc_loss(lp, targets, input_lengths, lengths,
+                                 blank=self.cfg.vocab_size, zero_infinity=True)
+                loss = loss + self.cfg.reader_ctc_weight * ctc
+                metrics["ctc"] = float(ctc.detach())
+
+        box_mask = box_mask.bool()
+        if bool(box_mask.any()) and self.cfg.reader_box_weight > 0:
+            logits = self._box_logits(vis[box_mask])
+            target = (bbox[box_mask].clamp(0, 1) *
+                      (self.cfg.reader_coord_bins - 1)).round().long()
+            box_ce = F.cross_entropy(logits.reshape(-1, logits.shape[-1]),
+                                     target.reshape(-1))
+            loss = loss + self.cfg.reader_box_weight * box_ce
+            pred = logits.argmax(-1).float() / (self.cfg.reader_coord_bins - 1)
+            with torch.no_grad():
+                def _xyxy_to_cxcywh(z):
+                    return torch.stack(((z[..., 0] + z[..., 2]) / 2,
+                                        (z[..., 1] + z[..., 3]) / 2,
+                                        (z[..., 2] - z[..., 0]).clamp(min=0),
+                                        (z[..., 3] - z[..., 1]).clamp(min=0)), dim=-1)
+                iou = bbox_iou(_xyxy_to_cxcywh(pred),
+                               _xyxy_to_cxcywh(bbox[box_mask])).mean()
+            metrics["box_ce"] = float(box_ce.detach())
+            metrics["box_iou"] = float(iou)
+        return loss, metrics
 
     def _dm_coords_ground(self, B, dev):
         """GROUND DM layout: [clean image latent grid (t=G)] + [bbox token (t=G, h=w=0)]."""
@@ -485,6 +601,52 @@ class JWM(nn.Module):
     # inference
     # ------------------------------------------------------------------
 
+    def forward(self, task: str, *args, **kwargs):
+        """DDP-safe task dispatch (training must call the wrapped module)."""
+        if task == "qa":
+            return self.loss_qa(*args, **kwargs)
+        if task == "read_v3":
+            return self.loss_read_v3(*args, **kwargs)
+        if task == "ground":
+            return self.loss_ground(*args, **kwargs)
+        if task == "fd":
+            return self.loss_fd(*args, **kwargs)
+        if task == "t2i":
+            return self.loss_t2i(*args, **kwargs)
+        raise ValueError(f"unknown JWM task: {task}")
+
+    def freeze_generator_for_reader(self) -> None:
+        """Reader training updates only vision, AR reasoner and reader heads."""
+        prefixes = ("lat_in", "lat_v_head", "act_in", "act_v_head", "conf_head",
+                    "sigma_embedder", "g_final")
+        for name, p in self.named_parameters():
+            if name.startswith(prefixes) or ".g_" in name or ".adaln" in name:
+                p.requires_grad_(False)
+
+    @torch.no_grad()
+    def predict_ocr_ctc(self, img: torch.Tensor) -> list[str]:
+        if not self.reader_enabled:
+            raise RuntimeError("reader heads are not enabled")
+        ids = self.ocr_head(self._img_tokens(img)).argmax(-1)
+        blank = self.cfg.vocab_size
+        out: list[str] = []
+        for row in ids.tolist():
+            seq, prev = [], None
+            for i in row:
+                if i != blank and i != prev and i not in (tok.PAD, tok.EOS):
+                    seq.append(i)
+                prev = i
+            out.append(tok.decode(seq, mode=self.cfg.tokenizer_mode))
+        return out
+
+    @torch.no_grad()
+    def predict_text_box(self, img: torch.Tensor) -> torch.Tensor:
+        logits = self._box_logits(self._img_tokens(img))
+        b = logits.argmax(-1).float() / (self.cfg.reader_coord_bins - 1)
+        xs = b[:, [0, 2]].sort(dim=1).values
+        ys = b[:, [1, 3]].sort(dim=1).values
+        return torch.stack([xs[:, 0], ys[:, 0], xs[:, 1], ys[:, 1]], dim=-1)
+
     @torch.no_grad()
     def generate_answer(self, img, q_ids, q_valid, max_new: int | None = None,
                         use_cache: bool = True) -> list[str]:
@@ -532,7 +694,7 @@ class JWM(nn.Module):
                 cache[0] = torch.cat([cache[0], k], dim=1)
                 cache[1] = torch.cat([cache[1], v], dim=1)
             logits = self.lm_head(self.r_final(h_new)[:, -1])
-        return [tok.decode(o) for o in out]
+        return [tok.decode(o, mode=c.tokenizer_mode) for o in out]
 
     @torch.no_grad()
     def _generate_answer_ref(self, img, q_ids, q_valid, max_new: int) -> list[str]:
@@ -556,7 +718,7 @@ class JWM(nn.Module):
             done = done | (nxt == tok.EOS)
             if bool(done.all()):
                 break
-        return [tok.decode(o) for o in out]
+        return [tok.decode(o, mode=c.tokenizer_mode) for o in out]
 
     @torch.no_grad()
     def sample_bbox(self, img, q_ids, q_valid, z_img_tok, steps=None, shift=None, guidance=1.0):

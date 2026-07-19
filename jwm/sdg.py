@@ -165,10 +165,20 @@ def synth_background(rng: random.Random, size: int = CANVAS) -> Image.Image:
 # ----------------------------------------------------------------------------
 
 def camera_degrade(img: Image.Image, cam: CameraParams, rng: random.Random,
-                   out_size: int = OUT) -> Image.Image:
-    """Apply the webcam model at out_size. Order: blur -> photometric -> noise -> jpeg."""
-    OUT = out_size  # noqa: N806 — keep the body identical for any output size
-    img = img.resize((OUT, OUT), Image.LANCZOS)
+                   out_size: int | tuple[int, int] | None = OUT) -> Image.Image:
+    """Apply the webcam model without accidentally changing document geometry.
+
+    ``None`` preserves the input size, an integer requests a square output and a
+    ``(width, height)`` tuple requests an explicit canvas. Reader-v3 uses the
+    preserving path because its text boxes are measured before degradation.
+    """
+    if out_size is None:
+        width, height = img.size
+    elif isinstance(out_size, tuple):
+        width, height = out_size
+    else:
+        width = height = out_size
+    img = img.resize((width, height), Image.LANCZOS)
     if cam.blur_sigma > 0:
         img = img.filter(ImageFilter.GaussianBlur(radius=cam.blur_sigma * rng.uniform(0.6, 1.4)))
     a = np.asarray(img).astype(np.float32)
@@ -179,7 +189,9 @@ def camera_degrade(img: Image.Image, cam: CameraParams, rng: random.Random,
     a = (a - mean) * cam.contrast * rng.uniform(0.92, 1.08) + mean + \
         cam.brightness + rng.uniform(-8, 8)
     # vignette
-    yy, xx = np.mgrid[0:OUT, 0:OUT].astype(np.float32) / OUT - 0.5
+    yy, xx = np.mgrid[0:height, 0:width].astype(np.float32)
+    yy = yy / max(1, height) - 0.5
+    xx = xx / max(1, width) - 0.5
     a *= (1.0 - cam.vignette * (xx ** 2 + yy ** 2) * 4)[..., None]
     # sensor noise
     a += np.random.default_rng(rng.randint(0, 10 ** 9)).normal(0, cam.noise_std, a.shape)

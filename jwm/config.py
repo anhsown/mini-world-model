@@ -26,9 +26,18 @@ class JWMConfig:
 
     # vision
     image_size: int = 64
+    # Reader v3 may use a portrait native-aspect canvas. Zero keeps the legacy
+    # square image_size behaviour used by existing checkpoints.
+    image_height: int = 0
+    image_width: int = 0
     patch: int = 8                          # -> 8x8 = 64 AR image tokens
     patch_merge: int = 1                    # NxN patch merge (Reader: 2 -> 4x fewer tokens)
     vision_mlp_layers: int = 1              # 1 = linear embed; 2+ = hierarchical MLP stem
+    vision_stem: str = "mlp"                # "mlp" (legacy) | "local" (Reader v3)
+    vision_local_layers: int = 0
+    vision_local_heads: int = 8
+    vision_window: int = 8
+    vision_grad_checkpoint: bool = False
     # conv-AE latent (frozen after pretrain)
     z_ch: int = 8                           # 8x8x8 latent
     lat_merge: int = 2                      # 2x2 merge -> 4x4 = 16 DM tokens, dim z_ch*4 = 32
@@ -36,6 +45,15 @@ class JWMConfig:
     # QA loss shaping — Day-4 fix: 1 EOS byte among ~200 answer slots is too
     # thin a stop signal; >1 upweights the EOS position in the answer CE
     eos_loss_weight: float = 1.0
+    answer_input_corrupt: float = 0.0
+    vision_contrast_alpha: float = 0.0
+    vision_contrast_margin: float = 0.25
+    tokenizer_mode: str = "byte"             # "byte" | "vi_char"
+
+    # Reader-v3 auxiliary objectives. Dormant for all legacy configs.
+    reader_ctc_weight: float = 0.0
+    reader_box_weight: float = 0.0
+    reader_coord_bins: int = 1001
 
     # Inkling-mini MoE for the REASONER tower (INKLING_MINI.md; generator stays dense)
     reasoner_moe: bool = False
@@ -67,11 +85,28 @@ class JWMConfig:
 
     @property
     def n_img_tokens(self) -> int:
-        return self.img_grid ** 2
+        return self.img_grid_h * self.img_grid_w
+
+    @property
+    def input_height(self) -> int:
+        return self.image_height or self.image_size
+
+    @property
+    def input_width(self) -> int:
+        return self.image_width or self.image_size
+
+    @property
+    def img_grid_h(self) -> int:
+        return self.input_height // self.patch // self.patch_merge
+
+    @property
+    def img_grid_w(self) -> int:
+        return self.input_width // self.patch // self.patch_merge
 
     @property
     def img_grid(self) -> int:
-        return self.image_size // self.patch // self.patch_merge
+        # Compatibility alias for square image pipelines.
+        return self.img_grid_h
 
     @property
     def img_tok_dim(self) -> int:
