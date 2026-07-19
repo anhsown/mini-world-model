@@ -147,7 +147,11 @@ def validate_datasets(datasets: dict, output: Path) -> dict:
     for split, sources in datasets.items():
         for name, dataset in sources.items():
             key = f"{split}/{name}"
-            reports["sources"][key] = validate_geometry_source(dataset, key)
+            # Bonn's value is dynamic foreground and real RGB-D appearance;
+            # several valid sequences deliberately keep the camera nearly
+            # static. TUM/Tartan remain mandatory camera-motion sources.
+            reports["sources"][key] = validate_geometry_source(
+                dataset, key, require_camera_motion=(name != "bonn"))
     for source in ("tum", "bonn", "tartanair"):
         available = [(split, datasets[split][source]) for split in datasets
                      if source in datasets[split]]
@@ -159,6 +163,15 @@ def validate_datasets(datasets: dict, output: Path) -> dict:
                             for row in reports["sources"].values()) and
                         all(row.get("valid", False)
                             for row in reports["splits"].values()))
+    reports["failures"] = {
+        key: [name for name in row.get("required_hypotheses", [])
+              if not row.get("hypotheses", {}).get(name, False)]
+        for key, row in reports["sources"].items() if not row.get("valid", False)
+    }
+    reports["split_failures"] = {
+        key: row.get("leaked_scene_ids", [])
+        for key, row in reports["splits"].items() if not row.get("valid", False)
+    }
     output.write_text(json.dumps(reports, indent=2), encoding="utf-8")
     return reports
 

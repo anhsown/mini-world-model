@@ -105,11 +105,12 @@ class TartanAirWindowDataset(Dataset):
                  frame_stride: int = 1, window_stride: int = 8,
                  height: int = 256, width: int = 256,
                  camera: str = "lcam_front", png_depth_scale: float = 1000.0,
-                 assume_static: bool = True):
+                 assume_static: bool = True, max_depth_m: float = 100.0):
         self.frames, self.frame_stride = frames, frame_stride
         self.height, self.width = height, width
         self.camera, self.png_depth_scale = camera, png_depth_scale
         self.assume_static = assume_static
+        self.max_depth_m = max_depth_m
         self.trajectories, self.windows = [], []
         span = (frames - 1) * frame_stride + 1
         for supplied in roots:
@@ -198,9 +199,13 @@ class TartanAirWindowDataset(Dataset):
                                             "nearest", 0.0)
                 masks.append(mask.squeeze(0) > 0.5)
         depth = torch.stack(depths)
+        depth_valid = (torch.isfinite(depth) & (depth > 1e-6) &
+                       (depth < self.max_depth_m))
         row = {
             "image": torch.stack(images), "depth": depth,
-            "depth_valid": torch.isfinite(depth) & (depth > 1e-6),
+            # TartanAir documents very large values for sky/far pixels. They
+            # are not usable metric supervision and must not enter pooling.
+            "depth_valid": depth_valid,
             "pose_c2w": normalize_pose_origin(trajectory["poses"][ids]),
             "intrinsics": intrinsics,
             "scene_id": trajectory["scene_id"], "source": "tartanair",
@@ -241,7 +246,8 @@ def validate_split_disjoint(train, validation, test=None) -> dict:
 
 
 def validate_geometry_source(dataset, source: str, max_windows: int = 12,
-                             output: str | Path | None = None) -> dict:
+                             output: str | Path | None = None,
+                             require_camera_motion: bool = True) -> dict:
     if len(dataset) == 0:
         report = {"valid": False, "source": source, "reason": "no windows"}
     else:
@@ -288,9 +294,14 @@ def validate_geometry_source(dataset, source: str, max_windows: int = 12,
             "H_pose_normalized_to_first_frame": first_identity,
             "H_motion_not_identity_dominated": bool(moving.float().mean() > 0.25),
         }
+        required_hypotheses = list(hypotheses)
+        if not require_camera_motion:
+            required_hypotheses.remove("H_motion_not_identity_dominated")
         report = {
-            "valid": all(hypotheses.values()), "source": source,
+            "valid": all(hypotheses[name] for name in required_hypotheses),
+            "source": source,
             "hypotheses": hypotheses,
+            "required_hypotheses": required_hypotheses,
             "metrics": {
                 "windows_total": len(dataset), "windows_checked": len(rows),
                 "depth_valid_fraction": float(valid_fraction.mean()),

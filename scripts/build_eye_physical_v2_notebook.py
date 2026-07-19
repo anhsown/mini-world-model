@@ -158,6 +158,9 @@ datasets = make_datasets(data_args)
 validation_path = Path('/kaggle/working/dataset_validation_v2.json')
 admission = validate_datasets(datasets, validation_path)
 print(json.dumps(admission, indent=2))
+if not admission['valid']:
+    print('FAILED SOURCE HYPOTHESES:', admission.get('failures', {}))
+    print('FAILED SPLIT HYPOTHESES:', admission.get('split_failures', {}))
 assert admission['valid'], 'DATA BLOCKED: inspect failed hypothesis before training'
 """),
     md("""## Equal-initialization causal ablation
