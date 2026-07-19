@@ -146,13 +146,39 @@ class JWM(nn.Module):
 
         # Reader-v3 auxiliary heads. CTC directly supervises pixel->grapheme;
         # four learned queries emit x1,y1,x2,y2 coordinate tokens in parallel.
-        self.reader_enabled = getattr(cfg, "vision_stem", "mlp") == "local" or \
-            cfg.reader_ctc_weight > 0 or cfg.reader_box_weight > 0
+        self.reader_enabled = (cfg.reader_ctc_weight > 0 or
+                               cfg.reader_box_weight > 0 or
+                               getattr(cfg, "reader_textness_weight", 0.0) > 0)
         if self.reader_enabled:
             self.ocr_head = nn.Linear(d, cfg.vocab_size + 1)  # last id = CTC blank
             self.box_queries = nn.Parameter(torch.randn(4, d) * 0.02)
             self.box_attn = nn.MultiheadAttention(d, cfg.n_heads, batch_first=True)
             self.coord_head = nn.Linear(d, cfg.reader_coord_bins)
+            self.reader_roi = None
+            if getattr(cfg, "reader_decoder", "full_page_ctc") == "line_roi_ctc":
+                from .reader_roi import LineROIRecognizer
+                self.reader_roi = LineROIRecognizer(
+                    d=d, heads=cfg.n_heads, hidden=cfg.ffn_hidden,
+                    layers=cfg.reader_roi_layers, vocab_size=cfg.vocab_size,
+                    grid_h=cfg.img_grid_h, grid_w=cfg.img_grid_w,
+                    roi_h=cfg.reader_roi_height, roi_w=cfg.reader_roi_width,
+                )
+
+        # Eye Physical: optional compact streaming 3D context. Keeping this
+        # disabled preserves the exact graph of all legacy checkpoints.
+        self.geometry = None
+        if getattr(cfg, "geometry_enabled", False):
+            from .geometric_memory import GeometricContextMemory
+            self.geometry = GeometricContextMemory(
+                d=d, heads=cfg.n_heads,
+                hidden=cfg.geometry_ffn_hidden or cfg.ffn_hidden,
+                layers=cfg.geometry_layers,
+                grid_h=cfg.img_grid_h, grid_w=cfg.img_grid_w,
+                register_tokens=cfg.geometry_register_tokens,
+                anchor_frames=cfg.geometry_anchor_frames,
+                local_window=cfg.geometry_local_window,
+                max_trajectory_frames=cfg.geometry_max_trajectory_frames,
+            )
 
         self.apply(self._init)
         # re-zero AdaLN after generic init (zero-init is a hard requirement)
@@ -211,11 +237,48 @@ class JWM(nn.Module):
              .reshape(B, gh * gw, 3 * p * p))
         return self.patch_embed(x) + self.e_img
 
-    def _ar_coords(self, S_text_after_img: int, device) -> torch.Tensor:
+    def encode_geometry_sequence(self, images: torch.Tensor,
+                                 detach_state: bool = False) -> dict:
+        """Encode ``(B,T,3,H,W)`` into a causal, metric world representation."""
+        if self.geometry is None:
+            raise RuntimeError("geometry_enabled must be true")
+        if images.ndim != 5:
+            raise ValueError("geometry images must have shape (B,T,3,H,W)")
+        b, t = images.shape[:2]
+        visual = self._img_tokens(images.reshape(b * t, *images.shape[2:]))
+        visual = visual.reshape(b, t, visual.shape[1], visual.shape[2])
+        return self.geometry.forward_sequence(visual, detach_state=detach_state)
+
+    def loss_geometry(self, images: torch.Tensor, depth_gt: torch.Tensor,
+                      pose_gt_c2w: torch.Tensor,
+                      depth_valid: torch.Tensor | None = None):
+        """Joint depth/absolute-pose/local-relative-pose supervision."""
+        output = self.encode_geometry_sequence(images, detach_state=False)
+        loss, metrics = self.geometry.loss(
+            output, depth_gt, pose_gt_c2w, depth_valid,
+            depth_weight=self.cfg.geometry_depth_weight,
+            abs_pose_weight=self.cfg.geometry_abs_pose_weight,
+            rel_pose_weight=self.cfg.geometry_rel_pose_weight,
+            rel_translation_weight=self.cfg.geometry_rel_translation_weight,
+        )
+        metrics["loss"] = float(loss.detach())
+        return loss, metrics
+
+    def _ar_coords(self, S_text_after_img: int, device,
+                   n_img_tokens: int | None = None) -> torch.Tensor:
         """Coordinates for [BOS][IMG grid][text slots...] per DESIGN §4 table."""
         c = self.cfg
+        n_img = c.n_img_tokens if n_img_tokens is None else n_img_tokens
         parts = [torch.tensor([[0.0, 0.0, 0.0]], device=device)]              # BOS p=0
-        parts.append(grid_coords(1.0, c.img_grid_h, c.img_grid_w).to(device)) # IMG t=1
+        grid = grid_coords(1.0, c.img_grid_h, c.img_grid_w).to(device)
+        if n_img < c.n_img_tokens:
+            grid = grid[:n_img]
+        elif n_img > c.n_img_tokens:
+            # Geometry summaries are temporal context, not spatial patches.
+            extra = torch.tensor([[1.0, 0.0, 0.0]], device=device).expand(
+                n_img - c.n_img_tokens, -1)
+            grid = torch.cat((grid, extra), dim=0)
+        parts.append(grid)                                                    # IMG t=1
         p0 = 2.0
         p = torch.arange(S_text_after_img, dtype=torch.float32, device=device) + p0
         parts.append(torch.stack([p, p, p], dim=-1))
@@ -233,16 +296,18 @@ class JWM(nn.Module):
     ):
         c, dev = self.cfg, img.device
         B, Qmax = q_ids.shape
+        image_tokens = self._img_tokens(img) if img_tokens is None else img_tokens
+        n_img = image_tokens.shape[1]
         pieces = [
             self.tok_emb(torch.full((B, 1), tok.BOS, device=dev)),
-            self._img_tokens(img) if img_tokens is None else img_tokens,
+            image_tokens,
             self.tok_emb(torch.full((B, 1), tok.BOQ, device=dev)),
             self.tok_emb(q_ids.clamp(max=c.vocab_size - 1)),
             self.tok_emb(torch.full((B, 1), trigger, device=dev)),
         ]
         valid = [
             torch.ones(B, 1, dtype=torch.bool, device=dev),
-            torch.ones(B, c.n_img_tokens, dtype=torch.bool, device=dev),
+            torch.ones(B, n_img, dtype=torch.bool, device=dev),
             torch.ones(B, 1, dtype=torch.bool, device=dev),
             q_valid,
             torch.ones(B, 1, dtype=torch.bool, device=dev),
@@ -252,8 +317,8 @@ class JWM(nn.Module):
             valid.append(a_valid)
         emb = torch.cat(pieces, dim=1)
         valid = torch.cat(valid, dim=1)
-        S_text = emb.shape[1] - 1 - c.n_img_tokens
-        coords = self._ar_coords(S_text, dev).unsqueeze(0).expand(B, -1, -1)
+        S_text = emb.shape[1] - 1 - n_img
+        coords = self._ar_coords(S_text, dev, n_img).unsqueeze(0).expand(B, -1, -1)
         return emb, coords, valid
 
     def _build_ar_text(self, q_ids: torch.Tensor, q_valid: torch.Tensor, trigger: int):
@@ -426,11 +491,19 @@ class JWM(nn.Module):
             ids = a_ids[ctc_mask]
             valid = a_valid[ctc_mask] & (ids != tok.EOS) & (ids != tok.PAD)
             lengths = valid.sum(dim=1)
-            usable = (lengths > 0) & (lengths <= vis.shape[1])
+            time_steps = (self.cfg.reader_roi_width if self.reader_roi is not None
+                          else vis.shape[1])
+            usable = (lengths > 0) & (lengths <= time_steps)
             if bool(usable.any()):
                 ids, valid, lengths = ids[usable], valid[usable], lengths[usable]
                 targets = torch.cat([row[m] for row, m in zip(ids, valid)], dim=0)
-                lp = self.ocr_head(vis[ctc_mask][usable]).log_softmax(-1).transpose(0, 1)
+                selected_vis = vis[ctc_mask][usable]
+                if self.reader_roi is not None:
+                    selected_box = bbox[ctc_mask][usable]
+                    lp = self.reader_roi(selected_vis, selected_box)
+                else:
+                    lp = self.ocr_head(selected_vis)
+                lp = lp.log_softmax(-1).transpose(0, 1)
                 input_lengths = torch.full_like(lengths, lp.shape[0])
                 ctc = F.ctc_loss(lp, targets, input_lengths, lengths,
                                  blank=self.cfg.vocab_size, zero_infinity=True)
@@ -438,6 +511,19 @@ class JWM(nn.Module):
                 metrics["ctc"] = float(ctc.detach())
 
         box_mask = box_mask.bool()
+        if (self.reader_roi is not None and bool(box_mask.any()) and
+                self.cfg.reader_textness_weight > 0):
+            text_logits = self.reader_roi.textness_logits(vis[box_mask])
+            text_target = self.reader_roi.textness_targets(bbox[box_mask])
+            # Text occupies few patches; positive weighting prevents an all-
+            # background detector from appearing successful.
+            positive = text_target.sum().clamp(min=1)
+            negative = (1 - text_target).sum().clamp(min=1)
+            pos_weight = (negative / positive).clamp(1, 20)
+            textness = F.binary_cross_entropy_with_logits(
+                text_logits, text_target, pos_weight=pos_weight)
+            loss = loss + self.cfg.reader_textness_weight * textness
+            metrics["textness"] = float(textness.detach())
         if bool(box_mask.any()) and self.cfg.reader_box_weight > 0:
             logits = self._box_logits(vis[box_mask])
             target = (bbox[box_mask].clamp(0, 1) *
@@ -613,6 +699,8 @@ class JWM(nn.Module):
             return self.loss_fd(*args, **kwargs)
         if task == "t2i":
             return self.loss_t2i(*args, **kwargs)
+        if task == "geometry":
+            return self.loss_geometry(*args, **kwargs)
         raise ValueError(f"unknown JWM task: {task}")
 
     def freeze_generator_for_reader(self) -> None:
@@ -627,7 +715,12 @@ class JWM(nn.Module):
     def predict_ocr_ctc(self, img: torch.Tensor) -> list[str]:
         if not self.reader_enabled:
             raise RuntimeError("reader heads are not enabled")
-        ids = self.ocr_head(self._img_tokens(img)).argmax(-1)
+        visual = self._img_tokens(img)
+        if self.reader_roi is not None:
+            boxes = self.reader_roi.predict_boxes(visual)
+            ids = self.reader_roi(visual, boxes).argmax(-1)
+        else:
+            ids = self.ocr_head(visual).argmax(-1)
         blank = self.cfg.vocab_size
         out: list[str] = []
         for row in ids.tolist():

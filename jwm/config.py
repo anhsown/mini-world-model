@@ -54,6 +54,25 @@ class JWMConfig:
     reader_ctc_weight: float = 0.0
     reader_box_weight: float = 0.0
     reader_coord_bins: int = 1001
+    reader_decoder: str = "full_page_ctc"  # "full_page_ctc" | "line_roi_ctc"
+    reader_roi_height: int = 4
+    reader_roi_width: int = 96
+    reader_roi_layers: int = 2
+    reader_textness_weight: float = 0.0
+
+    # Geometric Context Memory (LingBot-Map-inspired Eye Physical pathway).
+    # Disabled by default so every existing checkpoint remains load-compatible.
+    geometry_enabled: bool = False
+    geometry_layers: int = 2
+    geometry_register_tokens: int = 4
+    geometry_anchor_frames: int = 2
+    geometry_local_window: int = 8
+    geometry_max_trajectory_frames: int = 512
+    geometry_ffn_hidden: int = 0            # 0 -> ffn_hidden
+    geometry_depth_weight: float = 1.0
+    geometry_abs_pose_weight: float = 1.0
+    geometry_rel_pose_weight: float = 0.5
+    geometry_rel_translation_weight: float = 1.0
 
     # Inkling-mini MoE for the REASONER tower (INKLING_MINI.md; generator stays dense)
     reasoner_moe: bool = False

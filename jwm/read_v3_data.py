@@ -113,6 +113,8 @@ def render_read_v3_sample(rng: random.Random, level: int, fonts: list[str],
     x1 = min(b[0] for b in boxes); y1 = min(b[1] for b in boxes)
     x2 = max(b[2] for b in boxes); y2 = max(b[3] for b in boxes)
     bbox = np.asarray([x1 / w, y1 / h, x2 / w, y2 / h], dtype=np.float32)
+    line_boxes = np.asarray([[b[0] / w, b[1] / h, b[2] / w, b[3] / h]
+                             for b in boxes], dtype=np.float32)
 
     degraded = cam is not None and rng.random() < degrade_prob
     if degraded:
@@ -122,7 +124,8 @@ def render_read_v3_sample(rng: random.Random, level: int, fonts: list[str],
             img = img.resize((w, h), Image.Resampling.LANCZOS)
     arr = np.asarray(img.convert("RGB"), dtype=np.uint8)
     meta = {"level": level, "font_px": font_px, "random_text": random_text,
-            "degraded": degraded, "n_lines": len(lines)}
+            "degraded": degraded, "n_lines": len(lines),
+            "lines": lines, "line_boxes": line_boxes}
     return arr, text, bbox, meta
 
 
@@ -211,6 +214,48 @@ def validate_read_v3_data(cfg: JWMConfig, fonts: list[str], corpus: list[str],
         "real_stats": rs.round(5).tolist(),
         "mean_abs_domain_gap": round(distance, 5), "leaked_images": leakage,
     }
+
+
+def validate_read_v31_lines(cfg: JWMConfig, fonts: list[str],
+                            corpus: list[str], cam: CameraParams | None,
+                            samples: int = 128, seed: int = 3131) -> dict:
+    """Admission gate for the corrective line-ROI curriculum."""
+    rng = random.Random(seed)
+    transcripts, font_sizes = [], []
+    valid_box = visible_ink = token_roundtrip = ctc_fits = 0
+    for i in range(samples):
+        arr, text, _, meta = render_read_v3_sample(
+            rng, 1 + i % 2, fonts, corpus, cfg, cam,
+            random_text=(i % 4 != 0), degrade_prob=0.65)
+        line_box = meta["line_boxes"][0]
+        h, w = arr.shape[:2]
+        x1, y1, x2, y2 = (line_box * np.asarray([w, h, w, h])).round().astype(int)
+        crop = arr[max(0, y1):min(h, y2), max(0, x1):min(w, x2)]
+        ids = tok.encode(text, mode=cfg.tokenizer_mode)
+        transcripts.append(text); font_sizes.append(meta["font_px"])
+        valid_box += int(len(meta["line_boxes"]) == 1 and
+                         np.all(line_box >= 0) and np.all(line_box <= 1) and
+                         line_box[2] > line_box[0] and line_box[3] > line_box[1])
+        visible_ink += int(crop.size > 0 and crop.std() > 8 and crop.min() < 120)
+        token_roundtrip += int(tok.decode(ids, mode=cfg.tokenizer_mode) == text)
+        # CTC needs at least target length, plus room for repeated adjacent IDs.
+        repeats = sum(a == b for a, b in zip(ids, ids[1:]))
+        ctc_fits += int(len(ids) + repeats <= cfg.reader_roi_width)
+    hypotheses = {
+        "H_line_labels_unique": len(set(transcripts)) / samples >= 0.95,
+        "H_exact_line_boxes": valid_box == samples,
+        "H_visible_ink_inside_box": visible_ink == samples,
+        "H_tokenizer_roundtrip": token_roundtrip == samples,
+        "H_ctc_time_axis_sufficient": ctc_fits == samples,
+        "H_font_size_diverse": max(font_sizes) - min(font_sizes) >= 50,
+    }
+    return {"valid": all(hypotheses.values()), "hypotheses": hypotheses,
+            "counts": {"samples": samples, "unique": len(set(transcripts))},
+            "font_px": {"min": min(font_sizes), "max": max(font_sizes)},
+            "failures": {"box": samples - valid_box,
+                         "visibility": samples - visible_ink,
+                         "roundtrip": samples - token_roundtrip,
+                         "ctc_fit": samples - ctc_fits}}
 
 
 class ReadV3Batcher:

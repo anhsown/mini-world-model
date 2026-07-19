@@ -180,6 +180,81 @@ def project_to_so3(M: torch.Tensor) -> torch.Tensor:
     return U @ S @ Vh
 
 
+def rotation_geodesic(R_pred: torch.Tensor, R_true: torch.Tensor) -> torch.Tensor:
+    """SO(3) geodesic angle in radians, stable at both 0 and pi.
+
+    ``acos((trace(R)-1)/2)`` has an infinite derivative near identity.  The
+    equivalent atan2 form uses both the symmetric and skew parts and remains
+    numerically well behaved for the small inter-frame rotations seen in
+    streaming camera trajectories.
+    """
+    rel = R_pred.transpose(-1, -2) @ R_true
+    vee = torch.stack((rel[..., 2, 1] - rel[..., 1, 2],
+                       rel[..., 0, 2] - rel[..., 2, 0],
+                       rel[..., 1, 0] - rel[..., 0, 1]), dim=-1)
+    sin_theta = 0.5 * torch.linalg.vector_norm(vee, dim=-1)
+    cos_theta = 0.5 * (torch.diagonal(rel, dim1=-2, dim2=-1).sum(-1) - 1.0)
+    return torch.atan2(sin_theta, cos_theta.clamp(-1.0, 1.0))
+
+
+def relative_pose_c2w(pose_i: torch.Tensor, pose_j: torch.Tensor) -> torch.Tensor:
+    """Relative transform from camera i to camera j for C2W input poses.
+
+    If ``X_w = R_i X_i + t_i`` and ``X_w = R_j X_j + t_j``, then
+    ``X_i = R_i^T R_j X_j + R_i^T(t_j-t_i)``.  The returned matrix therefore
+    expresses camera-j coordinates in the camera-i frame and is invariant to a
+    common world-frame rigid transform.
+    """
+    Ri, ti = pose_i[..., :3, :3], pose_i[..., :3, 3]
+    Rj, tj = pose_j[..., :3, :3], pose_j[..., :3, 3]
+    R = Ri.transpose(-1, -2) @ Rj
+    t = (Ri.transpose(-1, -2) @ (tj - ti).unsqueeze(-1)).squeeze(-1)
+    out = torch.zeros(*R.shape[:-2], 4, 4, dtype=R.dtype, device=R.device)
+    out[..., :3, :3] = R
+    out[..., :3, 3] = t
+    out[..., 3, 3] = 1.0
+    return out
+
+
+def anchor_depth_scale(depth: torch.Tensor, valid: torch.Tensor | None = None,
+                       anchor_frames: int = 2) -> torch.Tensor:
+    """Per-sample monocular scale from valid anchor-frame metric depth.
+
+    ``depth`` starts with dimensions ``(B,T,...)``.  The statistic is detached:
+    scale defines the coordinate convention and must not become a trainable
+    shortcut through the ground-truth normalization path.
+    """
+    x = depth[:, :max(1, anchor_frames)].float()
+    mask = torch.isfinite(x) & (x > 1e-6)
+    if valid is not None:
+        mask = mask & valid[:, :max(1, anchor_frames)].bool()
+    dims = tuple(range(1, x.ndim))
+    total = torch.where(mask, x, torch.zeros_like(x)).sum(dim=dims)
+    count = mask.sum(dim=dims).clamp(min=1)
+    return (total / count).clamp(min=1e-4).detach()
+
+
+def uncertainty_depth_loss(pred_depth: torch.Tensor, log_sigma: torch.Tensor,
+                           target_depth: torch.Tensor,
+                           valid: torch.Tensor | None = None) -> torch.Tensor:
+    """Masked uncertainty-weighted log-depth L1 loss.
+
+    The ``+ log_sigma`` term prevents the confidence head from reducing loss by
+    declaring every pixel uncertain.  Log depth makes the objective relative
+    rather than dominated by distant geometry.
+    """
+    mask = torch.isfinite(target_depth) & (target_depth > 1e-6)
+    if valid is not None:
+        mask = mask & valid.bool()
+    err = (pred_depth.clamp(min=1e-6).log() -
+           target_depth.clamp(min=1e-6).log()).abs()
+    ls = log_sigma.clamp(-6.0, 6.0)
+    loss = torch.exp(-ls) * err + ls
+    if not bool(mask.any()):
+        return pred_depth.sum() * 0.0
+    return loss[mask].mean()
+
+
 # ----------------------------------------------------------------------------
 # 4. bbox utilities + metrics (DESIGN §5.3, §10)
 # ----------------------------------------------------------------------------

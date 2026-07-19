@@ -29,3 +29,25 @@ gradients. End-to-end smoke passed and 51/51 Reader/math tests pass.
 Notebook: `jwm/kaggle/jwm_read_t4x2_v3.ipynb`. Expected base runtime: 7–9 hours;
 worst case with stage extensions: about 11 hours.
 
+## V3 training and benchmark verdict
+
+Kaggle stopped safely at `s0_glyph_bootstrap`, step 3,200, with
+`blocked_by_metric_gate`. The checkpoint is structurally valid and contains no
+NaN/Inf tensors, but CTC-CER was **1.000** against a promotion threshold of
+0.72.
+
+The dimension-correct **JWM-EyeRead-v3** benchmark evaluated 186 samples at
+1024×768. Exact match and containment were **0% on every tier**. AR CER was
+0.916 on L2 lines, 0.977 on L4 paragraphs, 1.037 on 40 real VietDocVQA pages,
+and 1.195 on 50 OOD MTVQA-VI samples. Direct CTC CER was 1.000 across every
+synthetic tier; text-box IoU peaked at only 0.275 on large L4 paragraphs.
+
+The blind-image control nevertheless measured a positive shuffled-minus-correct
+loss gap of **+0.554**, with correct images winning **63.2%** of batches. Thus
+the checkpoint encodes weak visual evidence, but its full-page 2D CTC head
+collapses to blank (99.73% of positions) and cannot decode that evidence. Blank
+logit calibration improved CER only to about 0.895 with 0% exact match.
+
+Decision: preserve the visual stem and reasoner as a warm start, reinitialize
+OCR/localization heads, replace full-page CTC with ROI/line-wise 1D decoding,
+and only then add geometric streaming memory for Eye Physical.

@@ -51,3 +51,33 @@ gap thống kê **0,05003**, leakage **0**.
 Notebook bàn giao: `jwm/kaggle/jwm_read_t4x2_v3.ipynb`. Thời gian dự kiến base
 7–9 giờ, worst-case khoảng 11 giờ nếu phải mở rộng stage.
 
+## 6. Kết quả train và benchmark v3
+
+Kaggle dừng an toàn tại `s0_glyph_bootstrap`, bước 3.200, với trạng thái
+`blocked_by_metric_gate`. Checkpoint hợp lệ, không có tensor NaN/Inf, nhưng không
+được promote vì CTC-CER bằng **1,000** (gate yêu cầu ≤ 0,72).
+
+Benchmark **JWM-EyeRead-v3** được chạy trên 186 mẫu đúng kích thước 1024×768:
+
+| Nhóm | n | CER | Exact | CTC-CER | Box IoU |
+|---|---:|---:|---:|---:|---:|
+| Ký tự 200 px | 12 | 1,000 | 0% | 1,000 | 0,000 |
+| Từ 120 px | 12 | 1,000 | 0% | 1,000 | 0,029 |
+| Từ 80 px | 12 | 0,951 | 0% | 1,000 | 0,014 |
+| Từ 48 px | 12 | 1,033 | 0% | 1,000 | 0,000 |
+| Từ 28 px | 12 | 0,979 | 0% | 1,000 | 0,000 |
+| Dòng L2 | 12 | 0,916 | 0% | 1,000 | 0,081 |
+| Đoạn L4 | 12 | 0,977 | 0% | 1,000 | 0,275 |
+| Từ 80 px degraded | 12 | 1,000 | 0% | 1,000 | 0,005 |
+| VietDocVQA thật | 40 | 1,037 | 0% | — | — |
+| MTVQA-VI OOD | 50 | 1,195 | 0% | — | — |
+
+Containment cũng bằng **0%** trên toàn bộ tier. Blind-image control cho loss gap
+`shuffled − correct = +0,554` và ảnh đúng thắng **63,2%** số batch: model đã mã
+hóa một phần tín hiệu thị giác, nhưng CTC bị blank collapse 99,73% và decoder
+không chuyển tín hiệu đó thành văn bản. Thử trừ blank logit chỉ hạ CER tốt nhất
+đến khoảng **0,895**, exact vẫn 0%; vì vậy không resume cùng kiến trúc/loss.
+
+Quyết định: giữ checkpoint làm warm-start cho vision stem và reasoner; khởi tạo
+lại OCR/localization heads, chuyển CTC từ toàn trang 2D sang ROI/line sequence
+1D, rồi mới bắt đầu Eye Physical với geometric streaming memory.

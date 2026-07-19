@@ -77,6 +77,50 @@ def reader_scale_v3() -> JWMConfig:
     )
 
 
+def eye_physical_scale() -> JWMConfig:
+    """Day-5 streaming physical eye for T4x2 training and local deployment.
+
+    The camera may capture/display at 30 FPS, while geometry keyframes are
+    selected adaptively. A 256px, 16x16 visual grid supplies dense local cues;
+    GCM retains two full anchors, eight recent frames and compact trajectory
+    summaries without making memory grow by a full image per frame.
+    """
+    return JWMConfig(
+        d_model=384, n_layers=8, n_heads=12, ffn_hidden=1024,
+        # Match jwm_v4's MoE shapes so its semantic reasoner can warm-start
+        # this branch; only the new eye/geometry modules begin from scratch.
+        reasoner_moe=True, moe_experts=32, moe_topk=4, moe_shared=1,
+        image_size=256, patch=16, patch_merge=1,
+        vision_stem="local", vision_local_layers=2,
+        vision_local_heads=8, vision_window=4,
+        vision_grad_checkpoint=True,
+        max_q_bytes=96, max_a_bytes=128,
+        geometry_enabled=True, geometry_layers=2,
+        geometry_register_tokens=4, geometry_anchor_frames=2,
+        geometry_local_window=8, geometry_max_trajectory_frames=256,
+        geometry_depth_weight=1.0, geometry_abs_pose_weight=1.0,
+        geometry_rel_pose_weight=0.5,
+    )
+
+
+def reader_scale_v31() -> JWMConfig:
+    """Corrective Reader warm-start: line ROI before 1D CTC decoding.
+
+    It retains v3's visual stem/reasoner shape so those weights can be reused,
+    while OCR/localization heads are newly initialized. Full-page flattened CTC
+    is intentionally disabled.
+    """
+    cfg = reader_scale_v3()
+    cfg.reader_decoder = "line_roi_ctc"
+    cfg.reader_roi_height = 4
+    cfg.reader_roi_width = 128
+    cfg.reader_roi_layers = 2
+    cfg.reader_textness_weight = 0.35
+    cfg.reader_ctc_weight = 1.0
+    cfg.reader_box_weight = 0.20
+    return cfg
+
+
 def pipeline_scale() -> JWMConfig:
     """ACTIVE scale for the staged pipeline.
 

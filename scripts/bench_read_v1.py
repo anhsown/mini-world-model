@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import io
 import json
+import os
 import random
 import statistics
 import sys
@@ -36,9 +37,16 @@ from jwm.read_data import (READ_QUESTIONS, find_fonts, letterbox,
                            load_doc_pairs, render_read_sample)
 from jwm.sdg import CameraParams, camera_degrade
 
-CKPT = ROOT / "jwm_read_v1.pt"
-VDOC = Path(r"C:\Users\ASUS\hf_datasets\viet_doc_reasoning")
-OUT_JSON = ROOT / "data" / "bench_read_v1.json"
+import argparse
+
+_ap = argparse.ArgumentParser()
+_ap.add_argument("--ckpt", default=str(ROOT / "jwm_read_v1.pt"))
+_ap.add_argument("--tag", default="v1")
+_ARGS, _ = _ap.parse_known_args()
+
+CKPT = Path(_ARGS.ckpt)
+VDOC = Path(os.environ.get("JWM_VDOC", ROOT / "data" / "viet_doc_reasoning"))
+OUT_JSON = ROOT / "data" / f"bench_read_{_ARGS.tag}.json"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 SIZE = 768
 BATCH = 8
