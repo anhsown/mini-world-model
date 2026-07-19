@@ -168,8 +168,7 @@ class JWM(nn.Module):
         # disabled preserves the exact graph of all legacy checkpoints.
         self.geometry = None
         if getattr(cfg, "geometry_enabled", False):
-            from .geometric_memory import GeometricContextMemory
-            self.geometry = GeometricContextMemory(
+            geometry_kwargs = dict(
                 d=d, heads=cfg.n_heads,
                 hidden=cfg.geometry_ffn_hidden or cfg.ffn_hidden,
                 layers=cfg.geometry_layers,
@@ -177,8 +176,16 @@ class JWM(nn.Module):
                 register_tokens=cfg.geometry_register_tokens,
                 anchor_frames=cfg.geometry_anchor_frames,
                 local_window=cfg.geometry_local_window,
-                max_trajectory_frames=cfg.geometry_max_trajectory_frames,
-            )
+                max_trajectory_frames=cfg.geometry_max_trajectory_frames)
+            if getattr(cfg, "geometry_version", "v1") == "v2_pairwise":
+                from .geometric_memory_v2 import PairwiseGeometricContextMemory
+                self.geometry = PairwiseGeometricContextMemory(
+                    **geometry_kwargs,
+                    motion_radius=cfg.geometry_motion_radius,
+                    min_valid_fraction=cfg.geometry_min_valid_fraction)
+            else:
+                from .geometric_memory import GeometricContextMemory
+                self.geometry = GeometricContextMemory(**geometry_kwargs)
 
         self.apply(self._init)
         # re-zero AdaLN after generic init (zero-init is a hard requirement)
@@ -251,16 +258,35 @@ class JWM(nn.Module):
 
     def loss_geometry(self, images: torch.Tensor, depth_gt: torch.Tensor,
                       pose_gt_c2w: torch.Tensor,
-                      depth_valid: torch.Tensor | None = None):
+                      depth_valid: torch.Tensor | None = None,
+                      dynamic_gt: torch.Tensor | None = None,
+                      negative_images: torch.Tensor | None = None):
         """Joint depth/absolute-pose/local-relative-pose supervision."""
         output = self.encode_geometry_sequence(images, detach_state=False)
-        loss, metrics = self.geometry.loss(
-            output, depth_gt, pose_gt_c2w, depth_valid,
-            depth_weight=self.cfg.geometry_depth_weight,
-            abs_pose_weight=self.cfg.geometry_abs_pose_weight,
-            rel_pose_weight=self.cfg.geometry_rel_pose_weight,
-            rel_translation_weight=self.cfg.geometry_rel_translation_weight,
-        )
+        if getattr(self.cfg, "geometry_version", "v1") == "v2_pairwise":
+            negative_output = (self.encode_geometry_sequence(
+                negative_images, detach_state=False)
+                if negative_images is not None else None)
+            loss, metrics = self.geometry.loss(
+                output, depth_gt, pose_gt_c2w, depth_valid,
+                depth_weight=self.cfg.geometry_depth_weight,
+                metric_depth_weight=self.cfg.geometry_metric_depth_weight,
+                abs_pose_weight=self.cfg.geometry_abs_pose_weight,
+                rel_pose_weight=self.cfg.geometry_rel_pose_weight,
+                rel_translation_weight=self.cfg.geometry_rel_translation_weight,
+                cycle_weight=self.cfg.geometry_cycle_weight,
+                dynamic_gt=dynamic_gt,
+                dynamic_weight=self.cfg.geometry_dynamic_weight,
+                negative_output=negative_output,
+                counterfactual_weight=self.cfg.geometry_counterfactual_weight,
+                counterfactual_margin=self.cfg.geometry_counterfactual_margin)
+        else:
+            loss, metrics = self.geometry.loss(
+                output, depth_gt, pose_gt_c2w, depth_valid,
+                depth_weight=self.cfg.geometry_depth_weight,
+                abs_pose_weight=self.cfg.geometry_abs_pose_weight,
+                rel_pose_weight=self.cfg.geometry_rel_pose_weight,
+                rel_translation_weight=self.cfg.geometry_rel_translation_weight)
         metrics["loss"] = float(loss.detach())
         return loss, metrics
 

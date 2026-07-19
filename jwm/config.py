@@ -73,6 +73,17 @@ class JWMConfig:
     geometry_abs_pose_weight: float = 1.0
     geometry_rel_pose_weight: float = 0.5
     geometry_rel_translation_weight: float = 1.0
+    # Eye Physical v2. ``v1`` preserves every existing checkpoint exactly;
+    # ``v2_pairwise`` makes ego-pose causal on visual frame pairs and predicts
+    # metric depth without target-derived scale at inference.
+    geometry_version: str = "v1"
+    geometry_motion_radius: int = 2
+    geometry_metric_depth_weight: float = 0.0
+    geometry_cycle_weight: float = 0.0
+    geometry_dynamic_weight: float = 0.0
+    geometry_counterfactual_weight: float = 0.0
+    geometry_counterfactual_margin: float = 0.20
+    geometry_min_valid_fraction: float = 0.20
 
     # Inkling-mini MoE for the REASONER tower (INKLING_MINI.md; generator stays dense)
     reasoner_moe: bool = False

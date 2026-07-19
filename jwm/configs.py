@@ -103,6 +103,50 @@ def eye_physical_scale() -> JWMConfig:
     )
 
 
+def eye_physical_v2_scale() -> JWMConfig:
+    """Pairwise metric Eye v2; semantic MoE/Generator remain frozen.
+
+    The visual token and semantic dimensions remain compatible with JWM v4,
+    while all geometry-v2 parameters are new.  Relative pose is inferred from
+    frame-pair evidence and integrated from an identity first-camera frame.
+    """
+    return JWMConfig(
+        d_model=384, n_layers=8, n_heads=12, ffn_hidden=1024,
+        reasoner_moe=True, moe_experts=32, moe_topk=4, moe_shared=1,
+        image_size=256, patch=16, patch_merge=1,
+        vision_stem="local", vision_local_layers=2,
+        vision_local_heads=8, vision_window=4,
+        vision_grad_checkpoint=True,
+        max_q_bytes=96, max_a_bytes=128,
+        geometry_enabled=True, geometry_version="v2_pairwise",
+        geometry_layers=2, geometry_register_tokens=4,
+        geometry_anchor_frames=2, geometry_local_window=8,
+        geometry_max_trajectory_frames=256,
+        geometry_motion_radius=2,
+        geometry_depth_weight=0.5,
+        geometry_metric_depth_weight=1.0,
+        geometry_abs_pose_weight=0.25,
+        geometry_rel_pose_weight=1.0,
+        geometry_cycle_weight=0.25,
+        geometry_dynamic_weight=0.20,
+        geometry_counterfactual_weight=0.25,
+        geometry_counterfactual_margin=0.20,
+        geometry_min_valid_fraction=0.20,
+    )
+
+
+def eye_physical_v2_ablation(arm: str) -> JWMConfig:
+    """Controlled v2 arms; each arm adds exactly one mechanism."""
+    arm = arm.upper()
+    if arm not in {"A", "B", "C", "D"}:
+        raise ValueError("Eye v2 ablation arm must be A, B, C or D")
+    cfg = eye_physical_v2_scale()
+    cfg.geometry_cycle_weight = 0.25 if arm in {"B", "C", "D"} else 0.0
+    cfg.geometry_dynamic_weight = 0.20 if arm in {"C", "D"} else 0.0
+    cfg.geometry_counterfactual_weight = 0.25 if arm == "D" else 0.0
+    return cfg
+
+
 def reader_scale_v31() -> JWMConfig:
     """Corrective Reader warm-start: line ROI before 1D CTC decoding.
 
