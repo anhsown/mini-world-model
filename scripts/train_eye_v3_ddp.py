@@ -62,6 +62,15 @@ STAGES = (
 CHECKPOINT_VERSION = "jwm-eye-v3.1-ctpg"
 
 
+def apply_distributed_lr_decision(action, controller, lr_factor, *, controller_owner):
+    """Apply a broadcast LR action without mutating controller replicas."""
+    if action != BudgetAction.REDUCE_LR:
+        return lr_factor
+    if controller_owner:
+        controller.acknowledge_lr_decay()
+    return lr_factor * .5
+
+
 class ProceduralV3Dataset(Dataset):
     OFFSETS = {"train": 10_000_000, "validation": 20_000_000, "test": 30_000_000}
     def __init__(self, split: str, samples: int = 64, frames: int = 6, size: int = 256):
@@ -377,7 +386,9 @@ def main():
                     payload = [decision]
                     dist.broadcast_object_list(payload, src=0); decision = payload[0]
                 if decision.action == BudgetAction.REDUCE_LR:
-                    controller.acknowledge_lr_decay(); lr_factor *= .5
+                    lr_factor = apply_distributed_lr_decision(
+                        decision.action, controller, lr_factor,
+                        controller_owner=(rank == 0))
                 elif decision.action in (BudgetAction.ADVANCE_STAGE,
                                           BudgetAction.STOP_CONVERGED):
                     break

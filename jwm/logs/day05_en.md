@@ -126,3 +126,10 @@ hard-motion sampling, and wrong-window ranking objectives.
 - A 100-step exact-seed local canary passed at roughly `0.93–0.95` valid tracks
   with no NaN/Inf; all `127/127` repository tests pass.
 - New notebook: `jwm/kaggle/jwm_eye_physical_v31_t4x2_day05.ipynb`.
+
+## Eye v3.1 — DDP adaptive-LR hotfix
+
+- The Kaggle run stopped at stage 1 step 2400 because rank 1 called
+  `acknowledge_lr_decay()` without owning controller observations. The hotfix
+  limits controller mutation to rank 0 while applying the same LR factor on
+  both GPUs, allowing the run to resume from `resume.pt`.

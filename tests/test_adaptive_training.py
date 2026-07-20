@@ -6,6 +6,7 @@ from jwm.adaptive_training import (
     BudgetConfig,
     MetricSpec,
 )
+from scripts.train_eye_v3_ddp import apply_distributed_lr_decision
 
 
 def _controller(*, final=False, max_lr_decays=1):
@@ -78,3 +79,17 @@ def test_state_round_trip_preserves_patience_and_best_checkpoint():
     assert restored.state_dict() == controller.state_dict()
     assert restored.decide() == controller.decide()
 
+
+def test_ddp_lr_decay_mutates_only_owner_but_scales_every_rank():
+    owner = _controller()
+    _observe(owner, 200, 1.05, 1.05)
+    worker = _controller()  # Rank 1 intentionally has no observations.
+
+    owner_factor = apply_distributed_lr_decision(
+        BudgetAction.REDUCE_LR, owner, 1.0, controller_owner=True)
+    worker_factor = apply_distributed_lr_decision(
+        BudgetAction.REDUCE_LR, worker, 1.0, controller_owner=False)
+
+    assert owner_factor == worker_factor == 0.5
+    assert owner.lr_decays == 1
+    assert worker.lr_decays == 0

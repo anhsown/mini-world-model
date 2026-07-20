@@ -129,3 +129,10 @@ direction, hard camera motion và wrong-window ranking trước khi train lại.
 - Local exact-seed canary 100 bước pass: valid-track khoảng `0.93–0.95`, không có
   NaN/Inf; toàn bộ `127/127` tests pass.
 - Notebook mới: `jwm/kaggle/jwm_eye_physical_v31_t4x2_day05.ipynb`.
+
+## Eye v3.1 — DDP adaptive-LR hotfix
+
+- Run Kaggle dừng ở stage 1 step 2400 vì rank 1 gọi
+  `acknowledge_lr_decay()` dù chỉ rank 0 có observation. Hotfix giới hạn mutation
+  controller ở rank 0, nhưng vẫn áp dụng cùng LR factor trên cả hai GPU; run có
+  thể resume từ `resume.pt` mà không train lại từ đầu.
