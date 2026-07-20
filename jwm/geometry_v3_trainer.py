@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+from collections import defaultdict
 from typing import Iterable
 
 import torch
@@ -11,6 +12,7 @@ import torch.nn.functional as F
 from .geometry_math_v3 import bilinear_sample, camera_transform
 from .geometry_v3_data import make_counterfactuals
 from .mathx import rotation_geodesic
+from .training_metrics_v2 import expected_calibration_error, harmonic_score
 
 
 # These branches have no target in isolated physical-eye training.  They are
@@ -58,11 +60,20 @@ def depth_metrics(prediction: torch.Tensor, target: torch.Tensor,
     mask = valid & torch.isfinite(prediction) & torch.isfinite(target) & (target > 0)
     pred, truth = prediction[mask].clamp_min(1e-4), target[mask].clamp_min(1e-4)
     if not pred.numel():
-        return {"depth_abs_rel": math.inf, "depth_rmse": math.inf, "depth_delta1": 0.0}
+        return {"depth_abs_rel": math.inf, "depth_rmse": math.inf,
+                "depth_log_rmse": math.inf, "depth_silog": math.inf,
+                "depth_delta1": 0.0, "depth_delta2": 0.0, "depth_delta3": 0.0}
     ratio = torch.maximum(pred / truth, truth / pred)
+    log_delta = pred.log() - truth.log()
+    silog = torch.sqrt((log_delta.square().mean() - .5 * log_delta.mean().square())
+                       .clamp_min(0))
     return {"depth_abs_rel": float(((pred - truth).abs() / truth).mean()),
             "depth_rmse": float(torch.sqrt((pred - truth).square().mean())),
-            "depth_delta1": float((ratio < 1.25).float().mean())}
+            "depth_log_rmse": float(torch.sqrt(log_delta.square().mean())),
+            "depth_silog": float(silog),
+            "depth_delta1": float((ratio < 1.25).float().mean()),
+            "depth_delta2": float((ratio < 1.25 ** 2).float().mean()),
+            "depth_delta3": float((ratio < 1.25 ** 3).float().mean())}
 
 
 def pose_metrics(prediction: torch.Tensor, target: torch.Tensor) -> dict[str, float]:
@@ -76,7 +87,11 @@ def pose_metrics(prediction: torch.Tensor, target: torch.Tensor) -> dict[str, fl
     pred_rel, gt_rel = torch.stack(pred_rel, 1), torch.stack(gt_rel, 1)
     rpe_t = torch.linalg.vector_norm(pred_rel[..., :3, 3] - gt_rel[..., :3, 3], dim=-1)
     rpe_r = rotation_geodesic(pred_rel[..., :3, :3], gt_rel[..., :3, :3])
+    absolute_rotation = rotation_geodesic(prediction[..., :3, :3],
+                                          target[..., :3, :3])
     return {"ate_metric": float(torch.sqrt(translation.square().mean())),
+            "ate_median": float(translation.median()),
+            "ate_rotation_deg": float(absolute_rotation.mean() * 180 / math.pi),
             "rpe_translation": float(rpe_t.mean()),
             "rpe_rotation_deg": float(rpe_r.mean() * 180 / math.pi)}
 
@@ -90,7 +105,8 @@ def track_metrics(output: dict, batch: dict) -> dict[str, float]:
                          (h4, w4), mode="bilinear", align_corners=False)
     flow[:, 0] *= w4 / width; flow[:, 1] *= h4 / height
     flow = flow.reshape(b, pairs, 2, h4, w4)
-    errors, confidences, valid_count, total_count = [], [], 0, 0
+    errors, confidences, dynamic_pred, dynamic_true = [], [], [], []
+    valid_count, total_count = 0, 0
     for index in range(pairs):
         points = output["track_source"][:, index]
         target = points + bilinear_sample(flow[:, index], points)
@@ -101,12 +117,47 @@ def track_metrics(output: dict, batch: dict) -> dict[str, float]:
         valid_count += int(mask.sum()); total_count += mask.numel()
         if bool(mask.any()):
             errors.append(epe[mask]); confidences.append(output["track_confidence"][:, index][mask])
+            if "dynamic_mask" in batch:
+                dyn = F.interpolate(batch["dynamic_mask"][:, index:index + 1].float(),
+                                    (h4, w4), mode="nearest")
+                dynamic_true.append(bilinear_sample(dyn, points).squeeze(-1)[mask])
+                dynamic_pred.append(output["dynamic_probability"][:, index][mask])
     if not errors:
         return {"track_epe": 1e3, "track_confidence": 0.0,
-                "track_valid_fraction": 0.0}
-    return {"track_epe": float(torch.cat(errors).mean()),
-            "track_confidence": float(torch.cat(confidences).mean()),
-            "track_valid_fraction": valid_count / max(total_count, 1)}
+                "track_valid_fraction": 0.0, "track_pck1": 0.0,
+                "track_pck3": 0.0, "track_outlier_rate": 1.0,
+                "track_ece": 1.0, "track_brier": 1.0,
+                "dynamic_precision": 0.0, "dynamic_recall": 0.0,
+                "dynamic_f1": 0.0, "dynamic_iou": 0.0}
+    error, confidence = torch.cat(errors), torch.cat(confidences)
+    correct = (error < 3.0).float()
+    result = {"track_epe": float(error.mean()),
+              "track_epe_median": float(error.median()),
+              "track_epe_p90": float(torch.quantile(error, .9)),
+              "track_confidence": float(confidence.mean()),
+              "track_valid_fraction": valid_count / max(total_count, 1),
+              "track_pck1": float((error < 1.0).float().mean()),
+              "track_pck3": float(correct.mean()),
+              "track_outlier_rate": float((error > 5.0).float().mean()),
+              "track_ece": expected_calibration_error(confidence.tolist(),
+                                                       correct.tolist()),
+              "track_brier": float((confidence - correct).square().mean())}
+    if dynamic_true:
+        truth = torch.cat(dynamic_true) > .5
+        pred = torch.cat(dynamic_pred) > .5
+        tp = (pred & truth).sum().float(); fp = (pred & ~truth).sum().float()
+        fn = (~pred & truth).sum().float()
+        precision = tp / (tp + fp).clamp_min(1)
+        recall = tp / (tp + fn).clamp_min(1)
+        result.update({"dynamic_precision": float(precision),
+                       "dynamic_recall": float(recall),
+                       "dynamic_f1": float(2 * precision * recall /
+                                           (precision + recall).clamp_min(1e-8)),
+                       "dynamic_iou": float(tp / (tp + fp + fn).clamp_min(1))})
+    else:
+        result.update({"dynamic_precision": 0.0, "dynamic_recall": 0.0,
+                       "dynamic_f1": 0.0, "dynamic_iou": 0.0})
+    return result
 
 
 @torch.no_grad()
@@ -135,12 +186,18 @@ def evaluate_geometry_v3_controls(model, batches: Iterable[dict],
                                   depth_prior_m: float) -> dict:
     """Evaluate fixed OOD windows plus black/frozen/reverse/wrong-window/K."""
     model.eval()
-    keys = ("depth_abs_rel", "depth_rmse", "depth_delta1", "ate_metric",
-            "rpe_translation", "rpe_rotation_deg", "track_epe",
-            "track_confidence", "track_valid_fraction", "ba_residual_reduction")
+    keys = ("depth_abs_rel", "depth_rmse", "depth_log_rmse", "depth_silog",
+            "depth_delta1", "depth_delta2", "depth_delta3", "ate_metric",
+            "ate_median", "ate_rotation_deg", "rpe_translation",
+            "rpe_rotation_deg", "track_epe", "track_epe_median",
+            "track_epe_p90", "track_confidence", "track_valid_fraction",
+            "track_pck1", "track_pck3", "track_outlier_rate", "track_ece",
+            "track_brier", "dynamic_precision", "dynamic_recall", "dynamic_f1",
+            "dynamic_iou", "ba_residual_reduction")
     accum = {name: {key: [] for key in keys}
              for name in ("normal", "black", "frozen", "reverse",
                           "wrong_window", "wrong_intrinsics")}
+    source_accum = defaultdict(lambda: {key: [] for key in keys})
     baseline_absrel, identity_ate = [], []
     windows = 0
     for raw in batches:
@@ -160,6 +217,10 @@ def evaluate_geometry_v3_controls(model, batches: Iterable[dict],
             _, metrics = _infer(model, batch, image, k)
             for key in keys:
                 accum[name][key].append(metrics[key])
+                if name == "normal":
+                    labels = batch.get("source", ["unknown"])
+                    source = str(labels[0] if isinstance(labels, (list, tuple)) else labels)
+                    source_accum[source][key].append(metrics[key])
         prior = torch.full_like(batch["depth"], depth_prior_m)
         baseline_absrel.append(depth_metrics(prior, batch["depth"],
                                              batch["depth_valid"])["depth_abs_rel"])
@@ -169,6 +230,11 @@ def evaluate_geometry_v3_controls(model, batches: Iterable[dict],
     controls = {name: {key: sum(values) / len(values) if values else math.inf
                        for key, values in metrics.items()}
                 for name, metrics in accum.items()}
+    per_source = {
+        source: {key: sum(values) / len(values) if values else math.inf
+                 for key, values in metrics.items()}
+        for source, metrics in source_accum.items()
+    }
     normal = controls["normal"]
     depth_baseline = sum(baseline_absrel) / max(len(baseline_absrel), 1)
     pose_baseline = sum(identity_ate) / max(len(identity_ate), 1)
@@ -200,10 +266,45 @@ def evaluate_geometry_v3_controls(model, batches: Iterable[dict],
         "G_reverse_time_detected": ratios["reverse_time_rpe_ratio"] >= 1.10,
         "G_wrong_intrinsics_detected": ratios["wrong_intrinsics_pose_ratio"] >= 1.15,
     }
+    gate_pass_rate = sum(gates.values()) / len(gates)
+    # Bounded [0,1] checkpoint score. A harmonic mean makes a collapsed
+    # capability dominate instead of being hidden by strong depth alone.
+    probe_capability_score = harmonic_score((
+        math.exp(-normal["depth_abs_rel"]),
+        math.exp(-normal["ate_metric"] / .25),
+        math.exp(-normal["track_epe_p90"] / 3.0),
+        1.0 - min(1.0, normal["track_ece"]),
+    ))
+    capability_score = harmonic_score((
+        probe_capability_score,
+        max(0.0, min(1.0, normal["ba_residual_reduction"])),
+        gate_pass_rate,
+    ))
+    def source_score(row: dict) -> float:
+        return harmonic_score((math.exp(-row["depth_abs_rel"]),
+                               math.exp(-row["ate_metric"] / .25),
+                               math.exp(-row["track_epe_p90"] / 3.0),
+                               1.0 - min(1.0, row["track_ece"])))
+    source_scores = {source: source_score(row) for source, row in per_source.items()}
+    worst_source_score = min(source_scores.values(), default=0.0)
+    synthetic_scores = [score for source, score in source_scores.items()
+                        if "synthetic" in source or "procedural" in source]
+    real_scores = [score for source, score in source_scores.items()
+                   if "synthetic" not in source and "procedural" not in source]
+    sim_to_real_gap = (abs(sum(synthetic_scores) / len(synthetic_scores) -
+                           sum(real_scores) / len(real_scores))
+                       if synthetic_scores and real_scores else math.nan)
     return {"valid": all(gates.values()), "windows": windows,
             "controls": controls, "baselines": {
                 "fixed_depth_abs_rel": depth_baseline, "identity_ate": pose_baseline},
-            "ratios": ratios, "gates": gates}
+            "ratios": ratios, "gates": gates, "per_source": per_source,
+            "summary": {"capability_score": capability_score,
+                        "probe_capability_score": probe_capability_score,
+                        "causal_gate_pass_rate": gate_pass_rate,
+                        "worst_source_score": worst_source_score,
+                        "source_scores": source_scores,
+                        "sim_to_real_gap": sim_to_real_gap,
+                        "promotion_rule": "all causal gates AND no metric regression"}}
 
 
 def controller_metrics(report: dict) -> dict[str, float]:

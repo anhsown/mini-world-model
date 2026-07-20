@@ -28,7 +28,9 @@ TUM_INTRINSICS = {
     "freiburg1": (517.3, 516.5, 318.6, 255.3),
     "freiburg2": (520.9, 521.0, 325.1, 249.7),
     "freiburg3": (535.4, 539.2, 320.1, 247.6),
-    "bonn": (525.0, 525.0, 319.5, 239.5),
+    # Official Bonn Dynamic RGB camera calibration. Depth is already
+    # registered to RGB, so the generic ROS-default 525 focal length is wrong.
+    "bonn": (542.822841, 542.576870, 315.593520, 237.756098),
 }
 
 

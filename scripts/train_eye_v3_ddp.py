@@ -46,6 +46,9 @@ from jwm.geometry_v3_trainer import (
     missing_trainable_gradients, move_geometry_batch,
     set_eye_v3_physical_trainable,
 )
+from jwm.anchor_discovery import discover_registered_rgbd
+from jwm.real_anchored_sdg import RealAnchorProfile, RealAnchoredSyntheticGeometry
+from jwm.training_metrics_v2 import metric_catalog
 
 
 STAGES = (
@@ -99,6 +102,13 @@ def arguments():
     p.add_argument("--seed", type=int, default=20260723)
     p.add_argument("--quick", action="store_true")
     p.add_argument("--allow-partial-data", action="store_true")
+    p.add_argument("--anchor-root", type=Path,
+                   default=Path("data/real_anchor_v1/raw"))
+    p.add_argument("--dataset-registry", type=Path,
+                   default=Path("configs/datasets/real_anchor_v1.json"))
+    p.add_argument("--synthetic-profile", type=Path,
+                   default=Path("data/real_anchor_v1/derived/eye_real_anchor_profile_v1.json"))
+    p.add_argument("--synthetic-train-samples", type=int, default=250_000)
     return p.parse_args()
 
 
@@ -123,13 +133,24 @@ def atomic_save(payload: dict, path: Path):
 
 
 def make_datasets(args) -> dict[str, dict[str, Dataset]]:
-    result = {split: {"procedural": ProceduralV3Dataset(split)}
-              for split in ("train", "validation", "test")}
+    if args.synthetic_profile.exists():
+        profile = RealAnchorProfile.from_json(args.synthetic_profile)
+        counts = {"train": args.synthetic_train_samples,
+                  "validation": min(2_000, args.synthetic_train_samples),
+                  "test": min(2_000, args.synthetic_train_samples)}
+        result = {split: {"procedural": RealAnchoredSyntheticGeometry(
+                    split, counts[split], profile, frames=6, size=256)}
+                  for split in ("train", "validation", "test")}
+    else:
+        result = {split: {"procedural": ProceduralV3Dataset(split)}
+                  for split in ("train", "validation", "test")}
+    discovered = discover_registered_rgbd(args.anchor_root, args.dataset_registry)
     mapping = {"train": "train", "validation": "val", "test": "test"}
     for split, flag in mapping.items():
-        tartan = getattr(args, f"tartan_{flag}")
-        tum = getattr(args, f"tum_{flag}")
-        bonn = getattr(args, f"bonn_{flag}")
+        tartan = sorted(set(getattr(args, f"tartan_{flag}") +
+                            discovered[split]["tartan"]))
+        tum = sorted(set(getattr(args, f"tum_{flag}") + discovered[split]["tum"]))
+        bonn = sorted(set(getattr(args, f"bonn_{flag}") + discovered[split]["bonn"]))
         if tartan:
             base = TartanAirWindowDataset(tartan, frames=6, frame_stride=2,
                                            window_stride=12, height=256, width=256)
@@ -175,9 +196,12 @@ class V3Sampler:
 
 def fixed_eval_batches(sources: dict[str, Dataset], per_source: int = 3) -> list[dict]:
     batches = []
-    for dataset in sources.values():
-        count = min(per_source, len(dataset))
-        for i in range(count):
+    datasets = [dataset for dataset in sources.values() if len(dataset)]
+    for i in range(per_source):
+        for dataset in datasets:
+            count = min(per_source, len(dataset))
+            if i >= count:
+                continue
             index = min(len(dataset) - 1, math.floor(i * len(dataset) / max(count, 1)))
             batches.append(stack_geometry_v3_rows([dataset[index]]))
     return batches
@@ -220,6 +244,9 @@ def main():
     random.seed(args.seed + rank); torch.manual_seed(args.seed + rank)
     output = Path(args.output)
     if rank == 0: output.mkdir(parents=True, exist_ok=True)
+    if rank == 0:
+        (output / "metric_catalog_v2.json").write_text(
+            json.dumps(metric_catalog(), indent=2), encoding="utf-8")
 
     probe = json.loads(Path(args.probe_report).read_text(encoding="utf-8"))
     if not probe.get("valid"):
@@ -335,20 +362,23 @@ def main():
                 parameter.grad is None or bool(torch.isfinite(parameter.grad).all())
                 for parameter in trainable)
             healthy = torch.tensor(int(local_healthy), device=device)
-            if world > 1: dist.all_reduce(healthy, op=dist.ReduceOp.MIN)
+            if world > 1:
+                dist.all_reduce(healthy, op=dist.ReduceOp.MIN)
             if not bool(healthy):
                 optimizer.zero_grad(set_to_none=True)
-                nonfinite_skips += 1; nonfinite_streak += 1; lr_factor *= .5
+                nonfinite_skips += 1; nonfinite_streak += 1
+                lr_factor *= .5
                 scaler.update(new_scale=max(float(scaler.get_scale()) / 2, 1.0))
                 if rank == 0:
                     print(f"SKIP non-finite step: streak={nonfinite_streak} "
-                          f"total={nonfinite_skips} next_lr_factor={lr_factor:.4f}", flush=True)
+                          f"total={nonfinite_skips} next_lr_factor={lr_factor:.4f}",
+                          flush=True)
                 if nonfinite_streak >= 3:
                     pipeline_blocked = True
                     break
                 continue
-            gradient = torch.nn.utils.clip_grad_norm_(trainable, 1.0,
-                                                       error_if_nonfinite=True)
+            gradient = torch.nn.utils.clip_grad_norm_(
+                trainable, 1.0, error_if_nonfinite=True)
             scaler.step(optimizer); scaler.update()
             nonfinite_streak = 0
             stage_step += 1; global_step += 1
@@ -362,6 +392,9 @@ def main():
                       f"rot={accumulated['geometry_rotation']:.4f} "
                       f"trans={accumulated['geometry_translation']:.4f} "
                       f"ba={accumulated['geometry_ba_reduction']:.3f} "
+                      f"rigid={accumulated['geometry_rigid_epe']:.3f} "
+                      f"dyn={accumulated['geometry_dynamic_bce']:.3f} "
+                      f"cf={accumulated['geometry_calibration_contrast']:.3f} "
                       f"grad={float(gradient):.3f} lr={current_lr:.2e} "
                       f"{rate:.2f} opt-step/s", flush=True)
 

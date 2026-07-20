@@ -83,6 +83,8 @@ def eval_read_v3(model, descriptors: list[dict], cfg, device,
                 "exact": float(_norm(pred[i]) == _norm(ref)),
                 "teacher_tok_acc": float(teacher["qa_tok_acc"]),
             }
+            similarity = max(0.0, 1.0 - rec["cer"])
+            rec["anls"] = similarity if similarity >= 0.5 else 0.0
             if i in synth_pos:
                 j = synth_pos[i]
                 rec["ctc_prediction"] = ctc_pred[j]
@@ -93,7 +95,7 @@ def eval_read_v3(model, descriptors: list[dict], cfg, device,
 
     def aggregate(group):
         out = {"n": len(group)}
-        for key in ("cer", "exact", "ctc_cer", "box_iou"):
+        for key in ("cer", "anls", "exact", "ctc_cer", "box_iou"):
             vals = [r[key] for r in group if key in r and np.isfinite(r[key])]
             if vals:
                 out[key] = float(np.mean(vals))
@@ -103,11 +105,17 @@ def eval_read_v3(model, descriptors: list[dict], cfg, device,
                for k in sorted({r["kind"] for r in records})}
     synthetic = [r for r in records if r["kind"].startswith("rand")]
     documents = [r for r in records if r["kind"] == "doc"]
+    finite_kinds = [value for value in by_kind.values() if "cer" in value]
+    worst_kind_cer = max((value["cer"] for value in finite_kinds), default=float("nan"))
+    worst_kind_exact = min((value.get("exact", 0.0) for value in finite_kinds),
+                           default=float("nan"))
     return {
         "overall": aggregate(records),
         "synthetic": aggregate(synthetic),
         "documents": aggregate(documents),
         "by_kind": by_kind,
+        "robustness": {"worst_kind_cer": worst_kind_cer,
+                       "worst_kind_exact": worst_kind_exact},
         "failures": failures,
         "examples": records[:12],
     }

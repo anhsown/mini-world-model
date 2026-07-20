@@ -58,10 +58,15 @@ def _camera_rays(height: int, width: int, fov_degrees: float = 70.0):
 
 
 def render_geometry_sequence(seed: int, frames: int = 8, height: int = 128,
-                             width: int = 128) -> GeometrySequence:
+                             width: int = 128, fov_degrees: float = 70.0,
+                             motion_scale: float = 1.0) -> GeometrySequence:
     """Render a deterministic metric scene using analytic ray intersections."""
     gen = torch.Generator().manual_seed(int(seed))
-    rays_cam, intrinsics = _camera_rays(height, width)
+    if not 25.0 <= float(fov_degrees) <= 120.0:
+        raise ValueError("fov_degrees must be in [25, 120]")
+    if not 0.05 <= float(motion_scale) <= 8.0:
+        raise ValueError("motion_scale must be in [0.05, 8]")
+    rays_cam, intrinsics = _camera_rays(height, width, fov_degrees)
     n_spheres = int(torch.randint(3, 7, (1,), generator=gen))
     centers = torch.empty(n_spheres, 3).uniform_(-1.0, 1.0, generator=gen)
     centers[:, 0] *= 3.0
@@ -70,11 +75,20 @@ def render_geometry_sequence(seed: int, frames: int = 8, height: int = 128,
     radii = torch.empty(n_spheres).uniform_(0.3, 0.9, generator=gen)
     colours = torch.empty(n_spheres, 3).uniform_(0.15, 0.95, generator=gen)
     dynamic_index = seed % n_spheres
+    n_boxes = int(torch.randint(2, 6, (1,), generator=gen))
+    box_centers = torch.empty(n_boxes, 3).uniform_(-1.0, 1.0, generator=gen)
+    box_centers[:, 0] *= 3.2
+    box_centers[:, 1] = torch.empty(n_boxes).uniform_(-0.55, 0.9, generator=gen)
+    box_centers[:, 2] = torch.empty(n_boxes).uniform_(3.0, 10.5, generator=gen)
+    box_half = torch.empty(n_boxes, 3).uniform_(0.22, 0.75, generator=gen)
+    box_colours = torch.empty(n_boxes, 3).uniform_(0.08, 0.92, generator=gen)
+    dynamic_box = seed % n_boxes
 
     images, depths, poses, dynamic_masks = [], [], [], []
     phase = float(torch.rand((), generator=gen) * math.tau)
-    speed = float(torch.empty(()).uniform_(0.035, 0.11, generator=gen))
-    yaw_speed = float(torch.empty(()).uniform_(-0.018, 0.018, generator=gen))
+    speed = float(torch.empty(()).uniform_(0.035, 0.11, generator=gen)) * motion_scale
+    yaw_speed = (float(torch.empty(()).uniform_(-0.018, 0.018, generator=gen)) *
+                 motion_scale)
 
     for frame in range(frames):
         camera_x = (frame - (frames - 1) / 2) * speed
@@ -91,7 +105,11 @@ def render_geometry_sequence(seed: int, frames: int = 8, height: int = 128,
         # unnormalised camera ray has z=1 and rigid rotation preserves t.
         denom = directions[..., 2].clamp(min=1e-5)
         best_t = ((12.0 - origin[2]) / denom).clamp(min=0.05, max=30.0)
-        hit_colour = torch.full((height, width, 3), 0.58)
+        wall_point = origin + best_t[..., None] * directions
+        wall_grid = (((wall_point[..., 0] * 1.7).floor() +
+                      (wall_point[..., 1] * 1.7).floor()).remainder(2)).float()
+        wall_base = torch.tensor([.48, .53, .58]).view(1, 1, 3)
+        hit_colour = wall_base * (.82 + .20 * wall_grid[..., None])
         hit_normal = torch.zeros(height, width, 3)
         hit_normal[..., 2] = -1.0
         dynamic = torch.zeros(height, width, dtype=torch.bool)
@@ -103,7 +121,10 @@ def render_geometry_sequence(seed: int, frames: int = 8, height: int = 128,
                 min=-1e8, max=1e8)
             valid = (t_plane > 0.05) & (t_plane < best_t)
             best_t = torch.where(valid, t_plane, best_t)
-            c = torch.tensor(colour).view(1, 1, 3)
+            plane_point = origin + t_plane[..., None] * directions
+            tile = (((plane_point[..., 0] * .8).floor() +
+                     (plane_point[..., 2] * .8).floor()).remainder(2)).float()
+            c = torch.tensor(colour).view(1, 1, 3) * (.78 + .22 * tile[..., None])
             hit_colour = torch.where(valid[..., None], c, hit_colour)
             normal = torch.tensor([0.0, normal_y, 0.0]).view(1, 1, 3)
             hit_normal = torch.where(valid[..., None], normal, hit_normal)
@@ -129,10 +150,47 @@ def render_geometry_sequence(seed: int, frames: int = 8, height: int = 128,
                                   torch.full_like(dynamic, sphere_index == dynamic_index),
                                   dynamic)
 
+        # Axis-aligned cuboids add corners, planar faces and partial occlusion.
+        # Their ray intersections are analytic, so RGB/depth/mask stay exact.
+        frame_boxes = box_centers.clone()
+        frame_boxes[dynamic_box, 1] += 0.32 * math.sin(phase + frame * .41)
+        for box_index in range(n_boxes):
+            lower = frame_boxes[box_index] - box_half[box_index]
+            upper = frame_boxes[box_index] + box_half[box_index]
+            safe_direction = torch.where(
+                directions.abs() < 1e-6,
+                torch.full_like(directions, 1e-6), directions)
+            ta = (lower - origin) / safe_direction
+            tb = (upper - origin) / safe_direction
+            near_axis = torch.minimum(ta, tb)
+            far_axis = torch.maximum(ta, tb)
+            near = near_axis.amax(-1)
+            far = far_axis.amin(-1)
+            valid = (far >= near.clamp_min(.05)) & (near > .05) & (near < best_t)
+            point = origin + near[..., None] * directions
+            local = point - frame_boxes[box_index]
+            face_axis = (local.abs() - box_half[box_index]).abs().argmin(-1)
+            normal = torch.zeros_like(point)
+            normal.scatter_(-1, face_axis[..., None],
+                            torch.gather(local.sign(), -1, face_axis[..., None]))
+            best_t = torch.where(valid, near, best_t)
+            base = box_colours[box_index].view(1, 1, 3)
+            stripes = ((point[..., 0] * 3 + point[..., 1] * 2).floor().remainder(2))
+            material = base * (.84 + .16 * stripes[..., None])
+            hit_colour = torch.where(valid[..., None], material, hit_colour)
+            hit_normal = torch.where(valid[..., None], normal, hit_normal)
+            dynamic = torch.where(valid,
+                                  torch.full_like(dynamic, box_index == dynamic_box),
+                                  dynamic)
+
         light = torch.tensor([-0.35, 0.8, -0.48])
         light = light / light.norm()
         diffuse = (hit_normal * light).sum(-1).clamp(min=0.0)
         rgb = hit_colour * (0.35 + 0.65 * diffuse[..., None])
+        yy, xx = torch.meshgrid(torch.linspace(-1, 1, height),
+                                torch.linspace(-1, 1, width), indexing="ij")
+        vignette = (1.0 - .16 * (xx.square() + yy.square())).clamp(.68, 1.0)
+        rgb = rgb * vignette[..., None]
         # Deterministic, small sensor perturbation; geometry remains exact.
         noise = torch.randn(rgb.shape, generator=gen) * 0.008
         rgb = (rgb + noise).clamp(0.0, 1.0)

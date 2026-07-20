@@ -1,0 +1,222 @@
+{
+  "version": "1.0",
+  "description": "JWM real-anchor starter pack. Raw media is excluded from git; every asset is resumable and recorded in manifest.jsonl.",
+  "reserve_free_gb": 25.0,
+  "assets": [
+    {
+      "id": "tum_fr1_xyz",
+      "branch": "eye",
+      "source": "TUM_RGBD",
+      "kind": "real",
+      "tier": ["starter", "full", "kaggle"],
+      "split": "train",
+      "scene_group": "freiburg1",
+      "license": "TUM_RGBD_research_terms",
+      "url": "https://cvg.cit.tum.de/rgbd/dataset/freiburg1/rgbd_dataset_freiburg1_xyz.tgz",
+      "archive": "tgz",
+      "size_bytes": 504658435
+    },
+    {
+      "id": "tum_fr1_rpy",
+      "branch": "eye",
+      "source": "TUM_RGBD",
+      "kind": "real",
+      "tier": ["starter", "full", "kaggle"],
+      "split": "train",
+      "scene_group": "freiburg1",
+      "license": "TUM_RGBD_research_terms",
+      "url": "https://cvg.cit.tum.de/rgbd/dataset/freiburg1/rgbd_dataset_freiburg1_rpy.tgz",
+      "archive": "tgz",
+      "size_bytes": 450971566
+    },
+    {
+      "id": "tum_fr1_desk",
+      "branch": "eye",
+      "source": "TUM_RGBD",
+      "kind": "real",
+      "tier": ["starter", "full", "kaggle"],
+      "split": "train",
+      "scene_group": "freiburg1",
+      "license": "TUM_RGBD_research_terms",
+      "url": "https://cvg.cit.tum.de/rgbd/dataset/freiburg1/rgbd_dataset_freiburg1_desk.tgz",
+      "archive": "tgz",
+      "size_bytes": 386547057
+    },
+    {
+      "id": "tum_fr1_desk2",
+      "branch": "eye",
+      "source": "TUM_RGBD",
+      "kind": "real",
+      "tier": ["starter", "full", "kaggle"],
+      "split": "train",
+      "scene_group": "freiburg1",
+      "license": "TUM_RGBD_research_terms",
+      "url": "https://cvg.cit.tum.de/rgbd/dataset/freiburg1/rgbd_dataset_freiburg1_desk2.tgz",
+      "archive": "tgz",
+      "size_bytes": 397284474
+    },
+    {
+      "id": "tum_fr3_sitting_xyz",
+      "branch": "eye",
+      "source": "TUM_RGBD",
+      "kind": "real",
+      "tier": ["starter", "full", "kaggle"],
+      "split": "validation",
+      "scene_group": "freiburg3_sitting",
+      "license": "TUM_RGBD_research_terms",
+      "url": "https://cvg.cit.tum.de/rgbd/dataset/freiburg3/rgbd_dataset_freiburg3_sitting_xyz.tgz",
+      "archive": "tgz",
+      "size_bytes": 848256041
+    },
+    {
+      "id": "tum_fr3_walking_static",
+      "branch": "eye",
+      "source": "TUM_RGBD",
+      "kind": "real",
+      "tier": ["starter", "full", "kaggle"],
+      "split": "test",
+      "scene_group": "freiburg3_walking",
+      "license": "TUM_RGBD_research_terms",
+      "url": "https://cvg.cit.tum.de/rgbd/dataset/freiburg3/rgbd_dataset_freiburg3_walking_static.tgz",
+      "archive": "tgz",
+      "size_bytes": 515396076
+    },
+    {
+      "id": "tum_fr3_walking_halfsphere",
+      "branch": "eye",
+      "source": "TUM_RGBD",
+      "kind": "real",
+      "tier": ["starter", "full", "kaggle"],
+      "split": "test",
+      "scene_group": "freiburg3_walking",
+      "license": "TUM_RGBD_research_terms",
+      "url": "https://cvg.cit.tum.de/rgbd/dataset/freiburg3/rgbd_dataset_freiburg3_walking_halfsphere.tgz",
+      "archive": "tgz",
+      "size_bytes": 697932185
+    },
+    {
+      "id": "bonn_balloon",
+      "branch": "eye",
+      "source": "Bonn_Dynamic_RGBD",
+      "kind": "real",
+      "tier": ["starter", "full", "kaggle"],
+      "split": "train",
+      "scene_group": "bonn_balloon",
+      "license": "Bonn_RGBD_research_terms",
+      "url": "https://www.ipb.uni-bonn.de/html/projects/rgbd_dynamic2019/rgbd_bonn_balloon.zip",
+      "archive": "zip",
+      "size_bytes": 255642828
+    },
+    {
+      "id": "bonn_crowd",
+      "branch": "eye",
+      "source": "Bonn_Dynamic_RGBD",
+      "kind": "real",
+      "tier": ["starter", "full", "kaggle"],
+      "split": "test",
+      "scene_group": "bonn_crowd",
+      "license": "Bonn_RGBD_research_terms",
+      "url": "https://www.ipb.uni-bonn.de/html/projects/rgbd_dynamic2019/rgbd_bonn_crowd.zip",
+      "archive": "zip",
+      "size_bytes": 540960358
+    },
+    {
+      "id": "bonn_kidnapping_box",
+      "branch": "eye",
+      "source": "Bonn_Dynamic_RGBD",
+      "kind": "real",
+      "tier": ["starter", "full", "kaggle"],
+      "split": "validation",
+      "scene_group": "bonn_box_kidnap",
+      "license": "Bonn_RGBD_research_terms",
+      "url": "https://www.ipb.uni-bonn.de/html/projects/rgbd_dynamic2019/rgbd_bonn_kidnapping_box.zip",
+      "archive": "zip",
+      "size_bytes": 649068544
+    },
+    {
+      "id": "bonn_moving_nonobstructing_box",
+      "branch": "eye",
+      "source": "Bonn_Dynamic_RGBD",
+      "kind": "real",
+      "tier": ["starter", "full", "kaggle"],
+      "split": "train",
+      "scene_group": "bonn_box_move",
+      "license": "Bonn_RGBD_research_terms",
+      "url": "https://www.ipb.uni-bonn.de/html/projects/rgbd_dynamic2019/rgbd_bonn_moving_nonobstructing_box.zip",
+      "archive": "zip",
+      "size_bytes": 457388851
+    },
+    {
+      "id": "bonn_moving_obstructing_box",
+      "branch": "eye",
+      "source": "Bonn_Dynamic_RGBD",
+      "kind": "real",
+      "tier": ["starter", "full", "kaggle"],
+      "split": "validation",
+      "scene_group": "bonn_box_obstruct",
+      "license": "Bonn_RGBD_research_terms",
+      "url": "https://www.ipb.uni-bonn.de/html/projects/rgbd_dynamic2019/rgbd_bonn_moving_obstructing_box.zip",
+      "archive": "zip",
+      "size_bytes": 336383181
+    },
+    {
+      "id": "bonn_person_tracking",
+      "branch": "eye",
+      "source": "Bonn_Dynamic_RGBD",
+      "kind": "real",
+      "tier": ["starter", "full", "kaggle"],
+      "split": "train",
+      "scene_group": "bonn_person",
+      "license": "Bonn_RGBD_research_terms",
+      "url": "https://www.ipb.uni-bonn.de/html/projects/rgbd_dynamic2019/rgbd_bonn_person_tracking.zip",
+      "archive": "zip",
+      "size_bytes": 345505792
+    },
+    {
+      "id": "bonn_synchronous",
+      "branch": "eye",
+      "source": "Bonn_Dynamic_RGBD",
+      "kind": "real",
+      "tier": ["starter", "full", "kaggle"],
+      "split": "test",
+      "scene_group": "bonn_synchronous",
+      "license": "Bonn_RGBD_research_terms",
+      "url": "https://www.ipb.uni-bonn.de/html/projects/rgbd_dynamic2019/rgbd_bonn_synchronous.zip",
+      "archive": "zip",
+      "size_bytes": 191679693
+    },
+    {
+      "id": "tartanair_toolkit",
+      "branch": "eye",
+      "source": "TartanAir",
+      "kind": "simulator_tool",
+      "tier": ["full", "kaggle"],
+      "split": "none",
+      "scene_group": "tooling",
+      "license": "MIT_tooling_dataset_terms_separate",
+      "url": "https://files.pythonhosted.org/packages/7a/1e/0d4fcb0371b326a957af110aef6bbf4157c6003efdb9ce4b262f8c746e58/tartanair-1.4.0-py3-none-any.whl",
+      "archive": "file",
+      "size_bytes": 8912896
+    }
+  ],
+  "manual_sources": [
+    {
+      "id": "docvqa",
+      "branch": "reader",
+      "reason": "Official RRC login and terms acceptance required",
+      "url": "https://site.docvqa.org/datasets/docvqa"
+    },
+    {
+      "id": "dynamic_replica",
+      "branch": "eye",
+      "reason": "Explicit research license acceptance required",
+      "url": "https://dynamic-stereo.github.io/"
+    },
+    {
+      "id": "point_odyssey",
+      "branch": "eye",
+      "reason": "CC BY-NC-SA; keep outside redistributable model/data release until reviewed",
+      "url": "https://github.com/y-zheng18/point_odyssey"
+    }
+  ]
+}
