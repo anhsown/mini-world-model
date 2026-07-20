@@ -143,7 +143,6 @@ class CTPGPhysicalEye(nn.Module):
         self.pyramid = CalibratedPyramid(width)
         c4, _, c16 = self.pyramid.channels
         self.depth = nn.Sequential(ResidualConv(c4), nn.Conv2d(c4, 2, 1))
-        self.saliency = nn.Conv2d(c4, 1, 1)
         self.tracker = SparseTrackUpdater(c4, hidden=128, radius=track_radius,
                                           iterations=track_iterations)
         self.pose_head = nn.Sequential(nn.Linear(128 + 7, 128), nn.SiLU(),
@@ -153,6 +152,10 @@ class CTPGPhysicalEye(nn.Module):
         self.world_projection = nn.Linear(c16, world_dim)
         self.track_projection = nn.Linear(128, world_dim)
         self.memory = BoundedWorldMemory(memory_frames)
+        # No metric residual-flow target exists in this curriculum.  Start
+        # from the conservative rigid-world prior instead of random flow.
+        nn.init.zeros_(self.tracker.residual_3d_flow.weight)
+        nn.init.zeros_(self.tracker.residual_3d_flow.bias)
 
     @staticmethod
     def _scale_intrinsics(k: torch.Tensor, input_hw: tuple[int, int],
@@ -163,7 +166,25 @@ class CTPGPhysicalEye(nn.Module):
         out[..., 1, :] *= oh / ih
         return out
 
-    def _select_points(self, score: torch.Tensor) -> torch.Tensor:
+    @staticmethod
+    def _trackability_score(feature: torch.Tensor) -> torch.Tensor:
+        """Parameter-free local structure score for sparse point selection.
+
+        Hard top-k has no gradient with respect to a learned saliency head.
+        Local feature variance is deterministic and image-dependent, avoiding
+        an orphan trainable branch in DistributedDataParallel.
+        """
+        mean = F.avg_pool2d(feature, 3, stride=1, padding=1)
+        second = F.avg_pool2d(feature.square(), 3, stride=1, padding=1)
+        variance = (second - mean.square()).clamp_min(0).mean(1, keepdim=True)
+        dx = F.pad((feature[..., 1:] - feature[..., :-1]).square().mean(1, keepdim=True),
+                   (0, 1, 0, 0))
+        dy = F.pad((feature[..., 1:, :] - feature[..., :-1, :]).square().mean(1, keepdim=True),
+                   (0, 0, 0, 1))
+        return variance + 0.5 * (dx + dy)
+
+    def _select_points(self, feature: torch.Tensor) -> torch.Tensor:
+        score = self._trackability_score(feature)
         b, _, h, w = score.shape
         count = min(self.track_points, h * w)
         index = score.flatten(1).topk(count, dim=-1).indices
@@ -201,7 +222,7 @@ class CTPGPhysicalEye(nn.Module):
         ba_histories = []
         for frame in range(t - 1):
             source, target = f4[:, frame], f4[:, frame + 1]
-            points = self._select_points(self.saliency(source))
+            points = self._select_points(source)
             track = self.tracker(source, target, points)
             sampled_depth = bilinear_sample(metric_depth4.reshape(b, t, 1, h4, w4)[:, frame],
                                              points).squeeze(-1)

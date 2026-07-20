@@ -13,6 +13,40 @@ from .geometry_v3_data import make_counterfactuals
 from .mathx import rotation_geodesic
 
 
+# These branches have no target in isolated physical-eye training.  They are
+# unlocked later for semantic token alignment or metric scene-flow training.
+PHYSICAL_EYE_FROZEN_PREFIXES = (
+    "pyramid.down8",
+    "pyramid.down16",
+    "world_projection",
+    "track_projection",
+    "tracker.residual_3d_flow",
+)
+
+
+def set_eye_v3_physical_trainable(model) -> list[str]:
+    """Freeze JWM except the exactly supervised Eye-v3 physical graph."""
+    if getattr(model, "geometry", None) is None:
+        raise ValueError("model has no geometry branch")
+    for parameter in model.parameters():
+        parameter.requires_grad_(False)
+    active = []
+    for name, parameter in model.geometry.named_parameters():
+        enabled = not name.startswith(PHYSICAL_EYE_FROZEN_PREFIXES)
+        parameter.requires_grad_(enabled)
+        if enabled:
+            active.append(f"geometry.{name}")
+    if not active:
+        raise RuntimeError("Eye-v3 physical graph has no trainable parameters")
+    return active
+
+
+def missing_trainable_gradients(model) -> list[str]:
+    """List active parameters disconnected from the latest backward graph."""
+    return [name for name, parameter in model.named_parameters()
+            if parameter.requires_grad and parameter.grad is None]
+
+
 def move_geometry_batch(batch: dict, device: torch.device) -> dict:
     return {key: (value.to(device, non_blocking=True)
                   if torch.is_tensor(value) else value)

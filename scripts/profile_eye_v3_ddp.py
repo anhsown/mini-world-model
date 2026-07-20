@@ -20,7 +20,10 @@ from jwm import JWM
 from jwm.checkpoint_utils import warmstart_eye_physical
 from jwm.configs import eye_physical_v3_scale
 from jwm.geometry_v3_data import make_counterfactuals, procedural_v3_row, stack_geometry_v3_rows
-from jwm.geometry_v3_trainer import move_geometry_batch
+from jwm.geometry_v3_trainer import (
+    missing_trainable_gradients, move_geometry_batch,
+    set_eye_v3_physical_trainable,
+)
 
 
 def main():
@@ -46,9 +49,7 @@ def main():
         cfg.geometry_track_points = 12; cfg.geometry_track_iterations = 1
         cfg.geometry_ba_iterations = 1
     model = JWM(cfg); warmstart_eye_physical(model, args.warmstart)
-    for parameter in model.parameters(): parameter.requires_grad_(False)
-    for name, parameter in model.geometry.named_parameters():
-        parameter.requires_grad_(not name.startswith(("world_projection", "track_projection")))
+    active_names = set_eye_v3_physical_trainable(model)
     model.to(device)
     trainable = [p for p in model.parameters() if p.requires_grad]
     wrapped = (DDP(model, device_ids=[local] if device.type == "cuda" else None,
@@ -75,6 +76,13 @@ def main():
                               batch["projection_y_sign"], batch["rigid_flow"],
                               batch["rigid_flow_valid"], wrong)
         scaler.scale(loss).backward(); scaler.unscale_(optimizer)
+        if step == 0:
+            raw = wrapped.module if hasattr(wrapped, "module") else wrapped
+            disconnected = missing_trainable_gradients(raw)
+            if disconnected:
+                raise RuntimeError(
+                    "Eye-v3 exact graph has trainable parameters without gradients: "
+                    + ", ".join(disconnected))
         torch.nn.utils.clip_grad_norm_(trainable, 1.0)
         scaler.step(optimizer); scaler.update(); losses.append(float(loss.detach()))
         if rank == 0 and (step == 0 or (step + 1) % 20 == 0):
@@ -92,6 +100,7 @@ def main():
                                 (not total or peak / total < .88)),
                   "devices": world, "tiny": args.tiny, "steps": args.steps,
                   "per_gpu_batch": args.per_gpu_batch,
+                  "active_parameter_tensors": len(active_names),
                   "optimizer_steps_per_second": step_rate,
                   "seconds_per_step": 1 / step_rate,
                   "peak_memory_gib_per_rank": peak / 2**30,
@@ -107,4 +116,3 @@ def main():
 
 
 if __name__ == "__main__": main()
-

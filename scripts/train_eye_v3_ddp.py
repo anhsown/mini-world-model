@@ -42,7 +42,9 @@ from jwm.geometry_v3_data import (
     stack_geometry_v3_rows, validate_geometry_v3_datasets,
 )
 from jwm.geometry_v3_trainer import (
-    controller_metrics, evaluate_geometry_v3_controls, move_geometry_batch,
+    controller_metrics, evaluate_geometry_v3_controls,
+    missing_trainable_gradients, move_geometry_batch,
+    set_eye_v3_physical_trainable,
 )
 
 
@@ -196,11 +198,7 @@ def stage_specs(index: int):
 
 
 def set_trainable(model: JWM):
-    for parameter in model.parameters(): parameter.requires_grad_(False)
-    for name, parameter in model.geometry.named_parameters():
-        # World-token adapters are aligned during later joint reasoner training;
-        # the physical objectives here do not provide a semantic target for them.
-        parameter.requires_grad_(not name.startswith(("world_projection", "track_projection")))
+    return set_eye_v3_physical_trainable(model)
 
 
 def main():
@@ -233,7 +231,7 @@ def main():
         cfg.geometry_ba_iterations = 1
     model = JWM(cfg)
     warm_report = warmstart_eye_physical(model, args.warmstart)
-    set_trainable(model); model.to(device)
+    active_names = set_trainable(model); model.to(device)
     trainable = [p for p in model.parameters() if p.requires_grad]
     wrapped = (DDP(model, device_ids=[local] if device.type == "cuda" else None,
                    broadcast_buffers=False, find_unused_parameters=False)
@@ -263,6 +261,7 @@ def main():
                                                        encoding="utf-8")
         print(f"devices={world} total={sum(p.numel() for p in raw.parameters())/1e6:.2f}M "
               f"trainable={sum(p.numel() for p in trainable)/1e6:.2f}M "
+              f"active_tensors={len(active_names)} "
               f"depth_prior={prior_m:.3f}m", flush=True)
 
     pipeline_blocked = False
@@ -305,6 +304,12 @@ def main():
                 scaler.scale(micro_loss).backward()
                 for key, value in metrics.items():
                     accumulated[key] = accumulated.get(key, 0.0) + value / args.grad_accum
+            if global_step == 0:
+                disconnected = missing_trainable_gradients(raw)
+                if disconnected:
+                    raise RuntimeError(
+                        "Eye-v3 exact graph has trainable parameters without gradients: "
+                        + ", ".join(disconnected))
             scaler.unscale_(optimizer)
             gradient = torch.nn.utils.clip_grad_norm_(trainable, 1.0)
             scaler.step(optimizer); scaler.update()
@@ -385,4 +390,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

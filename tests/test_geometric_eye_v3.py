@@ -4,6 +4,9 @@ import torch
 
 from jwm import JWM, JWMConfig
 from jwm.geometry_v3_data import procedural_v3_row, stack_geometry_v3_rows
+from jwm.geometry_v3_trainer import (
+    missing_trainable_gradients, set_eye_v3_physical_trainable,
+)
 
 
 def tiny_v3():
@@ -60,3 +63,16 @@ def test_ctpg_refuses_uncalibrated_input():
     else:
         raise AssertionError("v3 accepted images without camera intrinsics")
 
+
+def test_exact_physical_graph_has_no_orphan_trainable_parameters():
+    model = JWM(tiny_v3())
+    active = set_eye_v3_physical_trainable(model)
+    batch = stack_geometry_v3_rows([procedural_v3_row(13, 3, 32)])
+    loss, _ = model(
+        "geometry", batch["image"], batch["depth"], batch["pose_c2w"],
+        batch["depth_valid"], batch["dynamic_mask"], None,
+        batch["intrinsics"], batch["projection_y_sign"],
+        batch["rigid_flow"], batch["rigid_flow_valid"])
+    loss.backward()
+    assert active
+    assert missing_trainable_gradients(model) == []
