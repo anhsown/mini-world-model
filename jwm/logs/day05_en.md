@@ -57,3 +57,49 @@ Next-round hypotheses: procedural shortcuts, insufficiently diverse real RGB-D, 
 - Full scale is `86.77M` total / `12.91M` trainable. An 8-frame AMP smoke test
   passed on the GTX 1650 at `1606.3 MiB` peak allocation; all `107` tests pass.
 - Kaggle notebook: `jwm/kaggle/jwm_eye_physical_v2_t4x2_day05.ipynb`.
+
+## Eye Physical v2 — T4×2 pilot result
+
+Dataset admission **passed** for every train/validation/test source: TUM, Bonn,
+and TartanAir were valid and scene splits had no leakage. Arms A–D each ran for
+800 optimizer steps with identical initialization and sample order.
+
+| Arm | Depth AbsRel ↓ | Depth δ1 ↑ | Metric ATE ↓ | Gates / 6 |
+|---|---:|---:|---:|---:|
+| A — pairwise base | 0.3068 | 0.4871 | 0.1730 | 1 |
+| **B — + SE(3) cycle** | **0.3051** | 0.4949 | 0.0748 | **1** |
+| C — + dynamic mask | 0.3063 | 0.5055 | 0.0773 | 1 |
+| D — + counterfactual | 0.3086 | **0.5163** | **0.0738** | 1 |
+
+Arm B won the composite score, but no arm passed all causal gates, so full
+E0→E1→E2 training was correctly blocked. On held-out real TUM+Bonn OOD data,
+arm B achieved only the black-image depth gate: prior/model depth `1.126×`
+(needs `1.20×`), prior/model ATE `0.898×` (needs `1.20×`), black/normal depth
+`1.459×` (pass), wrong/normal depth `1.153×`, wrong/normal ATE `1.155×`, and
+reverse/normal motion RPE `1.067×`.
+
+Depth now uses visible evidence, but not the correct frame pairing strongly
+enough. Pose still loses to the identity prior, and weak reverse-time
+sensitivity shows that temporal direction and ego-motion are underlearned.
+The pilot checkpoint is explicitly `blocked_by_ood_gate`, has 86,871,076
+parameters with no NaN/Inf, and SHA-256
+`423230C5CFA61F09B937F5507BFC5261A3B3664BC6DC71D7D0544C087D1AAFAE`.
+
+**Decision: BLOCKED.** Do not attach this pilot to JARVIS or continue the full
+curriculum from it. The next round must first strengthen temporal-direction,
+hard-motion sampling, and wrong-window ranking objectives.
+
+## Eye Physical v3 — build completed through gate 6
+
+- Found the v2 camera defect: adapters emitted intrinsics but the collator
+  dropped them. V3 requires per-frame K, float64 timestamps, projection
+  convention, rigid flow, and dynamic-label provenance.
+- Implemented CTPG-Eye: ray-conditioned pyramid, recurrent sparse tracks,
+  static/dynamic separation, metric pointmaps, SE(3), robust differentiable BA,
+  and bounded memory.
+- All five mechanism probes and all 123 repository tests pass. The short local
+  256px × 6-frame full-graph smoke allocated 0.825 GiB peak GPU memory.
+- Added adaptive evidence budgeting: OOD slope chooses continue, LR reduction,
+  stage advance, convergence or blocked stop; training loss cannot promote.
+- T4×2 notebook: `jwm/kaggle/jwm_eye_physical_v3_t4x2_day05.ipynb`. Full-scale
+  training still waits for real-source admission and Kaggle's exact 100-step profile.

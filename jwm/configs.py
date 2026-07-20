@@ -147,6 +147,33 @@ def eye_physical_v2_ablation(arm: str) -> JWMConfig:
     return cfg
 
 
+def eye_physical_v3_scale() -> JWMConfig:
+    """CTPG-Eye v3 for T4x2 training and bounded local deployment.
+
+    The semantic MoT dimensions stay warm-start compatible with JWM-v4. The
+    physical eye is camera-calibrated and trains independently at 256px; its
+    sparse 96-channel path is small enough for two 16GB T4 workers.
+    """
+    return JWMConfig(
+        d_model=384, n_layers=8, n_heads=12, ffn_hidden=1024,
+        reasoner_moe=True, moe_experts=32, moe_topk=4, moe_shared=1,
+        image_size=256, patch=16, patch_merge=1,
+        vision_stem="local", vision_local_layers=2,
+        vision_local_heads=8, vision_window=4,
+        vision_grad_checkpoint=True,
+        max_q_bytes=96, max_a_bytes=128,
+        geometry_enabled=True, geometry_version="v3_ctpg",
+        geometry_v3_width=96, geometry_track_points=64,
+        geometry_track_radius=2, geometry_track_iterations=3,
+        geometry_ba_iterations=2, geometry_memory_frames=32,
+        geometry_depth_weight=1.0, geometry_rel_pose_weight=1.0,
+        geometry_rel_translation_weight=1.0,
+        geometry_track_weight=1.0, geometry_rigid_weight=0.25,
+        geometry_dynamic_weight=0.20, geometry_ba_weight=0.20,
+        geometry_counterfactual_weight=0.15,
+    )
+
+
 def reader_scale_v31() -> JWMConfig:
     """Corrective Reader warm-start: line ROI before 1D CTC decoding.
 

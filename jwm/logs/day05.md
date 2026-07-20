@@ -57,3 +57,53 @@ Các nguyên nhân cần kiểm chứng ở vòng sau: procedural shortcut; tỷ
 - Full scale: `86.77M` tổng / `12.91M` trainable; AMP smoke 8 frame trên GTX
   1650 pass, peak `1606.3 MiB`; toàn bộ `107` tests pass.
 - Notebook Kaggle: `jwm/kaggle/jwm_eye_physical_v2_t4x2_day05.ipynb`.
+
+## Eye Physical v2 — kết quả pilot T4×2
+
+Admission dữ liệu đã **PASS** cho toàn bộ train/validation/test: TUM, Bonn và
+TartanAir đều hợp lệ; scene split không rò rỉ. Pilot chạy bốn arm A–D, mỗi arm
+800 optimizer steps với cùng initialization và sample order.
+
+| Arm | Depth AbsRel ↓ | Depth δ1 ↑ | ATE metric ↓ | Gate đạt / 6 |
+|---|---:|---:|---:|---:|
+| A — pairwise base | 0.3068 | 0.4871 | 0.1730 | 1 |
+| **B — + SE(3) cycle** | **0.3051** | 0.4949 | 0.0748 | **1** |
+| C — + dynamic mask | 0.3063 | 0.5055 | 0.0773 | 1 |
+| D — + counterfactual | 0.3086 | **0.5163** | **0.0738** | 1 |
+
+Arm B thắng theo composite score, nhưng không arm nào vượt đủ causal gate nên
+full E0→E1→E2 bị chặn. Trên held-out real OOD TUM+Bonn của arm B:
+
+| Causal check | Tỷ lệ đo được | Yêu cầu | Kết quả |
+|---|---:|---:|---|
+| Fixed-depth prior / model AbsRel | 1.126× | ≥1.20× | FAIL |
+| Identity prior / model ATE | 0.898× | ≥1.20× | FAIL |
+| Black / normal depth error | 1.459× | ≥1.25× | PASS |
+| Wrong-window / normal depth error | 1.153× | ≥1.25× | FAIL |
+| Wrong-window / normal ATE | 1.155× | ≥1.25× | FAIL |
+| Reverse-time / normal motion RPE | 1.067× | ≥1.10× | FAIL |
+
+Depth đã dùng bằng chứng ảnh ở mức rõ ràng (ảnh đen làm lỗi tăng 46%), nhưng
+chưa vượt fixed prior đủ biên và chưa phụ thuộc đúng cặp frame. Pose vẫn thua
+identity prior; đảo thời gian chỉ làm RPE xấu 6.7%, cho thấy temporal direction
+và ego-motion chưa được học đủ. Checkpoint pilot có trạng thái
+`blocked_by_ood_gate`, 86,871,076 parameters, không NaN/Inf, SHA-256
+`423230C5CFA61F09B937F5507BFC5261A3B3664BC6DC71D7D0544C087D1AAFAE`.
+
+**Quyết định: BLOCKED.** Không gắn checkpoint pilot vào JARVIS và không chạy
+full curriculum từ nó. Vòng tiếp theo phải sửa objective/sampling cho temporal
+direction, hard camera motion và wrong-window ranking trước khi train lại.
+
+## Eye Physical v3 — hoàn tất build tới gate 6
+
+- Tìm đúng lỗi camera của v2: adapter có intrinsics nhưng collator làm rơi trường
+  này. V3 bắt buộc K theo từng frame, timestamp float64, projection convention,
+  rigid flow và provenance của dynamic mask.
+- Dựng CTPG-Eye: ray-conditioned pyramid, sparse recurrent tracks, dynamic/static
+  split, metric pointmap, SE(3), differentiable robust BA và bounded memory.
+- 5/5 probe cơ chế pass; full regression 123/123 test pass. Full-graph local
+  256px × 6 frame dùng 0.825 GiB peak allocated trong smoke ngắn.
+- Dựng trainer adaptive: OOD slope tự quyết định continue/reduce-LR/advance/stop;
+  không promote nếu depth/pose chưa thắng prior hoặc causal controls chưa pass.
+- Notebook T4×2 đã tạo tại `jwm/kaggle/jwm_eye_physical_v3_t4x2_day05.ipynb`.
+  Full training vẫn chờ data admission và exact 100-step profile trên Kaggle.

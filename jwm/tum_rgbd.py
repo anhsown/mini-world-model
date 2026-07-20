@@ -130,7 +130,10 @@ class TUMRGBDWindowDataset(Dataset):
         return {"image": torch.stack(images), "depth": depth,
                 "depth_valid": depth > 1e-5, "pose_c2w": torch.stack(poses),
                 "scene_id": name,
-                "timestamp": torch.tensor([r["timestamp"] for r in selected])}
+                # Unix-scale RGB-D timestamps lose all sub-second motion when
+                # first materialized as float32. Keep float64 at the adapter.
+                "timestamp": torch.tensor([r["timestamp"] for r in selected],
+                                          dtype=torch.float64)}
 
 
 def validate_tum_dataset(dataset: TUMRGBDWindowDataset) -> dict:
@@ -159,4 +162,3 @@ def validate_tum_dataset(dataset: TUMRGBDWindowDataset) -> dict:
                         "pose_so3_max_error": float(so3_error),
                         "translation_per_frame_mean_m": float(motion.mean()),
                         "translation_per_frame_max_m": float(motion.max())}}
-

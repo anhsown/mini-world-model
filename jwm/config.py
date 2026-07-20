@@ -84,6 +84,16 @@ class JWMConfig:
     geometry_counterfactual_weight: float = 0.0
     geometry_counterfactual_margin: float = 0.20
     geometry_min_valid_fraction: float = 0.20
+    # CTPG-Eye v3 (camera-calibrated track/point/BA pathway). Dormant for v1/v2.
+    geometry_v3_width: int = 96
+    geometry_track_points: int = 64
+    geometry_track_radius: int = 2
+    geometry_track_iterations: int = 3
+    geometry_ba_iterations: int = 2
+    geometry_memory_frames: int = 32
+    geometry_track_weight: float = 1.0
+    geometry_rigid_weight: float = 0.25
+    geometry_ba_weight: float = 0.20
 
     # Inkling-mini MoE for the REASONER tower (INKLING_MINI.md; generator stays dense)
     reasoner_moe: bool = False

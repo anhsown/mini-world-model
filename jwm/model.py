@@ -168,22 +168,33 @@ class JWM(nn.Module):
         # disabled preserves the exact graph of all legacy checkpoints.
         self.geometry = None
         if getattr(cfg, "geometry_enabled", False):
-            geometry_kwargs = dict(
-                d=d, heads=cfg.n_heads,
-                hidden=cfg.geometry_ffn_hidden or cfg.ffn_hidden,
-                layers=cfg.geometry_layers,
-                grid_h=cfg.img_grid_h, grid_w=cfg.img_grid_w,
-                register_tokens=cfg.geometry_register_tokens,
-                anchor_frames=cfg.geometry_anchor_frames,
-                local_window=cfg.geometry_local_window,
-                max_trajectory_frames=cfg.geometry_max_trajectory_frames)
+            if getattr(cfg, "geometry_version", "v1") == "v3_ctpg":
+                from .geometric_eye_v3 import CTPGPhysicalEye
+                self.geometry = CTPGPhysicalEye(
+                    world_dim=d, width=cfg.geometry_v3_width,
+                    track_points=cfg.geometry_track_points,
+                    track_radius=cfg.geometry_track_radius,
+                    track_iterations=cfg.geometry_track_iterations,
+                    ba_iterations=cfg.geometry_ba_iterations,
+                    memory_frames=cfg.geometry_memory_frames)
+                geometry_kwargs = None
+            else:
+                geometry_kwargs = dict(
+                    d=d, heads=cfg.n_heads,
+                    hidden=cfg.geometry_ffn_hidden or cfg.ffn_hidden,
+                    layers=cfg.geometry_layers,
+                    grid_h=cfg.img_grid_h, grid_w=cfg.img_grid_w,
+                    register_tokens=cfg.geometry_register_tokens,
+                    anchor_frames=cfg.geometry_anchor_frames,
+                    local_window=cfg.geometry_local_window,
+                    max_trajectory_frames=cfg.geometry_max_trajectory_frames)
             if getattr(cfg, "geometry_version", "v1") == "v2_pairwise":
                 from .geometric_memory_v2 import PairwiseGeometricContextMemory
                 self.geometry = PairwiseGeometricContextMemory(
                     **geometry_kwargs,
                     motion_radius=cfg.geometry_motion_radius,
                     min_valid_fraction=cfg.geometry_min_valid_fraction)
-            else:
+            elif getattr(cfg, "geometry_version", "v1") != "v3_ctpg":
                 from .geometric_memory import GeometricContextMemory
                 self.geometry = GeometricContextMemory(**geometry_kwargs)
 
@@ -245,12 +256,19 @@ class JWM(nn.Module):
         return self.patch_embed(x) + self.e_img
 
     def encode_geometry_sequence(self, images: torch.Tensor,
-                                 detach_state: bool = False) -> dict:
+                                 detach_state: bool = False,
+                                 intrinsics: torch.Tensor | None = None,
+                                 projection_y_sign: torch.Tensor | None = None) -> dict:
         """Encode ``(B,T,3,H,W)`` into a causal, metric world representation."""
         if self.geometry is None:
             raise RuntimeError("geometry_enabled must be true")
         if images.ndim != 5:
             raise ValueError("geometry images must have shape (B,T,3,H,W)")
+        if getattr(self.cfg, "geometry_version", "v1") == "v3_ctpg":
+            if intrinsics is None:
+                raise ValueError("CTPG-Eye v3 requires per-frame intrinsics")
+            return self.geometry.forward_sequence(
+                images, intrinsics, projection_y_sign, detach_state=detach_state)
         b, t = images.shape[:2]
         visual = self._img_tokens(images.reshape(b * t, *images.shape[2:]))
         visual = visual.reshape(b, t, visual.shape[1], visual.shape[2])
@@ -260,10 +278,37 @@ class JWM(nn.Module):
                       pose_gt_c2w: torch.Tensor,
                       depth_valid: torch.Tensor | None = None,
                       dynamic_gt: torch.Tensor | None = None,
-                      negative_images: torch.Tensor | None = None):
+                      negative_images: torch.Tensor | None = None,
+                      intrinsics: torch.Tensor | None = None,
+                      projection_y_sign: torch.Tensor | None = None,
+                      rigid_flow: torch.Tensor | None = None,
+                      rigid_flow_valid: torch.Tensor | None = None,
+                      wrong_intrinsics: torch.Tensor | None = None):
         """Joint depth/absolute-pose/local-relative-pose supervision."""
-        output = self.encode_geometry_sequence(images, detach_state=False)
-        if getattr(self.cfg, "geometry_version", "v1") == "v2_pairwise":
+        version = getattr(self.cfg, "geometry_version", "v1")
+        output = self.encode_geometry_sequence(
+            images, detach_state=False, intrinsics=intrinsics,
+            projection_y_sign=projection_y_sign)
+        if version == "v3_ctpg":
+            if depth_valid is None:
+                depth_valid = torch.isfinite(depth_gt) & (depth_gt > 0)
+            counterfactual_output = (self.encode_geometry_sequence(
+                images, detach_state=False, intrinsics=wrong_intrinsics,
+                projection_y_sign=projection_y_sign)
+                if wrong_intrinsics is not None else None)
+            loss, metrics = self.geometry.loss(
+                output, depth_gt, pose_gt_c2w, depth_valid, intrinsics,
+                projection_y_sign, dynamic_gt, rigid_flow, rigid_flow_valid,
+                counterfactual_output=counterfactual_output,
+                weights={"depth": self.cfg.geometry_depth_weight,
+                         "rotation": self.cfg.geometry_rel_pose_weight,
+                         "translation": self.cfg.geometry_rel_translation_weight,
+                         "track": self.cfg.geometry_track_weight,
+                         "rigid": self.cfg.geometry_rigid_weight,
+                         "dynamic": self.cfg.geometry_dynamic_weight,
+                         "ba": self.cfg.geometry_ba_weight,
+                         "counterfactual": self.cfg.geometry_counterfactual_weight})
+        elif version == "v2_pairwise":
             negative_output = (self.encode_geometry_sequence(
                 negative_images, detach_state=False)
                 if negative_images is not None else None)
