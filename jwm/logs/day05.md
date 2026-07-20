@@ -136,3 +136,17 @@ direction, hard camera motion và wrong-window ranking trước khi train lại.
   `acknowledge_lr_decay()` dù chỉ rank 0 có observation. Hotfix giới hạn mutation
   controller ở rank 0, nhưng vẫn áp dụng cùng LR factor trên cả hai GPU; run có
   thể resume từ `resume.pt` mà không train lại từ đầu.
+
+## Benchmark Eye v3.1 sau full training
+
+- Checkpoint `jwm_eye_v31_blocked.pt` hợp lệ: 79.75M tham số, không có tensor
+  NaN/Inf; data admission pass, không scene leakage và mechanism probe pass 5/5.
+- Held-out causal/OOD trên TartanAir, TUM và Bonn chỉ pass **1/7 gates**. Depth
+  học được (`AbsRel=0.466`, gain so với prior `1.798x`), nhưng pose chỉ tốt hơn
+  identity `1.067x`, BA giảm residual `12.49%` và các control temporal/K gần 1x.
+- Independent procedural recheck pass **2/7 gates**: Depth AbsRel `0.2057`, ATE
+  `0.1604 m`, track EPE `0.2807 px`, nhưng BA `0%` và confidence chỉ `2.94e-5`.
+- Root cause chính: invalid rigid-flow bị nội suy trước khi mask, làm real-data
+  track EPE tăng phi vật lý tới `483729 px`; confidence collapse khiến BA mất
+  correspondence, còn reverse/wrong-window/wrong-K chưa được train trước khi
+  controller chặn stage 1. Không tăng steps cho v3.1; chuyển sang thiết kế v3.2.

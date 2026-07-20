@@ -133,3 +133,19 @@ hard-motion sampling, and wrong-window ranking objectives.
   `acknowledge_lr_decay()` without owning controller observations. The hotfix
   limits controller mutation to rank 0 while applying the same LR factor on
   both GPUs, allowing the run to resume from `resume.pt`.
+
+## Eye v3.1 benchmark after full training
+
+- `jwm_eye_v31_blocked.pt` is structurally sound: 79.75M parameters, no NaN/Inf
+  tensors, dataset admission passed without scene leakage, and all 5/5 mechanism
+  probes passed.
+- The held-out TartanAir/TUM/Bonn causal-OOD benchmark passed only **1/7 gates**.
+  Depth learned (`AbsRel=0.466`, `1.798x` prior gain), but pose beat identity by
+  only `1.067x`, BA reduced residual by `12.49%`, and temporal/K controls stayed
+  close to 1x.
+- An independent procedural recheck passed **2/7 gates**: Depth AbsRel `0.2057`,
+  ATE `0.1604 m`, track EPE `0.2807 px`, BA `0%`, confidence `2.94e-5`.
+- Main root cause: invalid rigid flow was interpolated before masking, producing
+  an impossible real-data track EPE of `483729 px`. Confidence collapse disabled
+  BA, while reverse/wrong-window/wrong-K supervision was scheduled after the
+  stage where training stopped. Do not add v3.1 steps; redesign as Eye v3.2.
