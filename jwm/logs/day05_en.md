@@ -103,3 +103,26 @@ hard-motion sampling, and wrong-window ranking objectives.
   stage advance, convergence or blocked stop; training loss cannot promote.
 - T4×2 notebook: `jwm/kaggle/jwm_eye_physical_v3_t4x2_day05.ipynb`. Full-scale
   training still waits for real-source admission and Kaggle's exact 100-step profile.
+
+## Eye Physical v3 pilot — numerical gate stopped at step 200
+
+- Dataset admission passed, but g0 became unstable: `grad=NaN` at step 175,
+  gradient norm `67549` at step 200, and `track_epe=Infinity`.
+- The adaptive controller issued `stop_unstable` and exported only
+  `jwm_eye_v3_blocked.pt`; it must not be resumed or deployed.
+- The failure was localized to border-collapsed top-k points, a non-finite-safe
+  empty-track fallback, and ill-conditioned gradients through the unrolled BA solve.
+
+## Eye Physical v3.1 Stability — corrective package
+
+- Track points now use an interior spatial lattice, stay inside the image, and
+  report an explicit valid-track ratio.
+- BA is forced to FP32 with Hessian-scaled Levenberg damping, bounded SE(3),
+  monotonic rollback, and a truncated solver gradient. Empty tracks remain finite.
+- G0 LR is reduced from `3e-4` to `1e-4`; a synchronized DDP governor skips
+  non-finite steps, backs off loss scale/LR, and blocks after three consecutive faults.
+- The preflight is now a 250-step actual Procedural+TartanAir mixture canary and
+  logs depth/track/valid/BA/gradient components.
+- A 100-step exact-seed local canary passed at roughly `0.93–0.95` valid tracks
+  with no NaN/Inf; all `127/127` repository tests pass.
+- New notebook: `jwm/kaggle/jwm_eye_physical_v31_t4x2_day05.ipynb`.

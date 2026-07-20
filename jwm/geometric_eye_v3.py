@@ -3,7 +3,8 @@
 This module is deliberately independent from the language tower. It consumes
 RGB windows and per-frame camera calibration, predicts metric depth and sparse
 tracks, separates dynamic evidence, estimates relative SE(3), then refines it
-with differentiable pose-only bundle adjustment. Compact world tokens are the
+with safeguarded pose-only bundle adjustment and a stable truncated gradient.
+Compact world tokens are the
 only interface required by the rest of JWM.
 """
 
@@ -106,6 +107,10 @@ class SparseTrackUpdater(nn.Module):
             update = torch.cat((correlation, displacement), dim=-1).reshape(b * n, -1)
             hidden = self.gru(update, hidden)
             current = current + self.delta(hidden).reshape(b, n, 2).tanh()
+            # Keep tracks in the image domain.  Sampling padded zeros outside
+            # the frame creates unconstrained correlations and can poison BA.
+            current = torch.stack((current[..., 0].clamp(0, source.shape[-1] - 1),
+                                   current[..., 1].clamp(0, source.shape[-2] - 1)), dim=-1)
         hidden_2d = hidden.reshape(b, n, -1)
         dynamic_logit = self.dynamic(hidden_2d).squeeze(-1)
         return {"target": current, "hidden": hidden_2d,
@@ -187,10 +192,40 @@ class CTPGPhysicalEye(nn.Module):
         score = self._trackability_score(feature)
         b, _, h, w = score.shape
         count = min(self.track_points, h * w)
-        index = score.flatten(1).topk(count, dim=-1).indices
-        y = torch.div(index, w, rounding_mode="floor")
-        x = index % w
-        return torch.stack((x, y), dim=-1).to(score.dtype)
+        # One maximum per spatial cell prevents all points collapsing onto a
+        # high-contrast border.  The margin keeps the correlation window and
+        # rigid-flow supervision inside the image.
+        margin = min(max(self.tracker.radius + 1, 1), max((min(h, w) - 1) // 2, 0))
+        while margin > 0 and (h - 2 * margin) * (w - 2 * margin) < count:
+            margin -= 1
+        inner_h, inner_w = max(h - 2 * margin, 1), max(w - 2 * margin, 1)
+        rows = max(1, min(inner_h, round(math.sqrt(count * inner_h / inner_w))))
+        cols = max(1, min(inner_w, math.ceil(count / rows)))
+        while rows * cols < count and rows < inner_h:
+            rows += 1
+        while rows * cols < count and cols < inner_w:
+            cols += 1
+        y_edges = torch.linspace(margin, h - margin, rows + 1, device=score.device).round().long()
+        x_edges = torch.linspace(margin, w - margin, cols + 1, device=score.device).round().long()
+        selected = []
+        for row in range(rows):
+            for col in range(cols):
+                y0, y1 = int(y_edges[row]), int(y_edges[row + 1])
+                x0, x1 = int(x_edges[col]), int(x_edges[col + 1])
+                if y1 <= y0 or x1 <= x0:
+                    continue
+                local = score[:, 0, y0:y1, x0:x1].flatten(1)
+                index = local.argmax(-1)
+                local_w = x1 - x0
+                y = torch.div(index, local_w, rounding_mode="floor") + y0
+                x = index % local_w + x0
+                selected.append(torch.stack((x, y), dim=-1))
+        if len(selected) < count:
+            raise RuntimeError(f"could select only {len(selected)}/{count} track points")
+        if len(selected) > count:
+            keep = torch.linspace(0, len(selected) - 1, count).round().long().tolist()
+            selected = [selected[index] for index in keep]
+        return torch.stack(selected, dim=1).to(score.dtype)
 
     def forward_sequence(self, images: torch.Tensor, intrinsics: torch.Tensor,
                          projection_y_sign: torch.Tensor | None = None,
@@ -242,9 +277,13 @@ class CTPGPhysicalEye(nn.Module):
             pooled = ((pose_features * static_weight[..., None]).sum(1) /
                       static_weight.sum(1, keepdim=True).clamp_min(1e-4))
             initial = se3_exp(self.pose_head(pooled))
-            refined, ba_history, _ = bundle_adjust_pair(
-                point3d, track["target"], k4[:, frame + 1], initial,
-                static_weight, sign, iterations=self.ba_iterations)
+            # BA and its Jacobians are a small system; numerical reliability is
+            # more valuable than Tensor-Core speed here.
+            with torch.autocast(device_type=images.device.type, enabled=False):
+                refined, ba_history, _ = bundle_adjust_pair(
+                    point3d.float(), track["target"].float(),
+                    k4[:, frame + 1].float(), initial.float(),
+                    static_weight.float(), sign.float(), iterations=self.ba_iterations)
             points_all.append(points); targets.append(track["target"])
             confidences.append(track["confidence"]); dynamics.append(track["dynamic_probability"])
             dynamic_logits.append(track["dynamic_logit"])
@@ -296,8 +335,10 @@ class CTPGPhysicalEye(nn.Module):
         valid = depth_valid & torch.isfinite(depth_gt) & (depth_gt > 1e-4)
         log_error = (output["depth"].clamp_min(1e-4).log() -
                      depth_gt.clamp_min(1e-4).log()).abs()
-        depth_nll = ((log_error * torch.exp(-output["depth_log_sigma"]) +
-                      output["depth_log_sigma"]).masked_select(valid).mean())
+        depth_terms = (log_error * torch.exp(-output["depth_log_sigma"]) +
+                       output["depth_log_sigma"])
+        depth_nll = (depth_terms.masked_select(valid).mean() if bool(valid.any()) else
+                     torch.nan_to_num(depth_terms).sum() * 0)
 
         gt_relative = torch.stack([
             camera_transform(pose_gt_c2w[:, i], pose_gt_c2w[:, i + 1])
@@ -312,6 +353,7 @@ class CTPGPhysicalEye(nn.Module):
         track_loss = depth_nll.new_zeros(())
         dynamic_loss = depth_nll.new_zeros(())
         rigid_consistency = depth_nll.new_zeros(())
+        track_valid_fraction = depth_nll.new_zeros(())
         if rigid_flow is not None:
             b, pairs, h, width, _ = rigid_flow.shape
             h4, w4 = output["feature_hw"]
@@ -332,9 +374,16 @@ class CTPGPhysicalEye(nn.Module):
                     gt_ok.append(bilinear_sample(mask, source[:, index]).squeeze(-1) > .5)
             gt_track = torch.stack(gt_track, 1); gt_ok = torch.stack(gt_ok, 1)
             epe = torch.linalg.vector_norm(output["track_target"] - gt_track, dim=-1)
-            track_loss = epe.masked_select(gt_ok).mean() if bool(gt_ok.any()) else epe.mean() * 0
+            finite = torch.isfinite(epe)
+            supervised = gt_ok & finite
+            safe_epe = torch.nan_to_num(epe, nan=1e3, posinf=1e3, neginf=1e3).clamp_max(1e3)
+            track_valid_fraction = supervised.float().mean()
+            track_loss = (safe_epe.masked_select(supervised).mean()
+                          if bool(supervised.any()) else safe_epe.sum() * 0)
             static = (1 - output["dynamic_probability"]) * output["track_confidence"]
-            rigid_consistency = (epe * static).sum() / static.sum().clamp_min(1)
+            static = static * supervised.to(static.dtype)
+            rigid_consistency = ((safe_epe * static).sum() /
+                                 static.sum().clamp_min(1))
         if dynamic_gt is not None:
             h4, w4 = output["feature_hw"]
             labels = []
@@ -344,7 +393,8 @@ class CTPGPhysicalEye(nn.Module):
                 labels.append(bilinear_sample(mask, output["track_source"][:, index]).squeeze(-1))
             labels = torch.stack(labels, 1)
             dynamic_loss = F.binary_cross_entropy_with_logits(output["dynamic_logit"], labels)
-        ba = output["ba_residual_history"]
+        ba = torch.nan_to_num(output["ba_residual_history"], nan=1e3,
+                              posinf=1e3, neginf=1e3)
         ba_monotonic = F.relu(ba[..., -1] - ba[..., 0]).mean()
         calibration_contrast = depth_nll.new_zeros(())
         if counterfactual_output is not None:
@@ -364,6 +414,7 @@ class CTPGPhysicalEye(nn.Module):
                    "geometry_rotation": float(rotation_loss.detach()),
                    "geometry_translation": float(translation_loss.detach()),
                    "geometry_track_epe": float(track_loss.detach()),
+                   "geometry_track_valid_fraction": float(track_valid_fraction.detach()),
                    "geometry_rigid_epe": float(rigid_consistency.detach()),
                    "geometry_dynamic_bce": float(dynamic_loss.detach()),
                    "geometry_ba_monotonic": float(ba_monotonic.detach()),

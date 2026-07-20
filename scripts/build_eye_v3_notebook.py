@@ -16,7 +16,7 @@ def code(value):
 
 
 cells = [
-md("""# JWM CTPG-Eye v3 — Day 5 (Kaggle T4×2)
+md("""# JWM CTPG-Eye v3.1 Stability — Day 5 (Kaggle T4×2)
 
 Camera-calibrated track/point geometry with differentiable BA and adaptive
 training budgets. Use **Save Version → Save & Run All**, accelerator **GPU
@@ -129,18 +129,25 @@ data_args=Namespace(tartan_train=tartan_train,tartan_val=tartan_val,tartan_test=
                     tum_train=tum_train,tum_val=tum_val,tum_test=tum_test,
                     bonn_train=bonn_train,bonn_val=bonn_val,bonn_test=bonn_test)
 datasets=make_datasets(data_args)
-admission=validate_geometry_v3_datasets(datasets,'/kaggle/working/dataset_validation_v3.json')
+admission=validate_geometry_v3_datasets(datasets,'/kaggle/working/dataset_validation_v31_preflight.json')
 print(json.dumps(admission,indent=2))
 assert admission['valid'],f"DATA BLOCKED: {admission['failures']}"
 """),
-md("""## Exact graph 100-step T4×2 profile
+md("""## Actual-mixture 250-step T4×2 stability canary
 
-This cell profiles the full 256px graph, not a miniature proxy. Peak memory
-must remain below 88% per rank. The measured rate gives the run-time estimate.
+This cell profiles the full 256px graph on the real g0 Procedural+TartanAir
+mixture. Peak memory must remain below 88% per rank and every loss/gradient
+must remain finite. The measured rate gives the run-time estimate.
 """),
 code("""profile='/kaggle/working/eye_v3_profile.json'
+profile_flags=[]
+for name,values in [('--tartan-train',tartan_train),('--tartan-val',tartan_val),
+ ('--tum-train',tum_train),('--tum-val',tum_val),('--tum-test',tum_test),
+ ('--bonn-train',bonn_train),('--bonn-val',bonn_val),('--bonn-test',bonn_test)]:
+    profile_flags += [name,*values]
 cmd=['torchrun','--standalone','--nproc_per_node=2','scripts/profile_eye_v3_ddp.py',
-     '--warmstart',warmstart,'--output',profile,'--steps','100','--per-gpu-batch','1']
+     '--warmstart',warmstart,'--output',profile,'--steps','250','--per-gpu-batch','1',
+     *profile_flags]
 print(' '.join(cmd),flush=True); subprocess.run(cmd,check=True)
 profile_report=json.loads(Path(profile).read_text()); print(json.dumps(profile_report,indent=2))
 assert profile_report['valid'],'PROFILE BLOCKED: unsafe memory or non-finite training'
@@ -152,7 +159,7 @@ slope decides continue, LR reduction, stage advance, convergence, overfit stop
 or blocked stop. Atomic `resume.pt` is written every 200 optimizer steps.
 """),
 code("""import shlex
-out='/kaggle/working/jwm_eye_v3'
+out='/kaggle/working/jwm_eye_v31'
 flags=[]
 for name,values in [('--tartan-train',tartan_train),('--tartan-val',tartan_val),
  ('--tum-train',tum_train),('--tum-val',tum_val),('--tum-test',tum_test),
@@ -166,30 +173,30 @@ print(' '.join(shlex.quote(x) for x in cmd),flush=True)
 subprocess.run(cmd,check=True)
 """),
 code("""import matplotlib.pyplot as plt
-metrics_path=Path(out)/'metrics_v3.json'; history=json.loads(metrics_path.read_text())
+metrics_path=Path(out)/'metrics_v31.json'; history=json.loads(metrics_path.read_text())
 print('evaluations',len(history),'final status checkpoint=',
-      [x.name for x in Path(out).glob('jwm_eye_v3*.pt')])
+      [x.name for x in Path(out).glob('jwm_eye_v31*.pt')])
 steps=[x['global_step'] for x in history]
 depth=[x['report']['controls']['normal']['depth_abs_rel'] for x in history]
 ate=[x['report']['controls']['normal']['ate_metric'] for x in history]
 gates=[sum(x['report']['gates'].values()) for x in history]
 fig,ax=plt.subplots(1,3,figsize=(12,3.2))
-ax[0].plot(steps,depth); ax[0].set_title('OOD Depth AbsRel ↓')
-ax[1].plot(steps,ate); ax[1].set_title('OOD metric ATE ↓')
-ax[2].plot(steps,gates); ax[2].axhline(7,color='r',ls='--'); ax[2].set_title('Causal gates / 7 ↑')
+ax[0].plot(steps,depth,marker='o'); ax[0].set_title('OOD Depth AbsRel ↓')
+ax[1].plot(steps,ate,marker='o'); ax[1].set_title('OOD metric ATE ↓')
+ax[2].plot(steps,gates,marker='o'); ax[2].axhline(7,color='r',ls='--'); ax[2].set_title('Causal gates / 7 ↑')
 plt.tight_layout(); plt.savefig(Path(out)/'training_metrics.png',dpi=160); plt.show()
 """),
 code("""import hashlib, shutil
-release=Path('/kaggle/working/jwm_eye_v3_release')
+release=Path('/kaggle/working/jwm_eye_v31_release')
 if release.exists(): shutil.rmtree(release)
 release.mkdir()
-for source in [Path(out)/'jwm_eye_v3.pt',Path(out)/'jwm_eye_v3_blocked.pt',
-               Path(out)/'metrics_v3.json',Path(out)/'dataset_validation_v3.json',
+for source in [Path(out)/'jwm_eye_v31.pt',Path(out)/'jwm_eye_v31_blocked.pt',
+               Path(out)/'metrics_v31.json',Path(out)/'dataset_validation_v31.json',
                Path(out)/'training_metrics.png',Path(probe),Path(profile)]:
     if source.exists(): shutil.copy2(source,release/source.name)
 for model in release.glob('*.pt'):
     print(model.name,'sha256',hashlib.sha256(model.read_bytes()).hexdigest())
-archive=shutil.make_archive('/kaggle/working/jwm_eye_v3_artifacts','zip',release)
+archive=shutil.make_archive('/kaggle/working/jwm_eye_v31_artifacts','zip',release)
 print('PORTABLE OUTPUT',archive,round(Path(archive).stat().st_size/2**20,2),'MiB')
 """),
 ]
@@ -198,7 +205,7 @@ notebook={"cells":cells,"metadata":{"accelerator":"GPU",
     "kernelspec":{"display_name":"Python 3","language":"python","name":"python3"},
     "language_info":{"name":"python","version":"3.12"}},
     "nbformat":4,"nbformat_minor":5}
-path=ROOT/'jwm'/'kaggle'/'jwm_eye_physical_v3_t4x2_day05.ipynb'
+path=ROOT/'jwm'/'kaggle'/'jwm_eye_physical_v31_t4x2_day05.ipynb'
 path.parent.mkdir(parents=True,exist_ok=True)
 path.write_text(json.dumps(notebook,ensure_ascii=False,indent=1),encoding='utf-8')
 print(path)

@@ -50,15 +50,16 @@ from jwm.geometry_v3_trainer import (
 
 STAGES = (
     # name, min, max, eval_every, lr, source mixture
-    ("g0_calibrated_tracks", 800, 1800, 200, 3e-4,
+    ("g0_calibrated_tracks", 800, 1800, 200, 1e-4,
      {"procedural": .55, "tartanair": .45}),
-    ("g1_metric_odometry", 1200, 3200, 300, 1.5e-4,
+    ("g1_metric_odometry", 1200, 3200, 300, 8e-5,
      {"procedural": .15, "tartanair": .35, "tum": .35, "bonn": .15}),
-    ("g2_dynamic_geometry", 800, 2200, 250, 1.0e-4,
+    ("g2_dynamic_geometry", 800, 2200, 250, 5e-5,
      {"procedural": .15, "tartanair": .15, "tum": .20, "bonn": .50}),
-    ("g3_causal_ood", 600, 1800, 200, 7e-5,
+    ("g3_causal_ood", 600, 1800, 200, 3e-5,
      {"procedural": .10, "tartanair": .25, "tum": .35, "bonn": .30}),
 )
+CHECKPOINT_VERSION = "jwm-eye-v3.1-ctpg"
 
 
 class ProceduralV3Dataset(Dataset):
@@ -185,15 +186,18 @@ def depth_prior(sources: dict[str, Dataset]) -> float:
 def stage_specs(index: int):
     if index == 0:
         return (MetricSpec("depth_prior_gain", "max", 1.0, 1.05),
-                MetricSpec("ba_residual_reduction", "max", 0.0, .10))
+                MetricSpec("ba_residual_reduction", "max", 0.0, .10),
+                MetricSpec("track_valid_fraction", "max", 0.0, .25))
     if index == 1:
         return (MetricSpec("depth_prior_gain", "max", 1.0, 1.10),
                 MetricSpec("pose_identity_gain", "max", 1.0, 1.10, weight=1.5),
-                MetricSpec("ba_residual_reduction", "max", 0.0, .12))
+                MetricSpec("ba_residual_reduction", "max", 0.0, .12),
+                MetricSpec("track_valid_fraction", "max", 0.0, .30))
     if index == 2:
         return (MetricSpec("wrong_window_pose_ratio", "max", 1.0, 1.15),
                 MetricSpec("reverse_time_rpe_ratio", "max", 1.0, 1.05),
-                MetricSpec("wrong_intrinsics_pose_ratio", "max", 1.0, 1.05))
+                MetricSpec("wrong_intrinsics_pose_ratio", "max", 1.0, 1.05),
+                MetricSpec("track_valid_fraction", "max", 0.0, .30))
     return eye_v3_budget_specs()
 
 
@@ -214,7 +218,7 @@ def main():
     datasets = make_datasets(args)
     if rank == 0:
         admission = validate_geometry_v3_datasets(
-            datasets, output / "dataset_validation_v3.json")
+            datasets, output / "dataset_validation_v31.json")
         available = set(datasets["train"]) - {"procedural"}
         missing = {"tartanair", "tum", "bonn"} - available
         if missing and not (args.quick or args.allow_partial_data):
@@ -245,15 +249,17 @@ def main():
     scaler = torch.amp.GradScaler("cuda", init_scale=256,
                                   enabled=device.type == "cuda")
     history, global_step, start_stage, start_step = [], 0, 0, 0
+    nonfinite_skips = 0
     resume = output / "resume.pt"
     resume_controller = None
     if resume.exists():
         state = torch.load(resume, map_location=device, weights_only=False)
-        if state.get("version") != "jwm-eye-v3-ctpg":
+        if state.get("version") != CHECKPOINT_VERSION:
             raise RuntimeError("incompatible Eye-v3 resume checkpoint")
         raw.load_state_dict(state["model"], strict=True)
         optimizer.load_state_dict(state["optimizer"]); scaler.load_state_dict(state["scaler"])
         history = state.get("history", []); global_step = int(state["global_step"])
+        nonfinite_skips = int(state.get("nonfinite_skips", 0))
         start_stage, start_step = int(state["stage_index"]), int(state["stage_step"])
         resume_controller = state.get("controller")
     if rank == 0:
@@ -277,20 +283,23 @@ def main():
                           final_stage=stage_index == len(STAGES) - 1)))
         stage_step = start_step if stage_index == start_stage else 0
         lr_factor = .5 ** controller.lr_decays
+        nonfinite_streak = 0
         started = time.time(); running_loss = 0.0; running_grad = 0.0
         if rank == 0:
             print(f"\n=== {name} resume={stage_step} budget={min_steps}:{max_steps} "
                   f"eval={eval_every} mix={sampler.weights(mixture)} ===", flush=True)
         while stage_step < max_steps:
             # Short warmup; LR reductions are controlled only by held-out plateaus.
-            warm = min(100, max(10, min_steps // 10))
+            warm = min(200, max(25, min_steps // 4))
             warm_factor = min(1.0, (stage_step + 1) / warm)
             current_lr = base_lr * lr_factor * warm_factor
             for group in optimizer.param_groups: group["lr"] = current_lr
             optimizer.zero_grad(set_to_none=True); accumulated = {}
+            forward_finite = True
             for micro in range(args.grad_accum):
                 batch = move_geometry_batch(
-                    sampler.batch(global_step, micro, args.per_gpu_batch, mixture), device)
+                    sampler.batch(global_step + nonfinite_skips, micro,
+                                  args.per_gpu_batch, mixture), device)
                 wrong_k = (make_counterfactuals(batch)["wrong_intrinsics"]
                            if stage_index >= 2 else None)
                 with torch.autocast(device_type=device.type, dtype=torch.float16,
@@ -300,7 +309,9 @@ def main():
                         batch["depth_valid"], batch["dynamic_mask"], None,
                         batch["intrinsics"], batch["projection_y_sign"],
                         batch["rigid_flow"], batch["rigid_flow_valid"], wrong_k)
-                    micro_loss = loss / args.grad_accum
+                    forward_finite = forward_finite and bool(torch.isfinite(loss.detach()))
+                    micro_loss = torch.nan_to_num(loss, nan=0.0, posinf=0.0,
+                                                  neginf=0.0) / args.grad_accum
                 scaler.scale(micro_loss).backward()
                 for key, value in metrics.items():
                     accumulated[key] = accumulated.get(key, 0.0) + value / args.grad_accum
@@ -311,8 +322,26 @@ def main():
                         "Eye-v3 exact graph has trainable parameters without gradients: "
                         + ", ".join(disconnected))
             scaler.unscale_(optimizer)
-            gradient = torch.nn.utils.clip_grad_norm_(trainable, 1.0)
+            local_healthy = forward_finite and all(
+                parameter.grad is None or bool(torch.isfinite(parameter.grad).all())
+                for parameter in trainable)
+            healthy = torch.tensor(int(local_healthy), device=device)
+            if world > 1: dist.all_reduce(healthy, op=dist.ReduceOp.MIN)
+            if not bool(healthy):
+                optimizer.zero_grad(set_to_none=True)
+                nonfinite_skips += 1; nonfinite_streak += 1; lr_factor *= .5
+                scaler.update(new_scale=max(float(scaler.get_scale()) / 2, 1.0))
+                if rank == 0:
+                    print(f"SKIP non-finite step: streak={nonfinite_streak} "
+                          f"total={nonfinite_skips} next_lr_factor={lr_factor:.4f}", flush=True)
+                if nonfinite_streak >= 3:
+                    pipeline_blocked = True
+                    break
+                continue
+            gradient = torch.nn.utils.clip_grad_norm_(trainable, 1.0,
+                                                       error_if_nonfinite=True)
             scaler.step(optimizer); scaler.update()
+            nonfinite_streak = 0
             stage_step += 1; global_step += 1
             running_loss += accumulated["loss"]; running_grad += float(gradient)
             if rank == 0 and (stage_step == 1 or stage_step % args.log_every == 0):
@@ -320,6 +349,7 @@ def main():
                 print(f"[{stage_step:5d}/{max_steps}] loss={accumulated['loss']:.4f} "
                       f"depth={accumulated['geometry_depth_nll']:.4f} "
                       f"track={accumulated['geometry_track_epe']:.4f} "
+                      f"valid={accumulated['geometry_track_valid_fraction']:.3f} "
                       f"rot={accumulated['geometry_rotation']:.4f} "
                       f"trans={accumulated['geometry_translation']:.4f} "
                       f"ba={accumulated['geometry_ba_reduction']:.3f} "
@@ -356,16 +386,18 @@ def main():
                                           BudgetAction.STOP_UNSTABLE):
                     pipeline_blocked = True; break
             if rank == 0 and global_step % args.checkpoint_every == 0:
-                atomic_save({"version": "jwm-eye-v3-ctpg", "cfg": asdict(cfg),
+                atomic_save({"version": CHECKPOINT_VERSION, "cfg": asdict(cfg),
                              "model": raw.state_dict(), "optimizer": optimizer.state_dict(),
                              "scaler": scaler.state_dict(), "history": history,
                              "stage_index": stage_index, "stage_step": stage_step,
                              "global_step": global_step,
+                             "nonfinite_skips": nonfinite_skips,
                              "controller": controller.state_dict()}, resume)
         if rank == 0:
-            atomic_save({"version": "jwm-eye-v3-ctpg", "cfg": asdict(cfg),
+            atomic_save({"version": CHECKPOINT_VERSION, "cfg": asdict(cfg),
                          "model": raw.state_dict(), "history": history,
                          "stage_index": stage_index, "global_step": global_step,
+                         "nonfinite_skips": nonfinite_skips,
                          "validation": last_report,
                          "status": "blocked" if pipeline_blocked else "stage_complete"},
                         output / f"stage_{stage_index}_{name}.pt")
@@ -376,13 +408,13 @@ def main():
     if rank == 0:
         status = ("promotion_gate_passed" if last_report and last_report["valid"] and
                   not pipeline_blocked else "blocked_by_causal_ood_gate")
-        final = output / ("jwm_eye_v3.pt" if status == "promotion_gate_passed"
-                          else "jwm_eye_v3_blocked.pt")
-        atomic_save({"version": "jwm-eye-v3-ctpg", "cfg": asdict(cfg),
+        final = output / ("jwm_eye_v31.pt" if status == "promotion_gate_passed"
+                          else "jwm_eye_v31_blocked.pt")
+        atomic_save({"version": CHECKPOINT_VERSION, "cfg": asdict(cfg),
                      "model": raw.state_dict(), "history": history,
                      "validation": last_report, "status": status}, final)
-        (output / "metrics_v3.json").write_text(json.dumps(history, indent=2),
-                                                 encoding="utf-8")
+        (output / "metrics_v31.json").write_text(json.dumps(history, indent=2),
+                                                  encoding="utf-8")
         print(f"{status} -> {final}", flush=True)
     if world > 1:
         dist.barrier(); dist.destroy_process_group()

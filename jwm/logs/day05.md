@@ -107,3 +107,25 @@ direction, hard camera motion và wrong-window ranking trước khi train lại.
   không promote nếu depth/pose chưa thắng prior hoặc causal controls chưa pass.
 - Notebook T4×2 đã tạo tại `jwm/kaggle/jwm_eye_physical_v3_t4x2_day05.ipynb`.
   Full training vẫn chờ data admission và exact 100-step profile trên Kaggle.
+
+## Eye Physical v3 pilot — numerical gate chặn ở step 200
+
+- Data admission pass nhưng g0 phát nổ: `grad=NaN` ở step 175, gradient norm
+  `67549` ở step 200 và `track_epe=Infinity`.
+- Adaptive controller phát `stop_unstable`; chỉ xuất
+  `jwm_eye_v3_blocked.pt`, không resume và không deploy.
+- Root cause được định vị ở point top-k dồn vào biên, fallback track rỗng không
+  finite-safe và đạo hàm xuyên linear solve của unrolled BA kém điều kiện.
+
+## Eye Physical v3.1 Stability — corrective package
+
+- Chọn track point theo lưới nội vùng, clamp track trong ảnh và báo riêng valid-track ratio.
+- BA bắt buộc FP32, Levenberg damping theo Hessian, giới hạn SE(3), rollback đơn điệu
+  và truncated solver-gradient; loss/evaluator không còn tạo NaN/Infinity khi track rỗng.
+- G0 LR giảm `3e-4 → 1e-4`; thêm governor đồng bộ DDP để skip non-finite step,
+  hạ loss scale/LR và block sau ba lỗi liên tiếp.
+- Profile mới chạy 250 bước trên đúng Procedural+TartanAir thay vì procedural-only;
+  log đủ depth/track/valid/BA/gradient.
+- Local exact-seed canary 100 bước pass: valid-track khoảng `0.93–0.95`, không có
+  NaN/Inf; toàn bộ `127/127` tests pass.
+- Notebook mới: `jwm/kaggle/jwm_eye_physical_v31_t4x2_day05.ipynb`.

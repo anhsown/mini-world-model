@@ -90,19 +90,23 @@ def track_metrics(output: dict, batch: dict) -> dict[str, float]:
                          (h4, w4), mode="bilinear", align_corners=False)
     flow[:, 0] *= w4 / width; flow[:, 1] *= h4 / height
     flow = flow.reshape(b, pairs, 2, h4, w4)
-    errors, confidences = [], []
+    errors, confidences, valid_count, total_count = [], [], 0, 0
     for index in range(pairs):
         points = output["track_source"][:, index]
         target = points + bilinear_sample(flow[:, index], points)
         mask4 = F.interpolate(valid[:, index:index + 1].float(), (h4, w4), mode="nearest")
         mask = bilinear_sample(mask4, points).squeeze(-1) > .5
         epe = torch.linalg.vector_norm(output["track_target"][:, index] - target, dim=-1)
+        mask = mask & torch.isfinite(epe)
+        valid_count += int(mask.sum()); total_count += mask.numel()
         if bool(mask.any()):
             errors.append(epe[mask]); confidences.append(output["track_confidence"][:, index][mask])
     if not errors:
-        return {"track_epe": math.inf, "track_confidence": 0.0}
+        return {"track_epe": 1e3, "track_confidence": 0.0,
+                "track_valid_fraction": 0.0}
     return {"track_epe": float(torch.cat(errors).mean()),
-            "track_confidence": float(torch.cat(confidences).mean())}
+            "track_confidence": float(torch.cat(confidences).mean()),
+            "track_valid_fraction": valid_count / max(total_count, 1)}
 
 
 @torch.no_grad()
@@ -115,7 +119,8 @@ def _infer(model, batch: dict, image: torch.Tensor | None = None,
     metrics = depth_metrics(output["depth"], batch["depth"], batch["depth_valid"])
     metrics.update(pose_metrics(output["pose_c2w"], batch["pose_c2w"]))
     metrics.update(track_metrics(output, batch))
-    ba = output["ba_residual_history"]
+    ba = torch.nan_to_num(output["ba_residual_history"], nan=1e3,
+                          posinf=1e3, neginf=1e3)
     initial = ba[..., 0]
     reduction = torch.where(initial > .25,
                             1 - ba[..., -1] / initial.clamp_min(1e-6),
@@ -132,7 +137,7 @@ def evaluate_geometry_v3_controls(model, batches: Iterable[dict],
     model.eval()
     keys = ("depth_abs_rel", "depth_rmse", "depth_delta1", "ate_metric",
             "rpe_translation", "rpe_rotation_deg", "track_epe",
-            "track_confidence", "ba_residual_reduction")
+            "track_confidence", "track_valid_fraction", "ba_residual_reduction")
     accum = {name: {key: [] for key in keys}
              for name in ("normal", "black", "frozen", "reverse",
                           "wrong_window", "wrong_intrinsics")}
@@ -172,6 +177,7 @@ def evaluate_geometry_v3_controls(model, batches: Iterable[dict],
         "depth_prior_gain": ratio(depth_baseline, normal["depth_abs_rel"]),
         "pose_identity_gain": ratio(pose_baseline, normal["ate_metric"]),
         "ba_residual_reduction": normal["ba_residual_reduction"],
+        "track_valid_fraction": normal["track_valid_fraction"],
         "wrong_window_depth_ratio": ratio(controls["wrong_window"]["depth_abs_rel"],
                                             normal["depth_abs_rel"]),
         "wrong_window_pose_ratio": ratio(controls["wrong_window"]["ate_metric"],
@@ -204,5 +210,6 @@ def controller_metrics(report: dict) -> dict[str, float]:
     """Exact metric dictionary consumed by ``AdaptiveTrainingBudget``."""
     return {name: float(report["ratios"][name]) for name in (
         "depth_prior_gain", "pose_identity_gain", "ba_residual_reduction",
+        "track_valid_fraction",
         "wrong_window_depth_ratio", "wrong_window_pose_ratio",
         "reverse_time_rpe_ratio", "wrong_intrinsics_pose_ratio")}

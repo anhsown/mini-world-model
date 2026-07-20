@@ -51,3 +51,17 @@ def test_bundle_adjustment_reduces_reprojection_and_pose_error():
     assert history[0, -1] < history[0, 0] * .05
     assert after.item() < before.item() * .2
 
+
+def test_degenerate_bundle_adjustment_is_finite_monotonic_and_differentiable():
+    points = torch.tensor([[[0.0, 0.0, 2.0]] * 16], requires_grad=True)
+    k = torch.tensor([[[90., 0., 32.], [0., 90., 24.], [0., 0., 1.]]])
+    twist = torch.tensor([[.02, 0., 0., 0., .01, 0.]], requires_grad=True)
+    initial = se3_exp(twist); target = torch.full((1, 16, 2), 500.0)
+    refined, history, prediction = bundle_adjust_pair(
+        points, target, k, initial, iterations=3, damping=1e-2)
+    assert torch.isfinite(refined).all() and torch.isfinite(history).all()
+    assert torch.isfinite(prediction).all()
+    assert bool((history[..., 1:] <= history[..., :-1] + 1e-5).all())
+    (refined.square().mean() + history.mean()).backward()
+    assert points.grad is not None and torch.isfinite(points.grad).all()
+    assert twist.grad is not None and torch.isfinite(twist.grad).all()

@@ -172,81 +172,90 @@ def bundle_adjust_pair(points_src: torch.Tensor, target_pixels: torch.Tensor,
     """Unrolled robust Gauss-Newton pose-only bundle adjustment.
 
     Args use ``(B,N,*)`` and the returned transform maps source to destination.
-    Gradients flow through projections, weights, points and linear solves.
+    Gradients flow through the incoming pose and direct residual paths; the
+    ill-conditioned solver update uses a truncated gradient for stability.
     """
-    # CUDA linear solves are both more stable and more widely implemented in
-    # FP32. Cast only the tiny BA system; gradients still flow through casts.
+    # The system is tiny (6x6), so force the complete unrolled solve to FP32.
     output_dtype = points_src.dtype
-    if points_src.dtype in (torch.float16, torch.bfloat16):
+    device_type = points_src.device.type
+    with torch.autocast(device_type=device_type, enabled=False):
         points_src = points_src.float(); target_pixels = target_pixels.float()
-        intrinsics_dst = intrinsics_dst.float(); initial = initial.float()
-        if weights is not None:
-            weights = weights.float()
-        y_sign = torch.as_tensor(y_sign, device=points_src.device).float()
-    transform = initial
-    base_weights = (torch.ones(points_src.shape[:2], device=points_src.device,
-                               dtype=points_src.dtype) if weights is None else weights)
-    residual_history = []
-    eye6 = torch.eye(6, device=points_src.device, dtype=points_src.dtype)[None]
-    for _ in range(iterations):
-        points = transform_points(transform, points_src)
-        prediction, z = project_points(points, intrinsics_dst, y_sign)
-        residual = prediction - target_pixels
-        magnitude = torch.linalg.vector_norm(residual, dim=-1).clamp_min(1e-6)
-        robust = torch.where(magnitude <= huber_delta, torch.ones_like(magnitude),
-                             huber_delta / magnitude)
-        visible = (z > 1e-4).to(points.dtype)
-        weight = (base_weights * robust * visible).clamp_min(0)
-        residual_history.append((weight * residual.square().sum(-1)).sum(-1) /
-                                weight.sum(-1).clamp_min(1))
+        intrinsics_dst = intrinsics_dst.float(); transform = initial.float()
+        sign_value = torch.as_tensor(y_sign, device=points_src.device).float()
+        base_weights = (torch.ones(points_src.shape[:2], device=points_src.device)
+                        if weights is None else weights.float())
+        base_weights = torch.nan_to_num(base_weights, nan=0.0).clamp(0, 1)
+        residual_history = []
+        eye6 = torch.eye(6, device=points_src.device)[None]
 
-        x, y, z_safe = points.unbind(-1)
-        z_safe = z_safe.clamp_min(1e-4)
-        fx = intrinsics_dst[:, 0, 0][:, None]
-        fy = intrinsics_dst[:, 1, 1][:, None]
-        sign = torch.as_tensor(y_sign, device=points.device, dtype=points.dtype)
-        if sign.ndim == 0:
-            sign = sign.expand(points.shape[0])
-        sign = sign.reshape(points.shape[0], -1)[:, :1]
-        zeros = torch.zeros_like(x)
-        j_proj = torch.stack((fx / z_safe, zeros, -fx * x / z_safe.square(),
-                              zeros, sign * fy / z_safe,
-                              -sign * fy * y / z_safe.square()), dim=-1)
-        j_proj = j_proj.reshape(points.shape[0], points.shape[1], 2, 3)
-        dpoint = torch.cat((torch.eye(3, device=points.device, dtype=points.dtype)
-                            .view(1, 1, 3, 3).expand(points.shape[0], points.shape[1], -1, -1),
-                            -skew(points)), dim=-1)
-        jacobian = j_proj @ dpoint
-        weighted_j = jacobian * weight[..., None, None].sqrt()
-        weighted_r = residual * weight[..., None].sqrt()
-        hessian = torch.einsum("bnij,bnik->bjk", weighted_j, weighted_j) + damping * eye6
-        gradient = torch.einsum("bnij,bni->bj", weighted_j, weighted_r)
-        # Explicit casts are required even after the input promotion because
-        # an enclosing CUDA autocast may choose FP16 for the einsums.
-        hessian32 = torch.nan_to_num(hessian.float(), nan=0.0, posinf=1e4, neginf=-1e4)
-        gradient32 = torch.nan_to_num(gradient.float(), nan=0.0, posinf=1e4, neginf=-1e4)
-        # Feature-poor frames can make the normal equations rank deficient.
-        # Escalating Levenberg damping is deterministic and keeps the frame
-        # usable; a pseudoinverse is the final differentiable fallback.
-        rhs = -gradient32.unsqueeze(-1)
-        solution, info = torch.linalg.solve_ex(hessian32 + 1e-3 * eye6.float(), rhs)
-        if bool((info != 0).any()):
-            stronger = hessian32 + 1e-1 * eye6.float()
-            retry, retry_info = torch.linalg.solve_ex(stronger, rhs)
-            fallback = torch.linalg.pinv(stronger) @ rhs
-            choose = (retry_info == 0).view(-1, 1, 1)
-            retry = torch.where(choose, retry, fallback)
+        def objective(candidate):
+            moved = transform_points(candidate, points_src)
+            pixels, depth = project_points(moved, intrinsics_dst, sign_value)
+            residual = torch.nan_to_num(pixels - target_pixels, nan=0.0,
+                                        posinf=1e3, neginf=-1e3).clamp(-1e3, 1e3)
+            magnitude = torch.linalg.vector_norm(residual, dim=-1).clamp_min(1e-6)
+            robust = torch.where(magnitude <= huber_delta, torch.ones_like(magnitude),
+                                 huber_delta / magnitude)
+            visible = ((depth > 0.1) & torch.isfinite(target_pixels).all(-1)).to(moved.dtype)
+            weight = base_weights * robust * visible
+            cost = (weight * residual.square().sum(-1)).sum(-1) / weight.sum(-1).clamp_min(1)
+            return cost, moved, residual, weight
+
+        for _ in range(iterations):
+            current_cost, points, residual, weight = objective(transform)
+            residual_history.append(current_cost)
+            x, y, z_safe = points.unbind(-1); z_safe = z_safe.clamp_min(0.1)
+            fx = intrinsics_dst[:, 0, 0][:, None]; fy = intrinsics_dst[:, 1, 1][:, None]
+            sign = sign_value
+            if sign.ndim == 0: sign = sign.expand(points.shape[0])
+            sign = sign.reshape(points.shape[0], -1)[:, :1]
+            zeros = torch.zeros_like(x)
+            j_proj = torch.stack((fx / z_safe, zeros, -fx * x / z_safe.square(),
+                                  zeros, sign * fy / z_safe,
+                                  -sign * fy * y / z_safe.square()), dim=-1)
+            j_proj = j_proj.reshape(points.shape[0], points.shape[1], 2, 3)
+            dpoint = torch.cat((torch.eye(3, device=points.device).view(1, 1, 3, 3)
+                                .expand(points.shape[0], points.shape[1], -1, -1),
+                                -skew(points)), dim=-1)
+            jacobian = torch.nan_to_num(j_proj @ dpoint, nan=0.0,
+                                        posinf=1e4, neginf=-1e4).clamp(-1e4, 1e4)
+            weighted_j = jacobian * weight[..., None, None].sqrt()
+            weighted_r = residual * weight[..., None].sqrt()
+            hessian = torch.einsum("bnij,bnik->bjk", weighted_j, weighted_j)
+            gradient = torch.einsum("bnij,bni->bj", weighted_j, weighted_r)
+            hessian = torch.nan_to_num(hessian, nan=0.0, posinf=1e6, neginf=-1e6)
+            gradient = torch.nan_to_num(gradient, nan=0.0, posinf=1e4, neginf=-1e4)
+            diagonal_scale = hessian.diagonal(dim1=-2, dim2=-1).abs().mean(-1)
+            lm = (float(damping) * diagonal_scale.clamp(1e-3, 1e4)).view(-1, 1, 1)
+            rhs = -gradient.unsqueeze(-1)
+            solution, info = torch.linalg.solve_ex(hessian + lm * eye6, rhs)
+            retry, retry_info = torch.linalg.solve_ex(
+                hessian + (100 * lm + 1e-2) * eye6, rhs)
             solution = torch.where((info == 0).view(-1, 1, 1), solution, retry)
-        delta = solution.squeeze(-1)
-        delta = delta.clamp(-0.25, 0.25)
-        transform = se3_exp(delta) @ transform
+            solved = ((info == 0) | (retry_info == 0)).view(-1, 1)
+            delta = torch.where(solved, solution.squeeze(-1),
+                                torch.zeros_like(solution.squeeze(-1)))
+            delta = torch.nan_to_num(delta, nan=0.0, posinf=0.0, neginf=0.0)
+            translation, rotation = delta[:, :3], delta[:, 3:]
+            translation = translation * (0.10 / translation.norm(
+                dim=-1, keepdim=True).clamp_min(0.10)).clamp(max=1)
+            rotation = rotation * (0.087 / rotation.norm(
+                dim=-1, keepdim=True).clamp_min(0.087)).clamp(max=1)
+            delta = torch.cat((translation, rotation), dim=-1).detach()
+            full = se3_exp(delta) @ transform
+            full_cost, _, _, _ = objective(full)
+            small = se3_exp(0.25 * delta) @ transform
+            small_cost, _, _, _ = objective(small)
+            accept_full = torch.isfinite(full_cost) & (full_cost <= current_cost)
+            best = torch.where(accept_full[:, None, None], full, transform)
+            best_cost = torch.where(accept_full, full_cost, current_cost)
+            accept_small = torch.isfinite(small_cost) & (small_cost < best_cost)
+            transform = torch.where(accept_small[:, None, None], small, best)
 
-    points = transform_points(transform, points_src)
-    prediction, z = project_points(points, intrinsics_dst, y_sign)
-    residual = prediction - target_pixels
-    final_w = base_weights * (z > 1e-4).to(points.dtype)
-    residual_history.append((final_w * residual.square().sum(-1)).sum(-1) /
-                            final_w.sum(-1).clamp_min(1))
+        final_cost, points, _, _ = objective(transform)
+        residual_history.append(final_cost)
+        prediction, _ = project_points(points, intrinsics_dst, sign_value)
+        prediction = torch.nan_to_num(prediction, nan=0.0, posinf=1e3, neginf=-1e3)
     return (transform.to(output_dtype),
             torch.stack(residual_history, dim=-1).to(output_dtype),
             prediction.to(output_dtype))

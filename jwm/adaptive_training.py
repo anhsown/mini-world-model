@@ -324,9 +324,9 @@ def eye_v3_budget_specs() -> tuple[MetricSpec, ...]:
         MetricSpec("depth_prior_gain", "max", 1.0, 1.20, weight=1.0),
         MetricSpec("pose_identity_gain", "max", 1.0, 1.20, weight=1.5),
         MetricSpec("ba_residual_reduction", "max", 0.0, 0.15, weight=1.5),
+        MetricSpec("track_valid_fraction", "max", 0.0, 0.30, weight=1.0),
         MetricSpec("wrong_window_depth_ratio", "max", 1.0, 1.25, weight=1.0),
         MetricSpec("wrong_window_pose_ratio", "max", 1.0, 1.25, weight=1.5),
         MetricSpec("reverse_time_rpe_ratio", "max", 1.0, 1.10, weight=1.0),
         MetricSpec("wrong_intrinsics_pose_ratio", "max", 1.0, 1.15, weight=1.0),
     )
-
