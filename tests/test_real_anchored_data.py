@@ -4,7 +4,7 @@ from pathlib import Path
 
 import torch
 
-from jwm.dataset_registry import (DatasetAsset, safe_extract, select_assets,
+from jwm.dataset_registry import (DatasetAsset, materialize_asset, safe_extract, select_assets,
                                   validate_registry_split_groups)
 from jwm.real_anchored_sdg import (RealAnchorProfile,
                                    RealAnchoredSyntheticGeometry,
@@ -75,3 +75,17 @@ def test_safe_extract_rejects_parent_escape(tmp_path: Path):
         pass
     else:
         raise AssertionError("unsafe archive was accepted")
+
+
+def test_materialize_resumes_from_extraction_marker_without_archive(tmp_path: Path):
+    asset = DatasetAsset("done", "eye", "source", "real", ("starter",),
+                         "train", "scene", "terms", "https://invalid/x.tgz",
+                         "tgz", size_bytes=10**12)
+    output = tmp_path / "raw/source/done"
+    output.mkdir(parents=True)
+    (output / ".jwm_extracted.json").write_text(
+        json.dumps({"asset": "done", "sha256": "abc"}), encoding="utf-8")
+    record = materialize_asset(asset, tmp_path, reserve_free_gb=10**6)
+    assert record["status"] == "already_ready"
+    assert record["sha256"] == "abc"
+    assert record["archive"] is None

@@ -175,6 +175,23 @@ def materialize_asset(asset: DatasetAsset, root: str | Path,
         asset.archive, ".bin")
     archive_path = downloads / f"{asset.id}{suffix}"
     partial = archive_path.with_suffix(archive_path.suffix + ".part")
+    output = extracted / asset.id
+    marker = output / ".jwm_extracted.json"
+    # A verified extraction is the durable completion record. This permits a
+    # low-disk environment to delete the compressed archive and safely resume.
+    if extract and marker.exists():
+        completed = json.loads(marker.read_text(encoding="utf-8"))
+        return {
+            "asset_id": asset.id, "source": asset.source, "branch": asset.branch,
+            "kind": asset.kind, "split": asset.split,
+            "scene_group": asset.scene_group, "license": asset.license,
+            "url": asset.url,
+            "archive": str(archive_path) if archive_path.exists() else None,
+            "extracted": str(output),
+            "bytes": archive_path.stat().st_size if archive_path.exists() else 0,
+            "sha256": completed.get("sha256"), "elapsed_s": 0.0,
+            "status": "already_ready",
+        }
     # A prior HTTP transfer may have completed before a rounded-size check
     # rejected it. Recover it without another network request.
     if not archive_path.exists() and partial.exists() and archive_is_valid(partial, asset.archive):
@@ -189,8 +206,6 @@ def materialize_asset(asset: DatasetAsset, root: str | Path,
     digest = sha256_file(archive_path)
     if asset.sha256 and digest.lower() != asset.sha256.lower():
         raise IOError(f"SHA256 mismatch for {asset.id}")
-    output = extracted / asset.id
-    marker = output / ".jwm_extracted.json"
     if extract and asset.archive != "file" and not marker.exists():
         safe_extract(archive_path, output, asset.archive)
         marker.parent.mkdir(parents=True, exist_ok=True)
