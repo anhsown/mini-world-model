@@ -18,7 +18,7 @@ import torch.nn.functional as F
 
 from .geometry_math_v3 import (
     backproject_depth, bilinear_sample, bundle_adjust_pair, camera_rays, camera_transform,
-    project_points, se3_exp, transform_points,
+    project_points, resize_flow_with_valid, se3_exp, transform_points,
 )
 from .mathx import rotation_geodesic
 
@@ -87,6 +87,8 @@ class SparseTrackUpdater(nn.Module):
         self.gru = nn.GRUCell(len(offsets) + 2, hidden)
         self.delta = nn.Linear(hidden, 2)
         self.confidence = nn.Linear(hidden, 1)
+        self.visibility = nn.Linear(hidden, 1)
+        self.log_scale = nn.Linear(hidden, 1)
         self.dynamic = nn.Linear(hidden, 1)
         self.residual_3d_flow = nn.Linear(hidden, 3)
         nn.init.zeros_(self.delta.weight); nn.init.zeros_(self.delta.bias)
@@ -113,8 +115,14 @@ class SparseTrackUpdater(nn.Module):
                                    current[..., 1].clamp(0, source.shape[-2] - 1)), dim=-1)
         hidden_2d = hidden.reshape(b, n, -1)
         dynamic_logit = self.dynamic(hidden_2d).squeeze(-1)
+        visibility_logit = self.visibility(hidden_2d).squeeze(-1)
+        confidence_logit = self.confidence(hidden_2d).squeeze(-1)
         return {"target": current, "hidden": hidden_2d,
-                "confidence": torch.sigmoid(self.confidence(hidden_2d).squeeze(-1)),
+                "confidence_logit": confidence_logit,
+                "confidence": torch.sigmoid(confidence_logit),
+                "visibility_logit": visibility_logit,
+                "visibility_probability": torch.sigmoid(visibility_logit),
+                "log_scale": self.log_scale(hidden_2d).squeeze(-1).clamp(-3.0, 4.0),
                 "dynamic_logit": dynamic_logit,
                 "dynamic_probability": torch.sigmoid(dynamic_logit),
                 "scene_flow_residual": self.residual_3d_flow(hidden_2d)}
@@ -216,6 +224,10 @@ class CTPGPhysicalEye(nn.Module):
                                        nn.Linear(128, 6))
         self.world_projection = nn.Linear(c16, world_dim)
         self.track_projection = nn.Linear(128, world_dim)
+        temporal_dim = scene_width if self.scene_mixer is not None else c16
+        self.temporal_compatibility = nn.Sequential(
+            nn.Linear(4 * temporal_dim, max(64, temporal_dim // 2)), nn.SiLU(),
+            nn.Linear(max(64, temporal_dim // 2), 1))
         self.memory = BoundedWorldMemory(memory_frames)
         self.reset_safe_initialization()
 
@@ -348,9 +360,11 @@ class CTPGPhysicalEye(nn.Module):
         else:
             predicted_rays = analytic_rays
         predicted_rays = predicted_rays.reshape(b, t, h4, w4, 3)
-        points_all, targets, confidences, dynamics, dynamic_logits = [], [], [], [], []
+        points_all, targets, confidences, confidence_logits = [], [], [], []
+        dynamics, dynamic_logits = [], []
+        visibility_logits, visibilities, track_log_scales = [], [], []
         residual_flows, track_hidden = [], []
-        backward_targets = []
+        backward_targets, backward_visibilities = [], []
         initial_transforms, refined_transforms = [], []
         ba_histories = []
         for frame in range(t - 1):
@@ -375,7 +389,8 @@ class CTPGPhysicalEye(nn.Module):
                                        normalized, sampled_depth[..., None] / 10.0,
                                        track["confidence"][..., None],
                                        track["dynamic_probability"][..., None]), dim=-1)
-            static_weight = track["confidence"] * (1 - track["dynamic_probability"])
+            static_weight = (track["confidence"] * track["visibility_probability"] *
+                             (1 - track["dynamic_probability"]))
             pooled = ((pose_features * static_weight[..., None]).sum(1) /
                       static_weight.sum(1, keepdim=True).clamp_min(1e-4))
             if scene_context is not None:
@@ -391,14 +406,20 @@ class CTPGPhysicalEye(nn.Module):
                     k4[:, frame + 1].float(), initial.float(),
                     static_weight.float(), sign.float(), iterations=self.ba_iterations)
             points_all.append(points); targets.append(track["target"])
-            confidences.append(track["confidence"]); dynamics.append(track["dynamic_probability"])
+            confidences.append(track["confidence"])
+            confidence_logits.append(track["confidence_logit"])
+            dynamics.append(track["dynamic_probability"])
             dynamic_logits.append(track["dynamic_logit"])
+            visibility_logits.append(track["visibility_logit"])
+            visibilities.append(track["visibility_probability"])
+            track_log_scales.append(track["log_scale"])
             residual_flows.append(track["scene_flow_residual"])
             track_hidden.append(track["hidden"]); initial_transforms.append(initial)
             refined_transforms.append(refined); ba_histories.append(ba_history)
             if self.ray_head is not None:
                 backward = self.tracker(target, source, track["target"])
                 backward_targets.append(backward["target"])
+                backward_visibilities.append(backward["visibility_probability"])
 
         relative = torch.stack(refined_transforms, dim=1)
         initial_relative = torch.stack(initial_transforms, dim=1)
@@ -414,6 +435,11 @@ class CTPGPhysicalEye(nn.Module):
         world = world.reshape(b, t, world.shape[1], world.shape[2])
         summary = torch.stack([h.mean(1) for h in track_hidden], dim=1)
         track_tokens = self.track_projection(summary)
+        temporal_source = (scene_context if scene_context is not None else
+                           f16.reshape(b, t, *f16.shape[1:]).mean(dim=(-1, -2)))
+        left, right = temporal_source[:, :-1], temporal_source[:, 1:]
+        temporal_features = torch.cat((left, right, right - left, left * right), dim=-1)
+        temporal_logits = self.temporal_compatibility(temporal_features).squeeze(-1)
         if detach_state:
             world = world.detach(); track_tokens = track_tokens.detach()
         result = {
@@ -425,6 +451,10 @@ class CTPGPhysicalEye(nn.Module):
             "track_source": torch.stack(points_all, dim=1),
             "track_target": torch.stack(targets, dim=1),
             "track_confidence": torch.stack(confidences, dim=1),
+            "track_confidence_logit": torch.stack(confidence_logits, dim=1),
+            "track_visibility_logit": torch.stack(visibility_logits, dim=1),
+            "track_visibility": torch.stack(visibilities, dim=1),
+            "track_log_scale": torch.stack(track_log_scales, dim=1),
             "dynamic_probability": torch.stack(dynamics, dim=1),
             "dynamic_logit": torch.stack(dynamic_logits, dim=1),
             "scene_flow_residual": torch.stack(residual_flows, dim=1),
@@ -432,9 +462,12 @@ class CTPGPhysicalEye(nn.Module):
             "world_tokens": world, "track_tokens": track_tokens,
             "feature_hw": (h4, w4), "intrinsics_feature": k4,
             "scene_context": scene_context,
+            "temporal_compatibility_logit": temporal_logits,
+            "temporal_compatibility": torch.sigmoid(temporal_logits),
         }
         if backward_targets:
             result["track_backward_target"] = torch.stack(backward_targets, dim=1)
+            result["track_backward_visibility"] = torch.stack(backward_visibilities, dim=1)
         return result
 
     def loss(self, output: dict, depth_gt: torch.Tensor, pose_gt_c2w: torch.Tensor,
@@ -443,6 +476,7 @@ class CTPGPhysicalEye(nn.Module):
              rigid_flow: torch.Tensor | None = None,
              rigid_flow_valid: torch.Tensor | None = None,
              counterfactual_output: dict | None = None,
+             temporal_negative_output: dict | None = None,
              weights: dict[str, float] | None = None) -> tuple[torch.Tensor, dict]:
         weights = weights or {}
         w = lambda name, default: float(weights.get(name, default))
@@ -469,6 +503,10 @@ class CTPGPhysicalEye(nn.Module):
         rigid_consistency = depth_nll.new_zeros(())
         track_valid_fraction = depth_nll.new_zeros(())
         confidence_loss = depth_nll.new_zeros(())
+        visibility_loss = depth_nll.new_zeros(())
+        temporal_loss = F.binary_cross_entropy_with_logits(
+            output["temporal_compatibility_logit"],
+            torch.ones_like(output["temporal_compatibility_logit"]))
         track_cycle = depth_nll.new_zeros(())
         ray_loss = depth_nll.new_zeros(())
         if "ray_map_feature" in output:
@@ -481,41 +519,55 @@ class CTPGPhysicalEye(nn.Module):
             ray_loss = (1 - (F.normalize(predicted_ray, dim=-1) *
                              F.normalize(target_ray, dim=-1)).sum(-1)).mean()
         if "track_backward_target" in output:
-            track_cycle = torch.linalg.vector_norm(
-                output["track_backward_target"] - output["track_source"], dim=-1).mean()
+            cycle_error = torch.linalg.vector_norm(
+                output["track_backward_target"] - output["track_source"], dim=-1)
+            cycle_weight = (output["track_visibility"] *
+                            output["track_backward_visibility"]).detach()
+            track_cycle = ((cycle_error * cycle_weight).sum() /
+                           cycle_weight.sum().clamp_min(1))
         if rigid_flow is not None:
             b, pairs, h, width, _ = rigid_flow.shape
             h4, w4 = output["feature_hw"]
-            flow4 = F.interpolate(rigid_flow.permute(0, 1, 4, 2, 3).reshape(-1, 2, h, width),
-                                  (h4, w4), mode="bilinear", align_corners=False)
-            flow4[:, 0] *= w4 / width; flow4[:, 1] *= h4 / h
-            flow4 = flow4.reshape(b, pairs, 2, h4, w4)
+            source_valid = (rigid_flow_valid if rigid_flow_valid is not None else
+                            torch.ones(b, pairs, h, width, dtype=torch.bool,
+                                       device=rigid_flow.device))
+            flow4, valid4 = resize_flow_with_valid(
+                rigid_flow, source_valid, (h4, w4))
             source = output["track_source"]
             gt_track, gt_ok = [], []
             for index in range(pairs):
                 sampled = bilinear_sample(flow4[:, index], source[:, index])
                 gt_track.append(source[:, index] + sampled)
-                if rigid_flow_valid is None:
-                    gt_ok.append(torch.ones_like(source[:, index, :, 0], dtype=torch.bool))
-                else:
-                    mask = F.interpolate(rigid_flow_valid[:, index:index+1].float(),
-                                         (h4, w4), mode="nearest")
-                    gt_ok.append(bilinear_sample(mask, source[:, index]).squeeze(-1) > .5)
+                gt_ok.append(bilinear_sample(
+                    valid4[:, index:index + 1].float(), source[:, index]
+                ).squeeze(-1) > .5)
             gt_track = torch.stack(gt_track, 1); gt_ok = torch.stack(gt_ok, 1)
             epe = torch.linalg.vector_norm(output["track_target"] - gt_track, dim=-1)
             finite = torch.isfinite(epe)
-            supervised = gt_ok & finite
+            target_inside = ((gt_track[..., 0] >= 0) & (gt_track[..., 0] <= w4 - 1) &
+                             (gt_track[..., 1] >= 0) & (gt_track[..., 1] <= h4 - 1))
+            supervised = gt_ok & finite & target_inside
             safe_epe = torch.nan_to_num(epe, nan=1e3, posinf=1e3, neginf=1e3).clamp_max(1e3)
             track_valid_fraction = supervised.float().mean()
-            track_loss = (safe_epe.masked_select(supervised).mean()
-                          if bool(supervised.any()) else safe_epe.sum() * 0)
-            confidence_target = (safe_epe <= 1.0).to(output["track_confidence"].dtype)
-            confidence_bce = F.binary_cross_entropy(
-                output["track_confidence"].clamp(1e-5, 1 - 1e-5),
-                confidence_target, reduction="none")
-            confidence_loss = ((confidence_bce * supervised.to(confidence_bce.dtype)).sum() /
-                               supervised.sum().clamp_min(1))
-            static = (1 - output["dynamic_probability"]) * output["track_confidence"]
+            # Heteroscedastic Laplace NLL is robust to the heavy-tailed tracking
+            # failures observed on real held-out video. Invalid/occluded points
+            # do not contribute a fabricated coordinate target.
+            scale = output["track_log_scale"].exp().clamp_min(1e-3)
+            robust_track = safe_epe / scale + output["track_log_scale"]
+            track_loss = (robust_track.masked_select(supervised).mean()
+                          if bool(supervised.any()) else robust_track.sum() * 0)
+            threshold = w("confidence_threshold_px", 3.0)
+            confidence_target = (supervised & (safe_epe <= threshold)).to(
+                output["track_confidence"].dtype)
+            confidence_bce = F.binary_cross_entropy_with_logits(
+                output["track_confidence_logit"], confidence_target,
+                reduction="none")
+            confidence_loss = confidence_bce.mean()
+            visibility_target = supervised.to(output["track_visibility_logit"].dtype)
+            visibility_loss = F.binary_cross_entropy_with_logits(
+                output["track_visibility_logit"], visibility_target)
+            static = ((1 - output["dynamic_probability"]) *
+                      output["track_confidence"] * output["track_visibility"])
             static = static * supervised.to(static.dtype)
             rigid_consistency = ((safe_epe * static).sum() /
                                  static.sum().clamp_min(1))
@@ -527,7 +579,16 @@ class CTPGPhysicalEye(nn.Module):
                                      (h4, w4), mode="nearest")
                 labels.append(bilinear_sample(mask, output["track_source"][:, index]).squeeze(-1))
             labels = torch.stack(labels, 1)
-            dynamic_loss = F.binary_cross_entropy_with_logits(output["dynamic_logit"], labels)
+            # Balanced focal BCE prevents the all-static solution on sources
+            # where dynamic points are rare.
+            positives = labels.sum().detach()
+            negatives = labels.numel() - positives
+            pos_weight = (negatives / positives.clamp_min(1)).clamp(1.0, 20.0)
+            dynamic_bce = F.binary_cross_entropy_with_logits(
+                output["dynamic_logit"], labels, pos_weight=pos_weight, reduction="none")
+            probability = output["dynamic_probability"]
+            pt = labels * probability + (1 - labels) * (1 - probability)
+            dynamic_loss = ((1 - pt).square() * dynamic_bce).mean()
         ba = torch.nan_to_num(output["ba_residual_history"], nan=1e3,
                               posinf=1e3, neginf=1e3)
         ba_monotonic = F.relu(ba[..., -1] - ba[..., 0]).mean()
@@ -535,6 +596,10 @@ class CTPGPhysicalEye(nn.Module):
         if counterfactual_output is not None:
             wrong_ba = counterfactual_output["ba_residual_history"][..., -1]
             calibration_contrast = F.relu(.05 + ba[..., -1] - wrong_ba).mean()
+        if temporal_negative_output is not None:
+            negative_logits = temporal_negative_output["temporal_compatibility_logit"]
+            temporal_loss = temporal_loss + F.binary_cross_entropy_with_logits(
+                negative_logits, torch.zeros_like(negative_logits))
         total = (w("depth", 1.0) * depth_nll + w("rotation", 1.0) * rotation_loss +
                  w("translation", 1.0) * translation_loss + w("track", 1.0) * track_loss +
                  w("rigid", .25) * rigid_consistency + w("dynamic", .2) * dynamic_loss +
@@ -542,7 +607,9 @@ class CTPGPhysicalEye(nn.Module):
                  w("counterfactual", .15) * calibration_contrast +
                  w("ray", 0.0) * ray_loss +
                  w("track_cycle", 0.0) * track_cycle +
-                 w("confidence", 0.0) * confidence_loss)
+                 w("confidence", 0.0) * confidence_loss +
+                 w("visibility", 0.0) * visibility_loss +
+                 w("temporal", 0.0) * temporal_loss)
         ba_initial = ba[..., 0]
         ba_reduction = torch.where(
             ba_initial > .25,
@@ -560,5 +627,7 @@ class CTPGPhysicalEye(nn.Module):
                    "geometry_ray_angular": float(ray_loss.detach()),
                    "geometry_track_cycle": float(track_cycle.detach()),
                    "geometry_confidence_bce": float(confidence_loss.detach()),
+                   "geometry_visibility_bce": float(visibility_loss.detach()),
+                   "geometry_temporal_bce": float(temporal_loss.detach()),
                    "geometry_ba_reduction": float(ba_reduction.detach())}
         return total, metrics

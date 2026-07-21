@@ -105,6 +105,10 @@ class JWMConfig:
     geometry_ray_weight: float = 0.0
     geometry_track_cycle_weight: float = 0.0
     geometry_confidence_weight: float = 0.0
+    geometry_visibility_weight: float = 0.0
+    geometry_temporal_weight: float = 0.0
+    geometry_track_robust_delta: float = 3.0
+    geometry_confidence_threshold_px: float = 3.0
 
     # Inkling-mini MoE for the REASONER tower (INKLING_MINI.md; generator stays dense)
     reasoner_moe: bool = False

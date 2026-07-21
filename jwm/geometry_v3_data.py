@@ -89,6 +89,8 @@ def standardize_geometry_row(row: dict, *, strict_camera: bool = True,
         out["dynamic_labels_missing"] = True
     else:
         out["dynamic_mask"] = out["dynamic_mask"].bool()
+        out["dynamic_label_source"] = str(
+            out.get("dynamic_label_source", "measured_or_simulator"))
     timestamp = out.get("timestamp")
     if timestamp is None:
         timestamp = torch.arange(frames, dtype=torch.float64) / float(default_fps)
@@ -105,8 +107,10 @@ def standardize_geometry_row(row: dict, *, strict_camera: bool = True,
         if source.startswith("bonn"):
             out["dynamic_mask"] = derive_depth_motion_mask(out)
             out["dynamic_labels_pseudo_depth_motion"] = True
+            out["dynamic_label_source"] = "depth_motion_pseudo"
         else:
             out["dynamic_labels_assumed_static"] = True
+            out["dynamic_label_source"] = "assumed_static"
     if add_flow:
         out.update(derive_rigid_supervision(out))
     return out
@@ -206,6 +210,8 @@ def stack_geometry_v3_rows(rows: list[dict]) -> dict:
     batch = {key: torch.stack([row[key] for row in rows]) for key in required}
     batch["source"] = [row["source"] for row in rows]
     batch["scene_id"] = [row["scene_id"] for row in rows]
+    batch["dynamic_label_source"] = [
+        row.get("dynamic_label_source", "unknown") for row in rows]
     return batch
 
 
@@ -215,8 +221,16 @@ def make_counterfactuals(batch: dict) -> dict:
     images = batch["image"]
     result["frozen_image"] = images[:, :1].expand_as(images).clone()
     result["reverse_image"] = images.flip(1)
-    result["wrong_window_image"] = (images.roll(1, 0) if images.shape[0] > 1
-                                    else images.roll(1, 1))
+    if images.shape[0] > 1:
+        # A different sample is a strong, semantically valid negative.
+        result["wrong_window_image"] = images.roll(1, 0)
+    else:
+        # Circular shift preserves almost every adjacent pair.  Even/odd
+        # interleaving breaks local chronology without changing frame content.
+        time = images.shape[1]
+        order = torch.cat((torch.arange(0, time, 2, device=images.device),
+                           torch.arange(1, time, 2, device=images.device)))
+        result["wrong_window_image"] = images.index_select(1, order)
     wrong_k = batch["intrinsics"].clone()
     wrong_k[..., 0, 0] *= 0.65
     wrong_k[..., 1, 1] *= 1.35
@@ -297,6 +311,9 @@ def validate_geometry_v3_source(dataset: Dataset, source: str,
     determinant = float((torch.det(rotations) - 1).abs().max())
     valid_depth = torch.stack([row["depth_valid"].float().mean() for row in rows])
     flow_coverage = torch.stack([row["rigid_flow_valid"].float().mean() for row in rows])
+    dynamic_fraction = torch.stack([row["dynamic_mask"].float().mean() for row in rows])
+    dynamic_label_sources = sorted({row.get("dynamic_label_source", "unknown")
+                                    for row in rows})
     reprojection = [_reprojection_inlier(row) for row in rows]
     # Wrong K must alter ray geometry; otherwise a later model could ignore K
     # without the admission report noticing a degenerate calibration field.
@@ -324,6 +341,8 @@ def validate_geometry_v3_source(dataset: Dataset, source: str,
             "metrics": {"windows_total": len(dataset), "windows_checked": len(rows),
                         "depth_valid_fraction": float(valid_depth.mean()),
                         "static_flow_coverage": float(flow_coverage.mean()),
+                        "dynamic_positive_fraction": float(dynamic_fraction.mean()),
+                        "dynamic_label_sources": dynamic_label_sources,
                         "measured_depth_reprojection_inlier": sum(reprojection) / len(reprojection),
                         "camera_ray_counterfactual_delta": sum(sensitivity) / len(sensitivity),
                         "pose_so3_max_error": so3,
@@ -349,11 +368,26 @@ def validate_geometry_v3_datasets(splits: dict[str, dict[str, Dataset]],
             for right in keys[i + 1:]:
                 leaks |= ids[left] & ids[right]
         report["scene_leaks"][name] = sorted(leaks)
+    train_reports = [item for key, item in report["sources"].items()
+                     if key.startswith("train:")]
+    dynamic_supervision = any(
+        item.get("metrics", {}).get("dynamic_positive_fraction", 0.0) > 1e-5 and
+        any(mode not in ("assumed_static", "unknown")
+            for mode in item.get("metrics", {}).get("dynamic_label_sources", []))
+        for item in train_reports)
+    report["global_hypotheses"] = {
+        "H_scene_groups_do_not_leak": not any(report["scene_leaks"].values()),
+        "H_train_has_positive_dynamic_supervision": dynamic_supervision,
+    }
     report["valid"] = (all(item["valid"] for item in report["sources"].values()) and
-                       not any(report["scene_leaks"].values()))
+                       all(report["global_hypotheses"].values()))
     report["failures"] = {
         key: [name for name, passed in item.get("hypotheses", {}).items() if not passed]
         for key, item in report["sources"].items() if not item["valid"]}
+    report["failures"]["global"] = [
+        name for name, passed in report["global_hypotheses"].items() if not passed]
+    if not report["failures"]["global"]:
+        report["failures"].pop("global")
     path = Path(output); path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(report, indent=2), encoding="utf-8")
     return report

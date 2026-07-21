@@ -304,10 +304,15 @@ class JWM(nn.Module):
                 images, detach_state=False, intrinsics=wrong_intrinsics,
                 projection_y_sign=projection_y_sign)
                 if wrong_intrinsics is not None else None)
+            temporal_negative_output = (self.encode_geometry_sequence(
+                negative_images, detach_state=False, intrinsics=intrinsics,
+                projection_y_sign=projection_y_sign)
+                if negative_images is not None else None)
             loss, metrics = self.geometry.loss(
                 output, depth_gt, pose_gt_c2w, depth_valid, intrinsics,
                 projection_y_sign, dynamic_gt, rigid_flow, rigid_flow_valid,
                 counterfactual_output=counterfactual_output,
+                temporal_negative_output=temporal_negative_output,
                 weights={"depth": self.cfg.geometry_depth_weight,
                          "rotation": self.cfg.geometry_rel_pose_weight,
                          "translation": self.cfg.geometry_rel_translation_weight,
@@ -318,7 +323,11 @@ class JWM(nn.Module):
                          "counterfactual": self.cfg.geometry_counterfactual_weight,
                          "ray": self.cfg.geometry_ray_weight,
                          "track_cycle": self.cfg.geometry_track_cycle_weight,
-                         "confidence": self.cfg.geometry_confidence_weight})
+                         "confidence": self.cfg.geometry_confidence_weight,
+                         "visibility": self.cfg.geometry_visibility_weight,
+                         "temporal": self.cfg.geometry_temporal_weight,
+                         "confidence_threshold_px":
+                             self.cfg.geometry_confidence_threshold_px})
         elif version == "v2_pairwise":
             negative_output = (self.encode_geometry_sequence(
                 negative_images, detach_state=False)

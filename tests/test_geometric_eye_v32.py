@@ -38,6 +38,9 @@ def test_v32_depth_ray_register_track_contract_and_gradients():
     assert output["scene_context"].shape == (1, 3, 48)
     assert output["ray_map_feature"].shape == (1, 3, 8, 8, 3)
     assert output["track_backward_target"].shape == (1, 2, 8, 2)
+    assert output["track_visibility"].shape == (1, 2, 8)
+    assert output["track_log_scale"].shape == (1, 2, 8)
+    assert output["temporal_compatibility"].shape == (1, 2)
     loss, metrics = model(
         "geometry", batch["image"], batch["depth"], batch["pose_c2w"],
         batch["depth_valid"], batch["dynamic_mask"], None,
@@ -45,7 +48,8 @@ def test_v32_depth_ray_register_track_contract_and_gradients():
         batch["rigid_flow"], batch["rigid_flow_valid"])
     assert torch.isfinite(loss)
     assert {"geometry_ray_angular", "geometry_track_cycle",
-            "geometry_confidence_bce"} <= set(metrics)
+            "geometry_confidence_bce", "geometry_visibility_bce",
+            "geometry_temporal_bce"} <= set(metrics)
     loss.backward()
     assert active
     assert missing_trainable_gradients(model) == []

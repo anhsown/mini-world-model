@@ -91,7 +91,7 @@ def arguments():
     p = argparse.ArgumentParser()
     p.add_argument("--output", required=True)
     p.add_argument("--warmstart", required=True)
-    p.add_argument("--architecture", choices=("v31", "v32"), default="v31")
+    p.add_argument("--architecture", choices=("v31", "v32", "v321"), default="v31")
     p.add_argument("--probe-report", default="data/eye_v3_probes/probe_report.json")
     for source in ("tartan", "tum", "bonn"):
         for split in ("train", "val", "test"):
@@ -223,18 +223,19 @@ def depth_prior(sources: dict[str, Dataset]) -> float:
 def stage_specs(index: int):
     if index == 0:
         return (MetricSpec("depth_prior_gain", "max", 1.0, 1.05),
-                MetricSpec("ba_residual_reduction", "max", 0.0, .10),
+                MetricSpec("track_quality_score", "max", 0.0, .40),
                 MetricSpec("track_valid_fraction", "max", 0.0, .25))
     if index == 1:
         return (MetricSpec("depth_prior_gain", "max", 1.0, 1.10),
                 MetricSpec("pose_identity_gain", "max", 1.0, 1.10, weight=1.5),
                 MetricSpec("ba_residual_reduction", "max", 0.0, .12),
+                MetricSpec("ba_pose_gain", "max", 1.0, 1.0),
                 MetricSpec("track_valid_fraction", "max", 0.0, .30))
     if index == 2:
-        return (MetricSpec("wrong_window_pose_ratio", "max", 1.0, 1.15),
+        return (MetricSpec("wrong_window_compatibility_gap", "max", 0.0, .10),
                 MetricSpec("reverse_time_rpe_ratio", "max", 1.0, 1.05),
                 MetricSpec("wrong_intrinsics_pose_ratio", "max", 1.0, 1.05),
-                MetricSpec("track_valid_fraction", "max", 0.0, .30))
+                MetricSpec("track_quality_score", "max", 0.0, .65))
     return eye_v3_budget_specs()
 
 
@@ -279,9 +280,9 @@ def main():
         print(json.dumps(admission, indent=2), flush=True)
     if world > 1: dist.barrier()
 
-    cfg = (eye_physical_v32_scale() if args.architecture == "v32"
+    cfg = (eye_physical_v32_scale() if args.architecture in ("v32", "v321")
            else eye_physical_v3_scale())
-    if args.quick and args.architecture == "v32":
+    if args.quick and args.architecture in ("v32", "v321"):
         cfg = eye_physical_v32_smoke_scale()
     elif args.quick:
         cfg.image_size = 64; cfg.geometry_v3_width = 32
@@ -289,7 +290,7 @@ def main():
         cfg.geometry_ba_iterations = 1
     model = JWM(cfg)
     warm_report = (warmstart_eye_v32(model, args.warmstart)
-                   if args.architecture == "v32"
+                   if args.architecture in ("v32", "v321")
                    else warmstart_eye_physical(model, args.warmstart))
     active_names = set_trainable(model); model.to(device)
     trainable = [p for p in model.parameters() if p.requires_grad]
@@ -317,8 +318,10 @@ def main():
     nonfinite_skips = 0
     resume = output / "resume.pt"
     resume_controller = None
-    checkpoint_version = ("jwm-eye-v3.2-depth-ray-registers"
-                          if args.architecture == "v32" else CHECKPOINT_VERSION)
+    checkpoint_version = ({
+        "v32": "jwm-eye-v3.2-depth-ray-registers",
+        "v321": "jwm-eye-v3.2.1-robust-causal-geometry",
+    }.get(args.architecture, CHECKPOINT_VERSION))
     if resume.exists():
         state = torch.load(resume, map_location=device, weights_only=False)
         if state.get("version") != checkpoint_version:
@@ -368,13 +371,18 @@ def main():
                 batch = move_geometry_batch(
                     sampler.batch(global_step + nonfinite_skips, micro,
                                   args.per_gpu_batch, mixture), device)
-                wrong_k = (make_counterfactuals(batch)["wrong_intrinsics"]
-                           if stage_index >= 2 else None)
+                counterfactuals = make_counterfactuals(batch)
+                # Bound compute to two encoder passes: later stages alternate
+                # temporal and calibration negatives instead of running both.
+                use_wrong_k = stage_index >= 2 and (global_step + micro) % 2 == 0
+                wrong_k = counterfactuals["wrong_intrinsics"] if use_wrong_k else None
+                wrong_window = (None if use_wrong_k else
+                                counterfactuals["wrong_window_image"])
                 with torch.autocast(device_type=device.type, dtype=torch.float16,
                                     enabled=device.type == "cuda"):
                     loss, metrics = wrapped(
                         "geometry", batch["image"], batch["depth"], batch["pose_c2w"],
-                        batch["depth_valid"], batch["dynamic_mask"], None,
+                        batch["depth_valid"], batch["dynamic_mask"], wrong_window,
                         batch["intrinsics"], batch["projection_y_sign"],
                         batch["rigid_flow"], batch["rigid_flow_valid"], wrong_k)
                     forward_finite = forward_finite and bool(torch.isfinite(loss.detach()))
@@ -430,6 +438,8 @@ def main():
                       f"ray={accumulated.get('geometry_ray_angular', 0.0):.3f} "
                       f"cycle={accumulated.get('geometry_track_cycle', 0.0):.3f} "
                       f"conf={accumulated.get('geometry_confidence_bce', 0.0):.3f} "
+                      f"vis={accumulated.get('geometry_visibility_bce', 0.0):.3f} "
+                      f"temp={accumulated.get('geometry_temporal_bce', 0.0):.3f} "
                       f"grad={float(gradient):.3f} lr={current_lr:.2e} "
                       f"{rate:.2f} opt-step/s", flush=True)
 
@@ -466,13 +476,13 @@ def main():
                     pipeline_blocked = True; break
             if rank == 0 and global_step % args.checkpoint_every == 0:
                 model_state = (dict(raw.geometry.state_dict())
-                               if args.architecture == "v32" else raw.state_dict())
-                if args.architecture == "v32":
+                               if args.architecture in ("v32", "v321") else raw.state_dict())
+                if args.architecture in ("v32", "v321"):
                     model_state = {f"geometry.{key}": value
                                    for key, value in model_state.items()}
                 atomic_save({"version": checkpoint_version, "cfg": asdict(cfg),
                              "model": model_state,
-                             "model_kind": ("geometry_delta" if args.architecture == "v32"
+                             "model_kind": ("geometry_delta" if args.architecture in ("v32", "v321")
                                             else "full"),
                              "optimizer": optimizer.state_dict(),
                              "scaler": scaler.state_dict(), "history": history,
@@ -482,12 +492,12 @@ def main():
                              "controller": controller.state_dict()}, resume)
         if rank == 0:
             stage_state = (dict(raw.geometry.state_dict())
-                           if args.architecture == "v32" else raw.state_dict())
-            if args.architecture == "v32":
+                           if args.architecture in ("v32", "v321") else raw.state_dict())
+            if args.architecture in ("v32", "v321"):
                 stage_state = {f"geometry.{key}": value for key, value in stage_state.items()}
             atomic_save({"version": checkpoint_version, "cfg": asdict(cfg),
                          "model": stage_state,
-                         "model_kind": ("geometry_delta" if args.architecture == "v32"
+                         "model_kind": ("geometry_delta" if args.architecture in ("v32", "v321")
                                         else "full"), "history": history,
                          "stage_index": stage_index, "global_step": global_step,
                          "nonfinite_skips": nonfinite_skips,
@@ -506,7 +516,8 @@ def main():
         status = ("promotion_gate_passed" if last_report and last_report["valid"] and
                   test_report["valid"] and not pipeline_blocked
                   else "blocked_by_causal_ood_gate")
-        stem = "jwm_eye_v32" if args.architecture == "v32" else "jwm_eye_v31"
+        stem = {"v32": "jwm_eye_v32", "v321": "jwm_eye_v321"}.get(
+            args.architecture, "jwm_eye_v31")
         final = output / (f"{stem}.pt" if status == "promotion_gate_passed"
                           else f"{stem}_blocked.pt")
         atomic_save({"version": checkpoint_version, "cfg": asdict(cfg),

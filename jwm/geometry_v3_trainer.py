@@ -9,7 +9,7 @@ from typing import Iterable
 import torch
 import torch.nn.functional as F
 
-from .geometry_math_v3 import bilinear_sample, camera_transform
+from .geometry_math_v3 import bilinear_sample, camera_transform, resize_flow_with_valid
 from .geometry_v3_data import make_counterfactuals
 from .mathx import rotation_geodesic
 from .training_metrics_v2 import expected_calibration_error, harmonic_score
@@ -102,24 +102,32 @@ def pose_metrics(prediction: torch.Tensor, target: torch.Tensor) -> dict[str, fl
             "rpe_rotation_deg": float(rpe_r.mean() * 180 / math.pi)}
 
 
+def poses_from_relative(relative: torch.Tensor) -> torch.Tensor:
+    """Compose C2W poses using the same convention as CTPG forward."""
+    batch, pairs = relative.shape[:2]
+    poses = [torch.eye(4, device=relative.device, dtype=relative.dtype)
+             .unsqueeze(0).expand(batch, -1, -1)]
+    for index in range(pairs):
+        poses.append(poses[-1] @ torch.linalg.inv(relative[:, index]))
+    return torch.stack(poses, dim=1)
+
+
 def track_metrics(output: dict, batch: dict) -> dict[str, float]:
     rigid = batch["rigid_flow"]
     valid = batch["rigid_flow_valid"]
     b, pairs, height, width, _ = rigid.shape
     h4, w4 = output["feature_hw"]
-    flow = F.interpolate(rigid.permute(0, 1, 4, 2, 3).reshape(-1, 2, height, width),
-                         (h4, w4), mode="bilinear", align_corners=False)
-    flow[:, 0] *= w4 / width; flow[:, 1] *= h4 / height
-    flow = flow.reshape(b, pairs, 2, h4, w4)
+    flow, valid4 = resize_flow_with_valid(rigid, valid, (h4, w4))
     errors, confidences, dynamic_pred, dynamic_true = [], [], [], []
     valid_count, total_count = 0, 0
     for index in range(pairs):
         points = output["track_source"][:, index]
         target = points + bilinear_sample(flow[:, index], points)
-        mask4 = F.interpolate(valid[:, index:index + 1].float(), (h4, w4), mode="nearest")
-        mask = bilinear_sample(mask4, points).squeeze(-1) > .5
+        mask = bilinear_sample(valid4[:, index:index + 1].float(), points).squeeze(-1) > .5
         epe = torch.linalg.vector_norm(output["track_target"][:, index] - target, dim=-1)
-        mask = mask & torch.isfinite(epe)
+        inside = ((target[..., 0] >= 0) & (target[..., 0] <= w4 - 1) &
+                  (target[..., 1] >= 0) & (target[..., 1] <= h4 - 1))
+        mask = mask & inside & torch.isfinite(epe)
         valid_count += int(mask.sum()); total_count += mask.numel()
         if bool(mask.any()):
             errors.append(epe[mask]); confidences.append(output["track_confidence"][:, index][mask])
@@ -132,10 +140,11 @@ def track_metrics(output: dict, batch: dict) -> dict[str, float]:
         return {"track_epe": 1e3, "track_confidence": 0.0,
                 "track_valid_fraction": 0.0, "track_pck1": 0.0,
                 "track_pck3": 0.0, "track_outlier_rate": 1.0,
-                "track_ece": 1.0, "track_brier": 1.0,
+                "track_ece": 1.0, "track_ece_pck1": 1.0, "track_brier": 1.0,
                 "dynamic_precision": 0.0, "dynamic_recall": 0.0,
                 "dynamic_f1": 0.0, "dynamic_iou": 0.0}
     error, confidence = torch.cat(errors), torch.cat(confidences)
+    correct1 = (error < 1.0).float()
     correct = (error < 3.0).float()
     result = {"track_epe": float(error.mean()),
               "track_epe_median": float(error.median()),
@@ -147,6 +156,8 @@ def track_metrics(output: dict, batch: dict) -> dict[str, float]:
               "track_outlier_rate": float((error > 5.0).float().mean()),
               "track_ece": expected_calibration_error(confidence.tolist(),
                                                        correct.tolist()),
+              "track_ece_pck1": expected_calibration_error(confidence.tolist(),
+                                                            correct1.tolist()),
               "track_brier": float((confidence - correct).square().mean())}
     if dynamic_true:
         truth = torch.cat(dynamic_true) > .5
@@ -175,7 +186,12 @@ def _infer(model, batch: dict, image: torch.Tensor | None = None,
         projection_y_sign=batch["projection_y_sign"])
     metrics = depth_metrics(output["depth"], batch["depth"], batch["depth_valid"])
     metrics.update(pose_metrics(output["pose_c2w"], batch["pose_c2w"]))
+    initial_pose = poses_from_relative(output["initial_relative_pose"])
+    metrics["initial_ate_metric"] = pose_metrics(
+        initial_pose, batch["pose_c2w"])["ate_metric"]
     metrics.update(track_metrics(output, batch))
+    metrics["temporal_compatibility"] = float(
+        output["temporal_compatibility"].mean())
     ba = torch.nan_to_num(output["ba_residual_history"], nan=1e3,
                           posinf=1e3, neginf=1e3)
     initial = ba[..., 0]
@@ -198,6 +214,7 @@ def evaluate_geometry_v3_controls(model, batches: Iterable[dict],
             "rpe_rotation_deg", "track_epe", "track_epe_median",
             "track_epe_p90", "track_confidence", "track_valid_fraction",
             "track_pck1", "track_pck3", "track_outlier_rate", "track_ece",
+            "track_ece_pck1", "initial_ate_metric", "temporal_compatibility",
             "track_brier", "dynamic_precision", "dynamic_recall", "dynamic_f1",
             "dynamic_iou", "ba_residual_reduction")
     accum = {name: {key: [] for key in keys}
@@ -205,6 +222,7 @@ def evaluate_geometry_v3_controls(model, batches: Iterable[dict],
                           "wrong_window", "wrong_intrinsics")}
     source_accum = defaultdict(lambda: {key: [] for key in keys})
     baseline_absrel, identity_ate = [], []
+    moving_model_ate, moving_identity_ate = [], []
     windows = 0
     for raw in batches:
         if windows >= max_windows:
@@ -231,7 +249,15 @@ def evaluate_geometry_v3_controls(model, batches: Iterable[dict],
         baseline_absrel.append(depth_metrics(prior, batch["depth"],
                                              batch["depth_valid"])["depth_abs_rel"])
         identity = torch.eye(4, device=device).view(1, 1, 4, 4).expand_as(batch["pose_c2w"])
-        identity_ate.append(pose_metrics(identity, batch["pose_c2w"])["ate_metric"])
+        identity_metric = pose_metrics(identity, batch["pose_c2w"])["ate_metric"]
+        identity_ate.append(identity_metric)
+        gt_relative = torch.stack([
+            camera_transform(batch["pose_c2w"][:, i], batch["pose_c2w"][:, i + 1])
+            for i in range(batch["pose_c2w"].shape[1] - 1)], dim=1)
+        motion = float(gt_relative[..., :3, 3].norm(dim=-1).mean())
+        if motion >= .01:
+            moving_model_ate.append(accum["normal"]["ate_metric"][-1])
+            moving_identity_ate.append(identity_metric)
         windows += batch["image"].shape[0]
     controls = {name: {key: sum(values) / len(values) if values else math.inf
                        for key, values in metrics.items()}
@@ -244,16 +270,24 @@ def evaluate_geometry_v3_controls(model, batches: Iterable[dict],
     normal = controls["normal"]
     depth_baseline = sum(baseline_absrel) / max(len(baseline_absrel), 1)
     pose_baseline = sum(identity_ate) / max(len(identity_ate), 1)
+    moving_pose_baseline = (sum(moving_identity_ate) / len(moving_identity_ate)
+                            if moving_identity_ate else pose_baseline)
+    moving_pose_model = (sum(moving_model_ate) / len(moving_model_ate)
+                         if moving_model_ate else normal["ate_metric"])
     ratio = lambda numerator, denominator: numerator / max(denominator, 1e-8)
     ratios = {
         "depth_prior_gain": ratio(depth_baseline, normal["depth_abs_rel"]),
-        "pose_identity_gain": ratio(pose_baseline, normal["ate_metric"]),
+        "pose_identity_gain": ratio(moving_pose_baseline, moving_pose_model),
         "ba_residual_reduction": normal["ba_residual_reduction"],
+        "ba_pose_gain": ratio(normal["initial_ate_metric"], normal["ate_metric"]),
         "track_valid_fraction": normal["track_valid_fraction"],
         "wrong_window_depth_ratio": ratio(controls["wrong_window"]["depth_abs_rel"],
                                             normal["depth_abs_rel"]),
         "wrong_window_pose_ratio": ratio(controls["wrong_window"]["ate_metric"],
                                            normal["ate_metric"]),
+        "wrong_window_compatibility_gap": (
+            normal["temporal_compatibility"] -
+            controls["wrong_window"]["temporal_compatibility"]),
         "reverse_time_rpe_ratio": ratio(controls["reverse"]["rpe_translation"],
                                          normal["rpe_translation"]),
         "wrong_intrinsics_pose_ratio": ratio(controls["wrong_intrinsics"]["ate_metric"],
@@ -262,13 +296,20 @@ def evaluate_geometry_v3_controls(model, batches: Iterable[dict],
                                      normal["depth_abs_rel"]),
         "frozen_pose_ratio": ratio(controls["frozen"]["ate_metric"],
                                     normal["ate_metric"]),
+        "track_quality_score": harmonic_score((
+            normal["track_pck3"],
+            1.0 - min(1.0, normal["track_ece"]),
+            1.0 - min(1.0, normal["track_outlier_rate"]),
+        )),
     }
     gates = {
         "G_depth_beats_prior_20pct": ratios["depth_prior_gain"] >= 1.20,
         "G_pose_beats_identity_20pct": ratios["pose_identity_gain"] >= 1.20,
-        "G_ba_reduces_residual_15pct": ratios["ba_residual_reduction"] >= .15,
-        "G_wrong_window_hurts_depth_25pct": ratios["wrong_window_depth_ratio"] >= 1.25,
-        "G_wrong_window_hurts_pose_25pct": ratios["wrong_window_pose_ratio"] >= 1.25,
+        "G_ba_improves_pose_and_residual": (
+            ratios["ba_residual_reduction"] >= .15 and ratios["ba_pose_gain"] >= 1.02),
+        "G_wrong_window_temporal_detected": (
+            ratios["wrong_window_compatibility_gap"] >= .15),
+        "G_tracks_usable_and_calibrated": ratios["track_quality_score"] >= .80,
         "G_reverse_time_detected": ratios["reverse_time_rpe_ratio"] >= 1.10,
         "G_wrong_intrinsics_detected": ratios["wrong_intrinsics_pose_ratio"] >= 1.15,
     }
@@ -302,7 +343,10 @@ def evaluate_geometry_v3_controls(model, batches: Iterable[dict],
                        if synthetic_scores and real_scores else math.nan)
     return {"valid": all(gates.values()), "windows": windows,
             "controls": controls, "baselines": {
-                "fixed_depth_abs_rel": depth_baseline, "identity_ate": pose_baseline},
+            "fixed_depth_abs_rel": depth_baseline, "identity_ate": pose_baseline,
+            "moving_identity_ate": moving_pose_baseline,
+            "moving_model_ate": moving_pose_model,
+            "moving_windows": len(moving_model_ate)},
             "ratios": ratios, "gates": gates, "per_source": per_source,
             "summary": {"capability_score": capability_score,
                         "probe_capability_score": probe_capability_score,
@@ -317,6 +361,7 @@ def controller_metrics(report: dict) -> dict[str, float]:
     """Exact metric dictionary consumed by ``AdaptiveTrainingBudget``."""
     return {name: float(report["ratios"][name]) for name in (
         "depth_prior_gain", "pose_identity_gain", "ba_residual_reduction",
+        "ba_pose_gain", "wrong_window_compatibility_gap", "track_quality_score",
         "track_valid_fraction",
         "wrong_window_depth_ratio", "wrong_window_pose_ratio",
         "reverse_time_rpe_ratio", "wrong_intrinsics_pose_ratio")}

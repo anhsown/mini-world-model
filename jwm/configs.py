@@ -205,9 +205,13 @@ def eye_physical_v32_scale() -> JWMConfig:
         geometry_dynamic_weight=0.25, geometry_ba_weight=0.15,
         geometry_counterfactual_weight=0.20,
         geometry_ray_weight=0.20,
-        geometry_track_cycle_weight=0.20,
-        geometry_confidence_weight=0.15,
-    )
+          geometry_track_cycle_weight=0.20,
+          geometry_confidence_weight=0.15,
+          geometry_visibility_weight=0.15,
+          geometry_temporal_weight=0.25,
+          geometry_track_robust_delta=3.0,
+          geometry_confidence_threshold_px=3.0,
+      )
 
 
 def eye_physical_v32_smoke_scale() -> JWMConfig:

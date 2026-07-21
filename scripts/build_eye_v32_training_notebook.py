@@ -1,4 +1,4 @@
-"""Build the resumable JWM-Eye v3.2 Kaggle T4x2 notebook."""
+"""Build the resumable JWM-Eye v3.2.1 Kaggle T4x2 notebook."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ def code(source: str) -> dict:
 
 
 cells = [
-    md("""# JWM-Eye v3.2 — 381M depth-ray world model (Kaggle T4×2)
+    md("""# JWM-Eye v3.2.1 — robust causal geometry (Kaggle T4×2)
 
 Select **GPU T4 x2**, enable Internet, and set Persistence to **Files only**.
 Attach private inputs containing `jwm_v4.pt` and
@@ -47,6 +47,7 @@ if requirements.exists():
     subprocess.run(['pip','install','-q','-r',str(requirements)],check=True)
 subprocess.run(['python','-m','pytest','tests/test_geometric_eye_v32.py',
                 'tests/test_geometric_eye_v3.py','tests/test_geometry_v3_data.py',
+                'tests/test_geometry_v321_metrics.py',
                 'tests/test_adaptive_training.py','-q'],check=True)
 """),
     code("""from pathlib import Path
@@ -73,30 +74,30 @@ subprocess.run(['python','scripts/build_real_anchored_synthetic.py',
  '--samples','250000','--profile-windows','96'],check=True)
 subprocess.run(['python','scripts/report_dataset_pack.py'],check=True)
 """),
-    code("""probe='/kaggle/working/eye_v32_probe_report.json'
+    code("""probe='/kaggle/working/eye_v321_probe_report.json'
 subprocess.run(['python','scripts/probe_eye_v3.py','--output',probe,
                 '--track-steps','120'],check=True)
 """),
-    md("""## Exact v3.2 graph canary
+    md("""## Exact v3.2.1 graph canary
 
 This runs the same 381M architecture and physical loss graph as full training.
 It blocks the long run on non-finite gradients or unsafe T4 memory use.
 """),
-    code("""profile='/kaggle/working/eye_v32_profile.json'
+    code("""profile='/kaggle/working/eye_v321_profile.json'
 subprocess.run(['torchrun','--standalone','--nproc_per_node=2',
- 'scripts/profile_eye_v3_ddp.py','--architecture','v32',
+ 'scripts/profile_eye_v3_ddp.py','--architecture','v321',
  '--warmstart',warmstart,'--output',profile,'--steps','100',
  '--per-gpu-batch','1'],check=True)
 """),
     md("""## Adaptive full training
 
 Held-out real causal/OOD gates—not training loss—control LR reductions, stage
-advancement and stopping. Intermediate v3.2 checkpoints store only the
+advancement and stopping. Intermediate v3.2.1 checkpoints store only the
 trainable geometry delta to preserve Kaggle disk; the final model is portable.
 """),
-    code("""out='/kaggle/working/jwm_eye_v32'
+    code("""out='/kaggle/working/jwm_eye_v321'
 cmd=['torchrun','--standalone','--nproc_per_node=2','scripts/train_eye_v3_ddp.py',
- '--architecture','v32','--output',out,'--warmstart',warmstart,
+ '--architecture','v321','--output',out,'--warmstart',warmstart,
  '--probe-report',probe,'--anchor-root','data/real_anchor_v1/raw',
  '--synthetic-profile','data/real_anchor_v1/derived/eye_real_anchor_profile_v1.json',
  '--synthetic-admission',admission,'--synthetic-train-samples','250000',
@@ -112,18 +113,18 @@ print(json.dumps(test['summary'],indent=2))
 print(json.dumps(test['gates'],indent=2))
 """),
     code("""import shutil, hashlib
-release=Path('/kaggle/working/jwm_eye_v32_release')
+release=Path('/kaggle/working/jwm_eye_v321_release')
 if release.exists(): shutil.rmtree(release)
 release.mkdir()
-models=sorted(Path(out).glob('jwm_eye_v32*.pt'))
-assert models, 'No final v3.2 model artifact found'
-for source in [models[-1],Path(out)/'metrics_v32.json',
+models=sorted(Path(out).glob('jwm_eye_v321*.pt'))
+assert models, 'No final v3.2.1 model artifact found'
+for source in [models[-1],Path(out)/'metrics_v321.json',
                Path(out)/'final_real_test_metrics.json',
                Path(out)/'synthetic_admission_used.json',
                Path(out)/'dataset_validation_v31.json',
                Path(out)/'warmstart_report.json',Path(profile),Path(probe)]:
     if source.exists(): shutil.copy2(source,release/source.name)
-archive=shutil.make_archive('/kaggle/working/jwm_eye_v32_artifacts','zip',release)
+archive=shutil.make_archive('/kaggle/working/jwm_eye_v321_artifacts','zip',release)
 for model in release.glob('*.pt'):
     print(model.name,'sha256',hashlib.sha256(model.read_bytes()).hexdigest())
 print('PORTABLE OUTPUT',archive,round(Path(archive).stat().st_size/2**20,2),'MiB')
@@ -141,6 +142,6 @@ notebook = {
 }
 
 output = (Path(__file__).resolve().parents[1] / "jwm/kaggle" /
-          "jwm_eye_v32_depth_ray_t4x2.ipynb")
+          "jwm_eye_v321_robust_causal_t4x2.ipynb")
 output.write_text(json.dumps(notebook, ensure_ascii=False, indent=1), encoding="utf-8")
 print(output)

@@ -10,6 +10,39 @@ the analytic JWM renderer (camera y points up).
 from __future__ import annotations
 
 import torch
+import torch.nn.functional as F
+
+
+def resize_flow_with_valid(flow: torch.Tensor, valid: torch.Tensor,
+                           size: tuple[int, int]) -> tuple[torch.Tensor, torch.Tensor]:
+    """Resize flow without bleeding invalid sentinels into valid pixels.
+
+    Args:
+        flow: ``(B,P,H,W,2)`` pixel displacement.
+        valid: ``(B,P,H,W)`` validity/visibility mask.
+        size: target ``(height,width)``.
+    Returns:
+        Rescaled flow ``(B,P,2,h,w)`` and conservative valid mask
+        ``(B,P,h,w)``.
+    """
+    if flow.shape[:-1] != valid.shape or flow.shape[-1] != 2:
+        raise ValueError("flow/valid shapes must be (B,P,H,W,2)/(B,P,H,W)")
+    b, pairs, height, width = valid.shape
+    out_h, out_w = size
+    weight = valid.to(flow.dtype).reshape(b * pairs, 1, height, width)
+    channels = torch.nan_to_num(flow, nan=0.0, posinf=0.0, neginf=0.0)
+    channels = channels.permute(0, 1, 4, 2, 3).reshape(b * pairs, 2, height, width)
+    numerator = F.interpolate(channels * weight, size, mode="bilinear",
+                              align_corners=False)
+    denominator = F.interpolate(weight, size, mode="bilinear",
+                                align_corners=False)
+    resized = numerator / denominator.clamp_min(1e-6)
+    resized[:, 0] *= out_w / width
+    resized[:, 1] *= out_h / height
+    # Require most of the interpolation footprint to be valid. This prevents
+    # supervision directly on depth/occlusion boundaries.
+    resized_valid = (denominator[:, 0] >= .75).reshape(b, pairs, out_h, out_w)
+    return resized.reshape(b, pairs, 2, out_h, out_w), resized_valid
 
 
 def ensure_frame_intrinsics(intrinsics: torch.Tensor, frames: int) -> torch.Tensor:
@@ -176,11 +209,14 @@ def bundle_adjust_pair(points_src: torch.Tensor, target_pixels: torch.Tensor,
     ill-conditioned solver update uses a truncated gradient for stability.
     """
     # The system is tiny (6x6), so force the complete unrolled solve to FP32.
+    # This nested context also defeats an enclosing CUDA autocast region.
     output_dtype = points_src.dtype
     device_type = points_src.device.type
     with torch.autocast(device_type=device_type, enabled=False):
-        points_src = points_src.float(); target_pixels = target_pixels.float()
-        intrinsics_dst = intrinsics_dst.float(); transform = initial.float()
+        points_src = points_src.float()
+        target_pixels = target_pixels.float()
+        intrinsics_dst = intrinsics_dst.float()
+        transform = initial.float()
         sign_value = torch.as_tensor(y_sign, device=points_src.device).float()
         base_weights = (torch.ones(points_src.shape[:2], device=points_src.device)
                         if weights is None else weights.float())
@@ -188,7 +224,8 @@ def bundle_adjust_pair(points_src: torch.Tensor, target_pixels: torch.Tensor,
         residual_history = []
         eye6 = torch.eye(6, device=points_src.device)[None]
 
-        def objective(candidate):
+        def objective(candidate: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor,
+                                                         torch.Tensor, torch.Tensor]:
             moved = transform_points(candidate, points_src)
             pixels, depth = project_points(moved, intrinsics_dst, sign_value)
             residual = torch.nan_to_num(pixels - target_pixels, nan=0.0,
@@ -196,7 +233,8 @@ def bundle_adjust_pair(points_src: torch.Tensor, target_pixels: torch.Tensor,
             magnitude = torch.linalg.vector_norm(residual, dim=-1).clamp_min(1e-6)
             robust = torch.where(magnitude <= huber_delta, torch.ones_like(magnitude),
                                  huber_delta / magnitude)
-            visible = ((depth > 0.1) & torch.isfinite(target_pixels).all(-1)).to(moved.dtype)
+            finite_target = torch.isfinite(target_pixels).all(-1)
+            visible = ((depth > 0.1) & finite_target).to(moved.dtype)
             weight = base_weights * robust * visible
             cost = (weight * residual.square().sum(-1)).sum(-1) / weight.sum(-1).clamp_min(1)
             return cost, moved, residual, weight
@@ -204,22 +242,27 @@ def bundle_adjust_pair(points_src: torch.Tensor, target_pixels: torch.Tensor,
         for _ in range(iterations):
             current_cost, points, residual, weight = objective(transform)
             residual_history.append(current_cost)
-            x, y, z_safe = points.unbind(-1); z_safe = z_safe.clamp_min(0.1)
-            fx = intrinsics_dst[:, 0, 0][:, None]; fy = intrinsics_dst[:, 1, 1][:, None]
+            x, y, z_safe = points.unbind(-1)
+            z_safe = z_safe.clamp_min(0.1)
+            fx = intrinsics_dst[:, 0, 0][:, None]
+            fy = intrinsics_dst[:, 1, 1][:, None]
             sign = sign_value
-            if sign.ndim == 0: sign = sign.expand(points.shape[0])
+            if sign.ndim == 0:
+                sign = sign.expand(points.shape[0])
             sign = sign.reshape(points.shape[0], -1)[:, :1]
             zeros = torch.zeros_like(x)
             j_proj = torch.stack((fx / z_safe, zeros, -fx * x / z_safe.square(),
                                   zeros, sign * fy / z_safe,
                                   -sign * fy * y / z_safe.square()), dim=-1)
             j_proj = j_proj.reshape(points.shape[0], points.shape[1], 2, 3)
-            dpoint = torch.cat((torch.eye(3, device=points.device).view(1, 1, 3, 3)
+            dpoint = torch.cat((torch.eye(3, device=points.device)
+                                .view(1, 1, 3, 3)
                                 .expand(points.shape[0], points.shape[1], -1, -1),
                                 -skew(points)), dim=-1)
             jacobian = torch.nan_to_num(j_proj @ dpoint, nan=0.0,
                                         posinf=1e4, neginf=-1e4).clamp(-1e4, 1e4)
-            weighted_j = jacobian * weight[..., None, None].sqrt()
+            root_weight = weight[..., None, None].sqrt()
+            weighted_j = jacobian * root_weight
             weighted_r = residual * weight[..., None].sqrt()
             hessian = torch.einsum("bnij,bnik->bjk", weighted_j, weighted_j)
             gradient = torch.einsum("bnij,bni->bj", weighted_j, weighted_r)
@@ -228,20 +271,31 @@ def bundle_adjust_pair(points_src: torch.Tensor, target_pixels: torch.Tensor,
             diagonal_scale = hessian.diagonal(dim1=-2, dim2=-1).abs().mean(-1)
             lm = (float(damping) * diagonal_scale.clamp(1e-3, 1e4)).view(-1, 1, 1)
             rhs = -gradient.unsqueeze(-1)
-            solution, info = torch.linalg.solve_ex(hessian + lm * eye6, rhs)
-            retry, retry_info = torch.linalg.solve_ex(
-                hessian + (100 * lm + 1e-2) * eye6, rhs)
+            system = hessian + lm * eye6
+            solution, info = torch.linalg.solve_ex(system, rhs)
+            retry, retry_info = torch.linalg.solve_ex(hessian + (100 * lm + 1e-2) * eye6,
+                                                       rhs)
             solution = torch.where((info == 0).view(-1, 1, 1), solution, retry)
             solved = ((info == 0) | (retry_info == 0)).view(-1, 1)
             delta = torch.where(solved, solution.squeeze(-1),
                                 torch.zeros_like(solution.squeeze(-1)))
             delta = torch.nan_to_num(delta, nan=0.0, posinf=0.0, neginf=0.0)
             translation, rotation = delta[:, :3], delta[:, 3:]
-            translation = translation * (0.10 / translation.norm(
-                dim=-1, keepdim=True).clamp_min(0.10)).clamp(max=1)
-            rotation = rotation * (0.087 / rotation.norm(
-                dim=-1, keepdim=True).clamp_min(0.087)).clamp(max=1)
+            translation = translation * (
+                0.10 / translation.norm(dim=-1, keepdim=True).clamp_min(0.10)
+            ).clamp(max=1)
+            rotation = rotation * (
+                0.087 / rotation.norm(dim=-1, keepdim=True).clamp_min(0.087)
+            ).clamp(max=1)
+            # Truncated differentiable BA: the accepted transform remains
+            # differentiable with respect to the incoming pose, while the
+            # ill-conditioned derivative of the linear solver itself is
+            # stopped.  Depth/tracks retain their direct supervised losses.
             delta = torch.cat((translation, rotation), dim=-1).detach()
+
+            # Trust-region rollback: accept an update only when it improves
+            # the robust objective; otherwise try a quarter step, then keep
+            # the previous transform.  This makes BA monotonic by contract.
             full = se3_exp(delta) @ transform
             full_cost, _, _, _ = objective(full)
             small = se3_exp(0.25 * delta) @ transform
@@ -252,7 +306,7 @@ def bundle_adjust_pair(points_src: torch.Tensor, target_pixels: torch.Tensor,
             accept_small = torch.isfinite(small_cost) & (small_cost < best_cost)
             transform = torch.where(accept_small[:, None, None], small, best)
 
-        final_cost, points, _, _ = objective(transform)
+        final_cost, points, residual, weight = objective(transform)
         residual_history.append(final_cost)
         prediction, _ = project_points(points, intrinsics_dst, sign_value)
         prediction = torch.nan_to_num(prediction, nan=0.0, posinf=1e3, neginf=-1e3)

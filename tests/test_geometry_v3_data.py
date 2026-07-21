@@ -29,7 +29,15 @@ def test_counterfactual_intrinsics_are_actually_different():
     assert torch.equal(controls["reverse_image"], batch["image"].flip(1))
 
 
+def test_single_sample_wrong_window_breaks_local_chronology_not_circular_shift():
+    batch = stack_geometry_v3_rows([procedural_v3_row(19, 6, 32)])
+    images = batch["image"]
+    wrong = make_counterfactuals(batch)["wrong_window_image"]
+    expected = images[:, [0, 2, 4, 1, 3, 5]]
+    assert torch.equal(wrong, expected)
+    assert not torch.equal(wrong, images.roll(1, 1))
+
+
 def test_procedural_v3_admission_passes_all_hypotheses():
     report = validate_geometry_v3_source(TinyProcedural(), "procedural")
     assert report["valid"], report
-

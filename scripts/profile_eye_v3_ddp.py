@@ -32,7 +32,7 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("--warmstart", required=True)
     p.add_argument("--output", required=True)
-    p.add_argument("--architecture", choices=("v31", "v32"), default="v31")
+    p.add_argument("--architecture", choices=("v31", "v32", "v321"), default="v31")
     p.add_argument("--steps", type=int, default=250)
     p.add_argument("--per-gpu-batch", type=int, default=1)
     p.add_argument("--tiny", action="store_true")
@@ -55,9 +55,9 @@ def main():
         dist.init_process_group("nccl" if device.type == "cuda" else "gloo",
                                 device_id=device if device.type == "cuda" else None)
     torch.manual_seed(20260723 + rank)
-    cfg = (eye_physical_v32_scale() if args.architecture == "v32"
+    cfg = (eye_physical_v32_scale() if args.architecture in ("v32", "v321")
            else eye_physical_v3_scale())
-    if args.tiny and args.architecture == "v32":
+    if args.tiny and args.architecture in ("v32", "v321"):
         cfg = eye_physical_v32_smoke_scale()
     elif args.tiny:
         cfg.image_size = 64; cfg.geometry_v3_width = 32
@@ -65,7 +65,7 @@ def main():
         cfg.geometry_ba_iterations = 1
     model = JWM(cfg)
     (warmstart_eye_v32(model, args.warmstart)
-     if args.architecture == "v32" else warmstart_eye_physical(model, args.warmstart))
+     if args.architecture in ("v32", "v321") else warmstart_eye_physical(model, args.warmstart))
     active_names = set_eye_v3_physical_trainable(model)
     model.to(device)
     trainable = [p for p in model.parameters() if p.requires_grad]
@@ -95,13 +95,15 @@ def main():
     started = time.time(); losses = []; recent_metrics = []
     for step in range(args.steps):
         batch = move_geometry_batch(cached[step % len(cached)], device)
-        wrong = make_counterfactuals(batch)["wrong_intrinsics"] if step % 2 else None
+        controls = make_counterfactuals(batch)
+        wrong = controls["wrong_intrinsics"] if step % 2 else None
+        wrong_window = controls["wrong_window_image"] if wrong is None else None
         optimizer.zero_grad(set_to_none=True)
         with torch.autocast(device_type=device.type, dtype=torch.float16,
                             enabled=device.type == "cuda"):
             loss, metrics = wrapped("geometry", batch["image"], batch["depth"],
                                     batch["pose_c2w"], batch["depth_valid"],
-                                    batch["dynamic_mask"], None, batch["intrinsics"],
+                                    batch["dynamic_mask"], wrong_window, batch["intrinsics"],
                                     batch["projection_y_sign"], batch["rigid_flow"],
                                     batch["rigid_flow_valid"], wrong)
         scaler.scale(loss).backward(); scaler.unscale_(optimizer)
@@ -129,6 +131,9 @@ def main():
                   f"track={mean('geometry_track_epe'):.4f} "
                   f"valid={mean('geometry_track_valid_fraction'):.3f} "
                   f"ba={mean('geometry_ba_reduction'):.3f} "
+                  f"conf={mean('geometry_confidence_bce'):.3f} "
+                  f"vis={mean('geometry_visibility_bce'):.3f} "
+                  f"temp={mean('geometry_temporal_bce'):.3f} "
                   f"grad={float(gradient):.3f}", flush=True)
     if device.type == "cuda": torch.cuda.synchronize(device)
     seconds = time.time() - started
