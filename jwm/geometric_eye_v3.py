@@ -138,29 +138,104 @@ class BoundedWorldMemory:
         self.tokens.clear(); self.poses.clear()
 
 
+class CausalSceneRegisterMixer(nn.Module):
+    """Compact causal temporal state instead of all-to-all video attention.
+
+    Each frame contributes one pooled visual token plus a small bank of scene
+    registers.  A token may attend to its own and earlier frames only.  This
+    keeps sequence cost O((T(R+1))^2) with R << spatial patches and gives pose
+    and metric scale a persistent, explicitly causal scene representation.
+    """
+
+    def __init__(self, input_channels: int, width: int, registers: int,
+                 layers: int, heads: int, max_frames: int):
+        super().__init__()
+        if width % heads:
+            raise ValueError("scene width must be divisible by scene heads")
+        self.registers = registers
+        self.input_projection = nn.Linear(input_channels, width)
+        self.scene_registers = nn.Parameter(torch.randn(registers, width) * 0.02)
+        self.frame_embedding = nn.Parameter(torch.randn(max_frames, width) * 0.01)
+        layer = nn.TransformerEncoderLayer(
+            width, heads, dim_feedforward=4 * width, activation="gelu",
+            batch_first=True, norm_first=True, dropout=0.0)
+        self.layers = nn.TransformerEncoder(layer, layers)
+        self.norm = nn.LayerNorm(width)
+
+    def forward(self, feature: torch.Tensor) -> torch.Tensor:
+        # feature: (B,T,C,H,W) -> one causal context vector per frame.
+        b, t, channels, _, _ = feature.shape
+        if t > self.frame_embedding.shape[0]:
+            raise ValueError(f"{t} frames exceed scene memory {self.frame_embedding.shape[0]}")
+        pooled = self.input_projection(feature.mean(dim=(-1, -2)))
+        frame_pos = self.frame_embedding[:t].view(1, t, 1, -1)
+        registers = self.scene_registers.view(1, 1, self.registers, -1).expand(b, t, -1, -1)
+        tokens = torch.cat((pooled.unsqueeze(2), registers), dim=2) + frame_pos
+        per_frame = self.registers + 1
+        flat = tokens.reshape(b, t * per_frame, -1)
+        frame_id = torch.arange(t, device=feature.device).repeat_interleave(per_frame)
+        # PyTorch bool encoder mask: True means blocked.
+        blocked = frame_id[None, :] > frame_id[:, None]
+        mixed = self.layers(flat, mask=blocked)
+        mixed = self.norm(mixed.reshape(b, t, per_frame, -1))
+        return mixed[:, :, 1:].mean(dim=2)
+
+
 class CTPGPhysicalEye(nn.Module):
     def __init__(self, world_dim: int, width: int = 96, track_points: int = 64,
                  track_radius: int = 2, track_iterations: int = 3,
-                 ba_iterations: int = 2, memory_frames: int = 32):
+                 ba_iterations: int = 2, memory_frames: int = 32,
+                 scene_registers: int = 0, scene_layers: int = 0,
+                 scene_width: int = 0, scene_heads: int = 8,
+                 pose_context: int = 0, ray_residual: float = 0.0):
         super().__init__()
         self.track_points = track_points
         self.ba_iterations = ba_iterations
+        self.ray_residual_scale = float(ray_residual)
         self.pyramid = CalibratedPyramid(width)
         c4, _, c16 = self.pyramid.channels
         self.depth = nn.Sequential(ResidualConv(c4), nn.Conv2d(c4, 2, 1))
+        self.scene_mixer = None
+        self.depth_film = None
+        self.pose_context = None
+        context_size = 0
+        if scene_registers > 0 and scene_layers > 0:
+            scene_width = scene_width or world_dim
+            self.scene_mixer = CausalSceneRegisterMixer(
+                c16, scene_width, scene_registers, scene_layers, scene_heads,
+                memory_frames)
+            self.depth_film = nn.Linear(scene_width, 2 * c4)
+            context_size = pose_context or max(32, scene_width // 4)
+            self.pose_context = nn.Linear(2 * scene_width, context_size)
+        self.ray_head = (nn.Conv2d(c4, 2, 1)
+                         if self.ray_residual_scale > 0 else None)
         self.tracker = SparseTrackUpdater(c4, hidden=128, radius=track_radius,
                                           iterations=track_iterations)
-        self.pose_head = nn.Sequential(nn.Linear(128 + 7, 128), nn.SiLU(),
+        self.pose_head = nn.Sequential(nn.Linear(128 + 7 + context_size, 192), nn.SiLU(),
+                                       nn.Linear(192, 128), nn.SiLU(),
                                        nn.Linear(128, 6))
-        nn.init.zeros_(self.pose_head[-1].weight)
-        nn.init.zeros_(self.pose_head[-1].bias)
         self.world_projection = nn.Linear(c16, world_dim)
         self.track_projection = nn.Linear(128, world_dim)
         self.memory = BoundedWorldMemory(memory_frames)
-        # No metric residual-flow target exists in this curriculum.  Start
-        # from the conservative rigid-world prior instead of random flow.
+        self.reset_safe_initialization()
+
+    def reset_safe_initialization(self) -> None:
+        """Restore identity-motion priors after JWM's global initializer.
+
+        JWM recursively initializes every Linear after submodules are built.
+        Without this explicit post-init hook the intended zero-delta pose and
+        track priors are silently overwritten, causing unstable first updates.
+        """
+        nn.init.zeros_(self.pose_head[-1].weight)
+        nn.init.zeros_(self.pose_head[-1].bias)
+        nn.init.zeros_(self.tracker.delta.weight)
+        nn.init.zeros_(self.tracker.delta.bias)
         nn.init.zeros_(self.tracker.residual_3d_flow.weight)
         nn.init.zeros_(self.tracker.residual_3d_flow.bias)
+        if self.ray_head is not None:
+            nn.init.zeros_(self.ray_head.weight); nn.init.zeros_(self.ray_head.bias)
+        if self.depth_film is not None:
+            nn.init.zeros_(self.depth_film.weight); nn.init.zeros_(self.depth_film.bias)
 
     @staticmethod
     def _scale_intrinsics(k: torch.Tensor, input_hw: tuple[int, int],
@@ -223,6 +298,8 @@ class CTPGPhysicalEye(nn.Module):
         if len(selected) < count:
             raise RuntimeError(f"could select only {len(selected)}/{count} track points")
         if len(selected) > count:
+            # Sample the complete cell lattice uniformly instead of dropping
+            # the final row/column, which would reintroduce spatial bias.
             keep = torch.linspace(0, len(selected) - 1, count).round().long().tolist()
             selected = [selected[index] for index in keep]
         return torch.stack(selected, dim=1).to(score.dtype)
@@ -242,7 +319,16 @@ class CTPGPhysicalEye(nn.Module):
         flat_sign = sign[:, None].expand(b, t).reshape(-1)
         f4, _, f16 = self.pyramid(flat_image, flat_k, flat_sign)
         h4, w4 = f4.shape[-2:]
-        raw_depth = self.depth(f4)
+        scene_context = None
+        if self.scene_mixer is not None:
+            f16_sequence = f16.reshape(b, t, *f16.shape[1:])
+            scene_context = self.scene_mixer(f16_sequence)
+            film = self.depth_film(scene_context.reshape(b * t, -1))
+            scale, shift = film.chunk(2, dim=-1)
+            f4_for_depth = f4 * (1 + 0.1 * scale[..., None, None].tanh()) + shift[..., None, None]
+        else:
+            f4_for_depth = f4
+        raw_depth = self.depth(f4_for_depth)
         metric_depth4 = raw_depth[:, :1].clamp(-4.0, 4.0).exp()
         log_sigma4 = raw_depth[:, 1:2].clamp(-5.0, 3.0)
         depth = F.interpolate(metric_depth4, (height, width), mode="bilinear",
@@ -251,8 +337,20 @@ class CTPGPhysicalEye(nn.Module):
                                   align_corners=False).reshape(b, t, height, width)
         f4 = f4.reshape(b, t, *f4.shape[1:])
         k4 = self._scale_intrinsics(intrinsics, (height, width), (h4, w4))
+        analytic_rays = camera_rays(
+            k4.reshape(b * t, 3, 3), h4, w4,
+            sign[:, None].expand(b, t).reshape(-1))
+        if self.ray_head is not None:
+            residual_xy = self.ray_residual_scale * torch.tanh(
+                self.ray_head(f4_for_depth)).permute(0, 2, 3, 1)
+            predicted_rays = analytic_rays.clone()
+            predicted_rays[..., :2] = predicted_rays[..., :2] + residual_xy
+        else:
+            predicted_rays = analytic_rays
+        predicted_rays = predicted_rays.reshape(b, t, h4, w4, 3)
         points_all, targets, confidences, dynamics, dynamic_logits = [], [], [], [], []
         residual_flows, track_hidden = [], []
+        backward_targets = []
         initial_transforms, refined_transforms = [], []
         ba_histories = []
         for frame in range(t - 1):
@@ -266,6 +364,10 @@ class CTPGPhysicalEye(nn.Module):
             point3d = torch.stack(((points[..., 0] - cx) / fx * sampled_depth,
                                    sign[:, None] * (points[..., 1] - cy) / fy * sampled_depth,
                                    sampled_depth), dim=-1)
+            if self.ray_head is not None:
+                sampled_ray = bilinear_sample(
+                    predicted_rays[:, frame].permute(0, 3, 1, 2), points)
+                point3d = sampled_ray * sampled_depth[..., None]
             flow = track["target"] - points
             normalized = torch.stack((points[..., 0] / max(w4 - 1, 1),
                                       points[..., 1] / max(h4 - 1, 1)), dim=-1)
@@ -276,6 +378,10 @@ class CTPGPhysicalEye(nn.Module):
             static_weight = track["confidence"] * (1 - track["dynamic_probability"])
             pooled = ((pose_features * static_weight[..., None]).sum(1) /
                       static_weight.sum(1, keepdim=True).clamp_min(1e-4))
+            if scene_context is not None:
+                context_pair = torch.cat((scene_context[:, frame],
+                                          scene_context[:, frame + 1]), dim=-1)
+                pooled = torch.cat((pooled, self.pose_context(context_pair)), dim=-1)
             initial = se3_exp(self.pose_head(pooled))
             # BA and its Jacobians are a small system; numerical reliability is
             # more valuable than Tensor-Core speed here.
@@ -290,6 +396,9 @@ class CTPGPhysicalEye(nn.Module):
             residual_flows.append(track["scene_flow_residual"])
             track_hidden.append(track["hidden"]); initial_transforms.append(initial)
             refined_transforms.append(refined); ba_histories.append(ba_history)
+            if self.ray_head is not None:
+                backward = self.tracker(target, source, track["target"])
+                backward_targets.append(backward["target"])
 
         relative = torch.stack(refined_transforms, dim=1)
         initial_relative = torch.stack(initial_transforms, dim=1)
@@ -307,8 +416,9 @@ class CTPGPhysicalEye(nn.Module):
         track_tokens = self.track_projection(summary)
         if detach_state:
             world = world.detach(); track_tokens = track_tokens.detach()
-        return {
+        result = {
             "depth": depth, "depth_log_sigma": log_sigma,
+            "ray_map_feature": predicted_rays,
             "pointmap_camera": pointmap,
             "pose_c2w": pose_c2w, "relative_pose": relative,
             "initial_relative_pose": initial_relative,
@@ -321,7 +431,11 @@ class CTPGPhysicalEye(nn.Module):
             "ba_residual_history": torch.stack(ba_histories, dim=1),
             "world_tokens": world, "track_tokens": track_tokens,
             "feature_hw": (h4, w4), "intrinsics_feature": k4,
+            "scene_context": scene_context,
         }
+        if backward_targets:
+            result["track_backward_target"] = torch.stack(backward_targets, dim=1)
+        return result
 
     def loss(self, output: dict, depth_gt: torch.Tensor, pose_gt_c2w: torch.Tensor,
              depth_valid: torch.Tensor, intrinsics: torch.Tensor,
@@ -354,6 +468,21 @@ class CTPGPhysicalEye(nn.Module):
         dynamic_loss = depth_nll.new_zeros(())
         rigid_consistency = depth_nll.new_zeros(())
         track_valid_fraction = depth_nll.new_zeros(())
+        confidence_loss = depth_nll.new_zeros(())
+        track_cycle = depth_nll.new_zeros(())
+        ray_loss = depth_nll.new_zeros(())
+        if "ray_map_feature" in output:
+            h4, w4 = output["feature_hw"]
+            b, t = intrinsics.shape[:2]
+            signs = projection_y_sign[:, None].expand(b, t).reshape(-1)
+            target_ray = camera_rays(
+                output["intrinsics_feature"].reshape(-1, 3, 3), h4, w4, signs)
+            predicted_ray = output["ray_map_feature"].reshape_as(target_ray)
+            ray_loss = (1 - (F.normalize(predicted_ray, dim=-1) *
+                             F.normalize(target_ray, dim=-1)).sum(-1)).mean()
+        if "track_backward_target" in output:
+            track_cycle = torch.linalg.vector_norm(
+                output["track_backward_target"] - output["track_source"], dim=-1).mean()
         if rigid_flow is not None:
             b, pairs, h, width, _ = rigid_flow.shape
             h4, w4 = output["feature_hw"]
@@ -380,6 +509,12 @@ class CTPGPhysicalEye(nn.Module):
             track_valid_fraction = supervised.float().mean()
             track_loss = (safe_epe.masked_select(supervised).mean()
                           if bool(supervised.any()) else safe_epe.sum() * 0)
+            confidence_target = (safe_epe <= 1.0).to(output["track_confidence"].dtype)
+            confidence_bce = F.binary_cross_entropy(
+                output["track_confidence"].clamp(1e-5, 1 - 1e-5),
+                confidence_target, reduction="none")
+            confidence_loss = ((confidence_bce * supervised.to(confidence_bce.dtype)).sum() /
+                               supervised.sum().clamp_min(1))
             static = (1 - output["dynamic_probability"]) * output["track_confidence"]
             static = static * supervised.to(static.dtype)
             rigid_consistency = ((safe_epe * static).sum() /
@@ -404,7 +539,10 @@ class CTPGPhysicalEye(nn.Module):
                  w("translation", 1.0) * translation_loss + w("track", 1.0) * track_loss +
                  w("rigid", .25) * rigid_consistency + w("dynamic", .2) * dynamic_loss +
                  w("ba", .2) * ba_monotonic +
-                 w("counterfactual", .15) * calibration_contrast)
+                 w("counterfactual", .15) * calibration_contrast +
+                 w("ray", 0.0) * ray_loss +
+                 w("track_cycle", 0.0) * track_cycle +
+                 w("confidence", 0.0) * confidence_loss)
         ba_initial = ba[..., 0]
         ba_reduction = torch.where(
             ba_initial > .25,
@@ -419,5 +557,8 @@ class CTPGPhysicalEye(nn.Module):
                    "geometry_dynamic_bce": float(dynamic_loss.detach()),
                    "geometry_ba_monotonic": float(ba_monotonic.detach()),
                    "geometry_calibration_contrast": float(calibration_contrast.detach()),
+                   "geometry_ray_angular": float(ray_loss.detach()),
+                   "geometry_track_cycle": float(track_cycle.detach()),
+                   "geometry_confidence_bce": float(confidence_loss.detach()),
                    "geometry_ba_reduction": float(ba_reduction.detach())}
         return total, metrics

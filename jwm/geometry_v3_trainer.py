@@ -33,8 +33,14 @@ def set_eye_v3_physical_trainable(model) -> list[str]:
     for parameter in model.parameters():
         parameter.requires_grad_(False)
     active = []
+    frozen_prefixes = PHYSICAL_EYE_FROZEN_PREFIXES
+    if getattr(model.cfg, "geometry_version", "v1") == "v32_ctpg":
+        # v3.2 scene registers consume the 1/16 pyramid, so those feature
+        # stages are part of a supervised pose/depth path and must be learned.
+        frozen_prefixes = tuple(prefix for prefix in frozen_prefixes
+                                if prefix not in ("pyramid.down8", "pyramid.down16"))
     for name, parameter in model.geometry.named_parameters():
-        enabled = not name.startswith(PHYSICAL_EYE_FROZEN_PREFIXES)
+        enabled = not name.startswith(frozen_prefixes)
         parameter.requires_grad_(enabled)
         if enabled:
             active.append(f"geometry.{name}")

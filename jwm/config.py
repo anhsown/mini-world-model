@@ -94,6 +94,17 @@ class JWMConfig:
     geometry_track_weight: float = 1.0
     geometry_rigid_weight: float = 0.25
     geometry_ba_weight: float = 0.20
+    # CTPG-Eye v3.2: depth-ray factorisation + compact causal scene state.
+    # Zero values preserve the exact v3.1 graph/checkpoint contract.
+    geometry_scene_registers: int = 0
+    geometry_scene_layers: int = 0
+    geometry_scene_width: int = 0          # 0 -> d_model
+    geometry_scene_heads: int = 8
+    geometry_pose_context: int = 0
+    geometry_ray_residual: float = 0.0
+    geometry_ray_weight: float = 0.0
+    geometry_track_cycle_weight: float = 0.0
+    geometry_confidence_weight: float = 0.0
 
     # Inkling-mini MoE for the REASONER tower (INKLING_MINI.md; generator stays dense)
     reasoner_moe: bool = False

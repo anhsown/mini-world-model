@@ -17,8 +17,9 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path: sys.path.insert(0, str(ROOT))
 
 from jwm import JWM
-from jwm.checkpoint_utils import warmstart_eye_physical
-from jwm.configs import eye_physical_v3_scale
+from jwm.checkpoint_utils import warmstart_eye_physical, warmstart_eye_v32
+from jwm.configs import (eye_physical_v3_scale, eye_physical_v32_scale,
+                         eye_physical_v32_smoke_scale)
 from jwm.geometry_v3_data import make_counterfactuals, procedural_v3_row, stack_geometry_v3_rows
 from jwm.geometry_v3_trainer import (
     missing_trainable_gradients, move_geometry_batch,
@@ -31,12 +32,19 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("--warmstart", required=True)
     p.add_argument("--output", required=True)
+    p.add_argument("--architecture", choices=("v31", "v32"), default="v31")
     p.add_argument("--steps", type=int, default=250)
     p.add_argument("--per-gpu-batch", type=int, default=1)
     p.add_argument("--tiny", action="store_true")
     for source in ("tartan", "tum", "bonn"):
         for split in ("train", "val", "test"):
             p.add_argument(f"--{source}-{split}", nargs="*", default=[])
+    p.add_argument("--anchor-root", type=Path, default=Path("data/real_anchor_v1/raw"))
+    p.add_argument("--dataset-registry", type=Path,
+                   default=Path("configs/datasets/real_anchor_v1.json"))
+    p.add_argument("--synthetic-profile", type=Path,
+                   default=Path("data/real_anchor_v1/derived/eye_real_anchor_profile_v1.json"))
+    p.add_argument("--synthetic-train-samples", type=int, default=250_000)
     args = p.parse_args()
     world, rank, local = (int(os.environ.get("WORLD_SIZE", "1")),
                           int(os.environ.get("RANK", "0")),
@@ -47,18 +55,25 @@ def main():
         dist.init_process_group("nccl" if device.type == "cuda" else "gloo",
                                 device_id=device if device.type == "cuda" else None)
     torch.manual_seed(20260723 + rank)
-    cfg = eye_physical_v3_scale()
-    if args.tiny:
+    cfg = (eye_physical_v32_scale() if args.architecture == "v32"
+           else eye_physical_v3_scale())
+    if args.tiny and args.architecture == "v32":
+        cfg = eye_physical_v32_smoke_scale()
+    elif args.tiny:
         cfg.image_size = 64; cfg.geometry_v3_width = 32
         cfg.geometry_track_points = 12; cfg.geometry_track_iterations = 1
         cfg.geometry_ba_iterations = 1
-    model = JWM(cfg); warmstart_eye_physical(model, args.warmstart)
+    model = JWM(cfg)
+    (warmstart_eye_v32(model, args.warmstart)
+     if args.architecture == "v32" else warmstart_eye_physical(model, args.warmstart))
     active_names = set_eye_v3_physical_trainable(model)
     model.to(device)
     trainable = [p for p in model.parameters() if p.requires_grad]
     wrapped = (DDP(model, device_ids=[local] if device.type == "cuda" else None,
                    broadcast_buffers=False) if world > 1 else model)
     optimizer = torch.optim.AdamW(trainable, lr=1e-4)
+    # Match the full trainer.  The default 65536 scale can overflow fresh
+    # convolution gradients and create a false-negative canary on step one.
     scaler = torch.amp.GradScaler("cuda", init_scale=256,
                                   enabled=device.type == "cuda")
     size = cfg.image_size
@@ -85,10 +100,10 @@ def main():
         with torch.autocast(device_type=device.type, dtype=torch.float16,
                             enabled=device.type == "cuda"):
             loss, metrics = wrapped("geometry", batch["image"], batch["depth"],
-                              batch["pose_c2w"], batch["depth_valid"],
-                              batch["dynamic_mask"], None, batch["intrinsics"],
-                              batch["projection_y_sign"], batch["rigid_flow"],
-                              batch["rigid_flow_valid"], wrong)
+                                    batch["pose_c2w"], batch["depth_valid"],
+                                    batch["dynamic_mask"], None, batch["intrinsics"],
+                                    batch["projection_y_sign"], batch["rigid_flow"],
+                                    batch["rigid_flow_valid"], wrong)
         scaler.scale(loss).backward(); scaler.unscale_(optimizer)
         if step == 0:
             raw = wrapped.module if hasattr(wrapped, "module") else wrapped
@@ -127,6 +142,7 @@ def main():
         report = {"valid": bool(all(torch.isfinite(torch.tensor(losses))) and
                                 (not total or peak / total < .88)),
                   "devices": world, "tiny": args.tiny, "steps": args.steps,
+                  "architecture": args.architecture,
                   "source_mode": source_mode,
                   "per_gpu_batch": args.per_gpu_batch,
                   "active_parameter_tensors": len(active_names),

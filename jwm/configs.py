@@ -174,6 +174,60 @@ def eye_physical_v3_scale() -> JWMConfig:
     )
 
 
+def eye_physical_v32_scale() -> JWMConfig:
+    """JWM-Eye v3.2: ~350M-class causal physical world model for T4x2.
+
+    Capacity is increased in both the semantic MoT and the supervised physical
+    eye.  Unlike a cosmetic backbone-only scale-up, the new geometry graph adds
+    a six-layer causal scene-register mixer, factorised depth/ray prediction,
+    forward/backward track consistency and calibrated track confidence.
+    """
+    return JWMConfig(
+        d_model=576, n_layers=16, n_heads=18, head_dim=32,
+        ffn_hidden=1536, rope_sections=(8, 4, 4),
+        reasoner_moe=True, moe_experts=32, moe_topk=4, moe_shared=1,
+        moe_expert_hidden=288,
+        image_size=256, patch=16, patch_merge=1,
+        vision_stem="local", vision_local_layers=6,
+        vision_local_heads=12, vision_window=4,
+        vision_grad_checkpoint=True,
+        max_q_bytes=128, max_a_bytes=192,
+        geometry_enabled=True, geometry_version="v32_ctpg",
+        geometry_v3_width=160, geometry_track_points=128,
+        geometry_track_radius=3, geometry_track_iterations=6,
+        geometry_ba_iterations=3, geometry_memory_frames=128,
+        geometry_scene_registers=16, geometry_scene_layers=6,
+        geometry_scene_width=384, geometry_scene_heads=12,
+        geometry_pose_context=96, geometry_ray_residual=0.10,
+        geometry_depth_weight=1.0, geometry_rel_pose_weight=1.0,
+        geometry_rel_translation_weight=1.0,
+        geometry_track_weight=0.75, geometry_rigid_weight=0.20,
+        geometry_dynamic_weight=0.25, geometry_ba_weight=0.15,
+        geometry_counterfactual_weight=0.20,
+        geometry_ray_weight=0.20,
+        geometry_track_cycle_weight=0.20,
+        geometry_confidence_weight=0.15,
+    )
+
+
+def eye_physical_v32_smoke_scale() -> JWMConfig:
+    """Graph-equivalent tiny profile for CPU unit and contract tests."""
+    cfg = eye_physical_v32_scale()
+    cfg.d_model = 48; cfg.n_layers = 2; cfg.n_heads = 6
+    cfg.ffn_hidden = 96; cfg.moe_expert_hidden = 24
+    cfg.moe_experts = 4; cfg.moe_topk = 2
+    cfg.image_size = 32; cfg.patch = 8
+    cfg.vision_local_layers = 1; cfg.vision_local_heads = 6
+    cfg.geometry_v3_width = 32; cfg.geometry_track_points = 8
+    cfg.geometry_track_radius = 1; cfg.geometry_track_iterations = 1
+    cfg.geometry_ba_iterations = 1; cfg.geometry_memory_frames = 8
+    cfg.geometry_scene_registers = 2; cfg.geometry_scene_layers = 1
+    cfg.geometry_scene_width = 48; cfg.geometry_scene_heads = 6
+    cfg.geometry_pose_context = 8
+    cfg.rope_sections = (2, 1, 1); cfg.head_dim = 8
+    return cfg
+
+
 def reader_scale_v31() -> JWMConfig:
     """Corrective Reader warm-start: line ROI before 1D CTC decoding.
 

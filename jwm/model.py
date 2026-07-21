@@ -168,7 +168,7 @@ class JWM(nn.Module):
         # disabled preserves the exact graph of all legacy checkpoints.
         self.geometry = None
         if getattr(cfg, "geometry_enabled", False):
-            if getattr(cfg, "geometry_version", "v1") == "v3_ctpg":
+            if getattr(cfg, "geometry_version", "v1") in ("v3_ctpg", "v32_ctpg"):
                 from .geometric_eye_v3 import CTPGPhysicalEye
                 self.geometry = CTPGPhysicalEye(
                     world_dim=d, width=cfg.geometry_v3_width,
@@ -176,7 +176,13 @@ class JWM(nn.Module):
                     track_radius=cfg.geometry_track_radius,
                     track_iterations=cfg.geometry_track_iterations,
                     ba_iterations=cfg.geometry_ba_iterations,
-                    memory_frames=cfg.geometry_memory_frames)
+                    memory_frames=cfg.geometry_memory_frames,
+                    scene_registers=cfg.geometry_scene_registers,
+                    scene_layers=cfg.geometry_scene_layers,
+                    scene_width=cfg.geometry_scene_width,
+                    scene_heads=cfg.geometry_scene_heads,
+                    pose_context=cfg.geometry_pose_context,
+                    ray_residual=cfg.geometry_ray_residual)
                 geometry_kwargs = None
             else:
                 geometry_kwargs = dict(
@@ -194,7 +200,7 @@ class JWM(nn.Module):
                     **geometry_kwargs,
                     motion_radius=cfg.geometry_motion_radius,
                     min_valid_fraction=cfg.geometry_min_valid_fraction)
-            elif getattr(cfg, "geometry_version", "v1") != "v3_ctpg":
+            elif getattr(cfg, "geometry_version", "v1") not in ("v3_ctpg", "v32_ctpg"):
                 from .geometric_memory import GeometricContextMemory
                 self.geometry = GeometricContextMemory(**geometry_kwargs)
 
@@ -203,6 +209,8 @@ class JWM(nn.Module):
         for blk in self.blocks:
             nn.init.zeros_(blk.adaln.weight)
             nn.init.zeros_(blk.adaln.bias)
+        if self.geometry is not None and hasattr(self.geometry, "reset_safe_initialization"):
+            self.geometry.reset_safe_initialization()
 
     @staticmethod
     def _init(m):
@@ -264,7 +272,7 @@ class JWM(nn.Module):
             raise RuntimeError("geometry_enabled must be true")
         if images.ndim != 5:
             raise ValueError("geometry images must have shape (B,T,3,H,W)")
-        if getattr(self.cfg, "geometry_version", "v1") == "v3_ctpg":
+        if getattr(self.cfg, "geometry_version", "v1") in ("v3_ctpg", "v32_ctpg"):
             if intrinsics is None:
                 raise ValueError("CTPG-Eye v3 requires per-frame intrinsics")
             return self.geometry.forward_sequence(
@@ -289,7 +297,7 @@ class JWM(nn.Module):
         output = self.encode_geometry_sequence(
             images, detach_state=False, intrinsics=intrinsics,
             projection_y_sign=projection_y_sign)
-        if version == "v3_ctpg":
+        if version in ("v3_ctpg", "v32_ctpg"):
             if depth_valid is None:
                 depth_valid = torch.isfinite(depth_gt) & (depth_gt > 0)
             counterfactual_output = (self.encode_geometry_sequence(
@@ -307,7 +315,10 @@ class JWM(nn.Module):
                          "rigid": self.cfg.geometry_rigid_weight,
                          "dynamic": self.cfg.geometry_dynamic_weight,
                          "ba": self.cfg.geometry_ba_weight,
-                         "counterfactual": self.cfg.geometry_counterfactual_weight})
+                         "counterfactual": self.cfg.geometry_counterfactual_weight,
+                         "ray": self.cfg.geometry_ray_weight,
+                         "track_cycle": self.cfg.geometry_track_cycle_weight,
+                         "confidence": self.cfg.geometry_confidence_weight})
         elif version == "v2_pairwise":
             negative_output = (self.encode_geometry_sequence(
                 negative_images, detach_state=False)

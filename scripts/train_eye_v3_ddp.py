@@ -32,8 +32,9 @@ from jwm.adaptive_training import (
     AdaptiveTrainingBudget, BudgetAction, BudgetConfig, MetricSpec,
     eye_v3_budget_specs,
 )
-from jwm.checkpoint_utils import warmstart_eye_physical
-from jwm.configs import eye_physical_v3_scale
+from jwm.checkpoint_utils import warmstart_eye_physical, warmstart_eye_v32
+from jwm.configs import (eye_physical_v3_scale, eye_physical_v32_scale,
+                         eye_physical_v32_smoke_scale)
 from jwm.geometry_v2_data import (
     BonnRGBDWindowDataset, TaggedTUMDataset, TartanAirWindowDataset,
 )
@@ -90,6 +91,7 @@ def arguments():
     p = argparse.ArgumentParser()
     p.add_argument("--output", required=True)
     p.add_argument("--warmstart", required=True)
+    p.add_argument("--architecture", choices=("v31", "v32"), default="v31")
     p.add_argument("--probe-report", default="data/eye_v3_probes/probe_report.json")
     for source in ("tartan", "tum", "bonn"):
         for split in ("train", "val", "test"):
@@ -277,13 +279,18 @@ def main():
         print(json.dumps(admission, indent=2), flush=True)
     if world > 1: dist.barrier()
 
-    cfg = eye_physical_v3_scale()
-    if args.quick:
+    cfg = (eye_physical_v32_scale() if args.architecture == "v32"
+           else eye_physical_v3_scale())
+    if args.quick and args.architecture == "v32":
+        cfg = eye_physical_v32_smoke_scale()
+    elif args.quick:
         cfg.image_size = 64; cfg.geometry_v3_width = 32
         cfg.geometry_track_points = 12; cfg.geometry_track_iterations = 1
         cfg.geometry_ba_iterations = 1
     model = JWM(cfg)
-    warm_report = warmstart_eye_physical(model, args.warmstart)
+    warm_report = (warmstart_eye_v32(model, args.warmstart)
+                   if args.architecture == "v32"
+                   else warmstart_eye_physical(model, args.warmstart))
     active_names = set_trainable(model); model.to(device)
     trainable = [p for p in model.parameters() if p.requires_grad]
     wrapped = (DDP(model, device_ids=[local] if device.type == "cuda" else None,
@@ -310,11 +317,14 @@ def main():
     nonfinite_skips = 0
     resume = output / "resume.pt"
     resume_controller = None
+    checkpoint_version = ("jwm-eye-v3.2-depth-ray-registers"
+                          if args.architecture == "v32" else CHECKPOINT_VERSION)
     if resume.exists():
         state = torch.load(resume, map_location=device, weights_only=False)
-        if state.get("version") != CHECKPOINT_VERSION:
+        if state.get("version") != checkpoint_version:
             raise RuntimeError("incompatible Eye-v3 resume checkpoint")
-        raw.load_state_dict(state["model"], strict=True)
+        raw.load_state_dict(state["model"],
+                            strict=state.get("model_kind") != "geometry_delta")
         optimizer.load_state_dict(state["optimizer"]); scaler.load_state_dict(state["scaler"])
         history = state.get("history", []); global_step = int(state["global_step"])
         nonfinite_skips = int(state.get("nonfinite_skips", 0))
@@ -417,6 +427,9 @@ def main():
                       f"rigid={accumulated['geometry_rigid_epe']:.3f} "
                       f"dyn={accumulated['geometry_dynamic_bce']:.3f} "
                       f"cf={accumulated['geometry_calibration_contrast']:.3f} "
+                      f"ray={accumulated.get('geometry_ray_angular', 0.0):.3f} "
+                      f"cycle={accumulated.get('geometry_track_cycle', 0.0):.3f} "
+                      f"conf={accumulated.get('geometry_confidence_bce', 0.0):.3f} "
                       f"grad={float(gradient):.3f} lr={current_lr:.2e} "
                       f"{rate:.2f} opt-step/s", flush=True)
 
@@ -452,16 +465,30 @@ def main():
                                           BudgetAction.STOP_UNSTABLE):
                     pipeline_blocked = True; break
             if rank == 0 and global_step % args.checkpoint_every == 0:
-                atomic_save({"version": CHECKPOINT_VERSION, "cfg": asdict(cfg),
-                             "model": raw.state_dict(), "optimizer": optimizer.state_dict(),
+                model_state = (dict(raw.geometry.state_dict())
+                               if args.architecture == "v32" else raw.state_dict())
+                if args.architecture == "v32":
+                    model_state = {f"geometry.{key}": value
+                                   for key, value in model_state.items()}
+                atomic_save({"version": checkpoint_version, "cfg": asdict(cfg),
+                             "model": model_state,
+                             "model_kind": ("geometry_delta" if args.architecture == "v32"
+                                            else "full"),
+                             "optimizer": optimizer.state_dict(),
                              "scaler": scaler.state_dict(), "history": history,
                              "stage_index": stage_index, "stage_step": stage_step,
                              "global_step": global_step,
                              "nonfinite_skips": nonfinite_skips,
                              "controller": controller.state_dict()}, resume)
         if rank == 0:
-            atomic_save({"version": CHECKPOINT_VERSION, "cfg": asdict(cfg),
-                         "model": raw.state_dict(), "history": history,
+            stage_state = (dict(raw.geometry.state_dict())
+                           if args.architecture == "v32" else raw.state_dict())
+            if args.architecture == "v32":
+                stage_state = {f"geometry.{key}": value for key, value in stage_state.items()}
+            atomic_save({"version": checkpoint_version, "cfg": asdict(cfg),
+                         "model": stage_state,
+                         "model_kind": ("geometry_delta" if args.architecture == "v32"
+                                        else "full"), "history": history,
                          "stage_index": stage_index, "global_step": global_step,
                          "nonfinite_skips": nonfinite_skips,
                          "validation": last_report,
@@ -479,14 +506,15 @@ def main():
         status = ("promotion_gate_passed" if last_report and last_report["valid"] and
                   test_report["valid"] and not pipeline_blocked
                   else "blocked_by_causal_ood_gate")
-        final = output / ("jwm_eye_v31.pt" if status == "promotion_gate_passed"
-                          else "jwm_eye_v31_blocked.pt")
-        atomic_save({"version": CHECKPOINT_VERSION, "cfg": asdict(cfg),
+        stem = "jwm_eye_v32" if args.architecture == "v32" else "jwm_eye_v31"
+        final = output / (f"{stem}.pt" if status == "promotion_gate_passed"
+                          else f"{stem}_blocked.pt")
+        atomic_save({"version": checkpoint_version, "cfg": asdict(cfg),
                      "model": raw.state_dict(), "history": history,
                      "validation": last_report, "test": test_report,
                      "status": status}, final)
-        (output / "metrics_v31.json").write_text(json.dumps(history, indent=2),
-                                                  encoding="utf-8")
+        (output / f"metrics_{args.architecture}.json").write_text(
+            json.dumps(history, indent=2), encoding="utf-8")
         print(f"{status} -> {final}", flush=True)
     if world > 1:
         dist.barrier(); dist.destroy_process_group()
