@@ -108,6 +108,8 @@ def arguments():
                    default=Path("configs/datasets/real_anchor_v1.json"))
     p.add_argument("--synthetic-profile", type=Path,
                    default=Path("data/real_anchor_v1/derived/eye_real_anchor_profile_v1.json"))
+    p.add_argument("--synthetic-admission", type=Path,
+                   default=Path("data/real_anchor_v1/synthetic_ablation_verdict.json"))
     p.add_argument("--synthetic-train-samples", type=int, default=250_000)
     return p.parse_args()
 
@@ -251,6 +253,17 @@ def main():
     probe = json.loads(Path(args.probe_report).read_text(encoding="utf-8"))
     if not probe.get("valid"):
         raise RuntimeError("Eye-v3 controlled probes failed; full training blocked")
+    if args.synthetic_profile.exists():
+        if not args.synthetic_admission.exists():
+            raise RuntimeError("real-anchored synthetic profile requires an A/B admission report")
+        synthetic_admission = json.loads(
+            args.synthetic_admission.read_text(encoding="utf-8"))
+        if (not synthetic_admission.get("valid") or
+                synthetic_admission.get("decision") != "admit"):
+            raise RuntimeError("synthetic data is quarantined by the real-heldout A/B gate")
+        if rank == 0:
+            (output / "synthetic_admission_used.json").write_text(
+                json.dumps(synthetic_admission, indent=2), encoding="utf-8")
     datasets = make_datasets(args)
     if rank == 0:
         admission = validate_geometry_v3_datasets(
@@ -278,8 +291,17 @@ def main():
                if world > 1 else model)
     raw = wrapped.module if hasattr(wrapped, "module") else wrapped
     sampler = V3Sampler(datasets["train"], world, rank, args.seed)
-    validation_batches = fixed_eval_batches(datasets["validation"], 2)
-    prior_m = depth_prior(datasets["train"])
+    real_validation = {name: dataset for name, dataset in datasets["validation"].items()
+                       if name not in ("procedural", "synthetic_real_anchored")}
+    real_test = {name: dataset for name, dataset in datasets["test"].items()
+                 if name not in ("procedural", "synthetic_real_anchored")}
+    real_train = {name: dataset for name, dataset in datasets["train"].items()
+                  if name not in ("procedural", "synthetic_real_anchored")}
+    if not real_validation or not real_test:
+        raise RuntimeError("checkpoint promotion requires real validation and test sources")
+    validation_batches = fixed_eval_batches(real_validation, 8)
+    test_batches = fixed_eval_batches(real_test, 8)
+    prior_m = depth_prior(real_train)
     optimizer = torch.optim.AdamW(trainable, lr=STAGES[0][4], betas=(.9, .95),
                                   weight_decay=.05)
     scaler = torch.amp.GradScaler("cuda", init_scale=256,
@@ -450,13 +472,19 @@ def main():
         if pipeline_blocked: break
 
     if rank == 0:
+        test_report = evaluate_geometry_v3_controls(
+            raw, test_batches, device, args.eval_windows, prior_m)
+        (output / "final_real_test_metrics.json").write_text(
+            json.dumps(test_report, indent=2), encoding="utf-8")
         status = ("promotion_gate_passed" if last_report and last_report["valid"] and
-                  not pipeline_blocked else "blocked_by_causal_ood_gate")
+                  test_report["valid"] and not pipeline_blocked
+                  else "blocked_by_causal_ood_gate")
         final = output / ("jwm_eye_v31.pt" if status == "promotion_gate_passed"
                           else "jwm_eye_v31_blocked.pt")
         atomic_save({"version": CHECKPOINT_VERSION, "cfg": asdict(cfg),
                      "model": raw.state_dict(), "history": history,
-                     "validation": last_report, "status": status}, final)
+                     "validation": last_report, "test": test_report,
+                     "status": status}, final)
         (output / "metrics_v31.json").write_text(json.dumps(history, indent=2),
                                                   encoding="utf-8")
         print(f"{status} -> {final}", flush=True)
