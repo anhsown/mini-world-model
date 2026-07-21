@@ -32,7 +32,9 @@ from jwm.adaptive_training import (
     AdaptiveTrainingBudget, BudgetAction, BudgetConfig, MetricSpec,
     eye_v3_budget_specs,
 )
-from jwm.checkpoint_utils import warmstart_eye_physical, warmstart_eye_v32
+from jwm.checkpoint_utils import (
+    warmstart_eye_physical, warmstart_eye_v32, warmstart_eye_v322,
+)
 from jwm.configs import (eye_physical_v3_scale, eye_physical_v32_scale,
                          eye_physical_v32_smoke_scale)
 from jwm.geometry_v2_data import (
@@ -55,7 +57,7 @@ from jwm.training_metrics_v2 import metric_catalog
 STAGES = (
     # name, min, max, eval_every, lr, source mixture
     ("g0_calibrated_tracks", 800, 1800, 200, 1e-4,
-     {"procedural": .55, "tartanair": .45}),
+     {"procedural": .35, "tartanair": .25, "tum": .25, "bonn": .15}),
     ("g1_metric_odometry", 1200, 3200, 300, 8e-5,
      {"procedural": .15, "tartanair": .35, "tum": .35, "bonn": .15}),
     ("g2_dynamic_geometry", 800, 2200, 250, 5e-5,
@@ -64,6 +66,43 @@ STAGES = (
      {"procedural": .10, "tartanair": .25, "tum": .35, "bonn": .30}),
 )
 CHECKPOINT_VERSION = "jwm-eye-v3.1-ctpg"
+V32_ARCHITECTURES = ("v32", "v321", "v322")
+
+STAGE_WEIGHT_PROFILES = (
+    {"geometry_depth_weight": 1.0, "geometry_depth_absrel_weight": 1.50,
+     "geometry_depth_gradient_weight": .50, "geometry_rel_pose_weight": .25,
+     "geometry_rel_translation_weight": .25, "geometry_initial_pose_weight": .25,
+     "geometry_track_weight": .75, "geometry_dynamic_weight": .05,
+     "geometry_ba_weight": .05, "geometry_counterfactual_weight": .05,
+     "geometry_pose_counterfactual_weight": .05, "geometry_temporal_weight": .35},
+    {"geometry_depth_weight": 1.0, "geometry_depth_absrel_weight": 1.00,
+     "geometry_depth_gradient_weight": .35, "geometry_rel_pose_weight": 1.50,
+     "geometry_rel_translation_weight": 2.00, "geometry_initial_pose_weight": 2.00,
+     "geometry_track_weight": .50, "geometry_dynamic_weight": .15,
+     "geometry_ba_weight": .15, "geometry_counterfactual_weight": .15,
+     "geometry_pose_counterfactual_weight": .25, "geometry_temporal_weight": .50},
+    {"geometry_depth_weight": .75, "geometry_depth_absrel_weight": .75,
+     "geometry_depth_gradient_weight": .25, "geometry_rel_pose_weight": 1.25,
+     "geometry_rel_translation_weight": 1.50, "geometry_initial_pose_weight": 1.50,
+     "geometry_track_weight": .50, "geometry_dynamic_weight": 1.00,
+     "geometry_ba_weight": .15, "geometry_counterfactual_weight": .25,
+     "geometry_pose_counterfactual_weight": .40, "geometry_temporal_weight": .75},
+    {"geometry_depth_weight": .75, "geometry_depth_absrel_weight": .75,
+     "geometry_depth_gradient_weight": .25, "geometry_rel_pose_weight": 1.50,
+     "geometry_rel_translation_weight": 1.75, "geometry_initial_pose_weight": 1.75,
+     "geometry_track_weight": .40, "geometry_dynamic_weight": .75,
+     "geometry_ba_weight": .15, "geometry_counterfactual_weight": .60,
+     "geometry_pose_counterfactual_weight": .75, "geometry_temporal_weight": 1.00},
+)
+
+def apply_stage_weight_profile(cfg, stage_index: int) -> dict[str, float]:
+    profile = STAGE_WEIGHT_PROFILES[stage_index]
+    for name, value in profile.items(): setattr(cfg, name, value)
+    return dict(profile)
+
+def should_rollback_and_advance(action: BudgetAction, stage_index: int) -> bool:
+    return (stage_index < len(STAGES) - 1 and
+            action in (BudgetAction.STOP_BLOCKED, BudgetAction.STOP_OVERFIT))
 
 
 def apply_distributed_lr_decision(action, controller, lr_factor, *, controller_owner):
@@ -91,7 +130,7 @@ def arguments():
     p = argparse.ArgumentParser()
     p.add_argument("--output", required=True)
     p.add_argument("--warmstart", required=True)
-    p.add_argument("--architecture", choices=("v31", "v32", "v321"), default="v31")
+    p.add_argument("--architecture", choices=("v31", "v32", "v321", "v322"), default="v31")
     p.add_argument("--probe-report", default="data/eye_v3_probes/probe_report.json")
     for source in ("tartan", "tum", "bonn"):
         for split in ("train", "val", "test"):
@@ -197,6 +236,19 @@ class V3Sampler:
             rows.append(dataset[global_index % len(dataset)])
         return stack_geometry_v3_rows(rows)
 
+def validate_stage_mixtures(sampler: V3Sampler, *, minimum_real_share: float = .25):
+    report = {}
+    for stage_index, (name, *_, requested) in enumerate(STAGES):
+        resolved = sampler.weights(requested)
+        real_share = sum(value for source, value in resolved.items()
+                         if source not in ("procedural", "synthetic_real_anchored"))
+        report[name] = {"stage_index": stage_index, "requested": requested,
+                        "resolved": resolved, "real_share": real_share,
+                        "valid": real_share >= minimum_real_share}
+    failures = [name for name, row in report.items() if not row["valid"]]
+    return {"valid": not failures, "minimum_real_share": minimum_real_share,
+            "failures": failures, "stages": report}
+
 
 def fixed_eval_batches(sources: dict[str, Dataset], per_source: int = 3) -> list[dict]:
     batches = []
@@ -280,18 +332,20 @@ def main():
         print(json.dumps(admission, indent=2), flush=True)
     if world > 1: dist.barrier()
 
-    cfg = (eye_physical_v32_scale() if args.architecture in ("v32", "v321")
+    cfg = (eye_physical_v32_scale() if args.architecture in V32_ARCHITECTURES
            else eye_physical_v3_scale())
-    if args.quick and args.architecture in ("v32", "v321"):
+    if args.quick and args.architecture in V32_ARCHITECTURES:
         cfg = eye_physical_v32_smoke_scale()
     elif args.quick:
         cfg.image_size = 64; cfg.geometry_v3_width = 32
         cfg.geometry_track_points = 12; cfg.geometry_track_iterations = 1
         cfg.geometry_ba_iterations = 1
     model = JWM(cfg)
-    warm_report = (warmstart_eye_v32(model, args.warmstart)
-                   if args.architecture in ("v32", "v321")
-                   else warmstart_eye_physical(model, args.warmstart))
+    warm_report = (warmstart_eye_v322(model, args.warmstart)
+                   if args.architecture == "v322" else
+                   warmstart_eye_v32(model, args.warmstart)
+                   if args.architecture in V32_ARCHITECTURES else
+                   warmstart_eye_physical(model, args.warmstart))
     active_names = set_trainable(model); model.to(device)
     trainable = [p for p in model.parameters() if p.requires_grad]
     wrapped = (DDP(model, device_ids=[local] if device.type == "cuda" else None,
@@ -299,6 +353,14 @@ def main():
                if world > 1 else model)
     raw = wrapped.module if hasattr(wrapped, "module") else wrapped
     sampler = V3Sampler(datasets["train"], world, rank, args.seed)
+    mixture_contract = validate_stage_mixtures(sampler)
+    if rank == 0:
+        (output / "stage_mixture_contract.json").write_text(
+            json.dumps(mixture_contract, indent=2), encoding="utf-8")
+        print(json.dumps(mixture_contract, indent=2), flush=True)
+    if not args.quick and not mixture_contract["valid"]:
+        raise RuntimeError("real-data stage mixture contract failed: " +
+                           ", ".join(mixture_contract["failures"]))
     real_validation = {name: dataset for name, dataset in datasets["validation"].items()
                        if name not in ("procedural", "synthetic_real_anchored")}
     real_test = {name: dataset for name, dataset in datasets["test"].items()
@@ -321,6 +383,7 @@ def main():
     checkpoint_version = ({
         "v32": "jwm-eye-v3.2-depth-ray-registers",
         "v321": "jwm-eye-v3.2.1-robust-causal-geometry",
+        "v322": "jwm-eye-v3.2.2-stage-safe-factored-geometry",
     }.get(args.architecture, CHECKPOINT_VERSION))
     if resume.exists():
         state = torch.load(resume, map_location=device, weights_only=False)
@@ -345,6 +408,10 @@ def main():
     last_report = None
     for stage_index, (name, min_steps, max_steps, eval_every, base_lr, mixture) in enumerate(STAGES):
         if stage_index < start_stage: continue
+        weight_profile = apply_stage_weight_profile(cfg, stage_index)
+        if stage_index != start_stage:
+            optimizer = torch.optim.AdamW(trainable, lr=base_lr, betas=(.9, .95), weight_decay=.05)
+            scaler = torch.amp.GradScaler("cuda", init_scale=256, enabled=device.type == "cuda")
         if args.quick: min_steps, max_steps, eval_every = 2, 4, 2
         controller = (AdaptiveTrainingBudget.from_state_dict(resume_controller)
                       if stage_index == start_stage and resume_controller else
@@ -356,9 +423,10 @@ def main():
         lr_factor = .5 ** controller.lr_decays
         nonfinite_streak = 0
         started = time.time(); running_loss = 0.0; running_grad = 0.0
+        best_path = output / f"stage_{stage_index}_{name}_best.pt"
         if rank == 0:
             print(f"\n=== {name} resume={stage_step} budget={min_steps}:{max_steps} "
-                  f"eval={eval_every} mix={sampler.weights(mixture)} ===", flush=True)
+                  f"eval={eval_every} mix={sampler.weights(mixture)} weights={weight_profile} ===", flush=True)
         while stage_step < max_steps:
             # Short warmup; LR reductions are controlled only by held-out plateaus.
             warm = min(200, max(25, min_steps // 4))
@@ -374,10 +442,12 @@ def main():
                 counterfactuals = make_counterfactuals(batch)
                 # Bound compute to two encoder passes: later stages alternate
                 # temporal and calibration negatives instead of running both.
-                use_wrong_k = stage_index >= 2 and (global_step + micro) % 2 == 0
+                negative_mode = (global_step + micro) % (3 if stage_index >= 2 else 2)
+                use_wrong_k = stage_index >= 2 and negative_mode == 0
                 wrong_k = counterfactuals["wrong_intrinsics"] if use_wrong_k else None
-                wrong_window = (None if use_wrong_k else
-                                counterfactuals["wrong_window_image"])
+                if use_wrong_k: wrong_window = None
+                elif negative_mode == 1: wrong_window = counterfactuals["reverse_image"]
+                else: wrong_window = counterfactuals["wrong_window_image"]
                 with torch.autocast(device_type=device.type, dtype=torch.float16,
                                     enabled=device.type == "cuda"):
                     loss, metrics = wrapped(
@@ -427,14 +497,18 @@ def main():
                 rate = stage_step / max(time.time() - started, 1e-6)
                 print(f"[{stage_step:5d}/{max_steps}] loss={accumulated['loss']:.4f} "
                       f"depth={accumulated['geometry_depth_nll']:.4f} "
+                      f"absrel={accumulated.get('geometry_depth_absrel_loss', 0.0):.3f} "
+                      f"edge={accumulated.get('geometry_depth_gradient', 0.0):.3f} "
                       f"track={accumulated['geometry_track_epe']:.4f} "
                       f"valid={accumulated['geometry_track_valid_fraction']:.3f} "
                       f"rot={accumulated['geometry_rotation']:.4f} "
                       f"trans={accumulated['geometry_translation']:.4f} "
+                      f"init_pose={accumulated.get('geometry_initial_pose', 0.0):.3f} "
                       f"ba={accumulated['geometry_ba_reduction']:.3f} "
                       f"rigid={accumulated['geometry_rigid_epe']:.3f} "
                       f"dyn={accumulated['geometry_dynamic_bce']:.3f} "
                       f"cf={accumulated['geometry_calibration_contrast']:.3f} "
+                      f"pose_cf={accumulated.get('geometry_pose_counterfactual', 0.0):.3f} "
                       f"ray={accumulated.get('geometry_ray_angular', 0.0):.3f} "
                       f"cycle={accumulated.get('geometry_track_cycle', 0.0):.3f} "
                       f"conf={accumulated.get('geometry_confidence_bce', 0.0):.3f} "
@@ -456,8 +530,15 @@ def main():
                     decision = controller.decide()
                     record = {"stage": name, "stage_step": stage_step,
                               "global_step": global_step, "report": last_report,
+                              "source_mixture": sampler.weights(mixture),
+                              "loss_weights": weight_profile,
                               "controller": asdict(decision)}
                     history.append(record)
+                    if controller.best_step == stage_step or not best_path.exists():
+                        atomic_save({"version": checkpoint_version, "stage_index": stage_index,
+                                     "stage_step": stage_step, "global_step": global_step,
+                                     "score": controller.best_score,
+                                     "geometry": raw.geometry.state_dict()}, best_path)
                     print(json.dumps(record, indent=2), flush=True)
                     running_loss = running_grad = 0.0
                 if world > 1:
@@ -470,19 +551,31 @@ def main():
                 elif decision.action in (BudgetAction.ADVANCE_STAGE,
                                           BudgetAction.STOP_CONVERGED):
                     break
+                elif should_rollback_and_advance(decision.action, stage_index):
+                    if world > 1: dist.barrier()
+                    best = torch.load(best_path, map_location=device, weights_only=False)
+                    raw.geometry.load_state_dict(best["geometry"], strict=True)
+                    if world > 1: dist.barrier()
+                    if rank == 0:
+                        best_record = next((row for row in reversed(history)
+                                            if row["stage"] == name and
+                                            row["stage_step"] == best["stage_step"]), None)
+                        if best_record is not None: last_report = best_record["report"]
+                        print(f"ROLLBACK stage {stage_index} to step {best['stage_step']}; advance", flush=True)
+                    break
                 elif decision.action in (BudgetAction.STOP_BLOCKED,
                                           BudgetAction.STOP_OVERFIT,
                                           BudgetAction.STOP_UNSTABLE):
                     pipeline_blocked = True; break
             if rank == 0 and global_step % args.checkpoint_every == 0:
                 model_state = (dict(raw.geometry.state_dict())
-                               if args.architecture in ("v32", "v321") else raw.state_dict())
-                if args.architecture in ("v32", "v321"):
+                               if args.architecture in V32_ARCHITECTURES else raw.state_dict())
+                if args.architecture in V32_ARCHITECTURES:
                     model_state = {f"geometry.{key}": value
                                    for key, value in model_state.items()}
                 atomic_save({"version": checkpoint_version, "cfg": asdict(cfg),
                              "model": model_state,
-                             "model_kind": ("geometry_delta" if args.architecture in ("v32", "v321")
+                             "model_kind": ("geometry_delta" if args.architecture in V32_ARCHITECTURES
                                             else "full"),
                              "optimizer": optimizer.state_dict(),
                              "scaler": scaler.state_dict(), "history": history,
@@ -492,12 +585,12 @@ def main():
                              "controller": controller.state_dict()}, resume)
         if rank == 0:
             stage_state = (dict(raw.geometry.state_dict())
-                           if args.architecture in ("v32", "v321") else raw.state_dict())
-            if args.architecture in ("v32", "v321"):
+                           if args.architecture in V32_ARCHITECTURES else raw.state_dict())
+            if args.architecture in V32_ARCHITECTURES:
                 stage_state = {f"geometry.{key}": value for key, value in stage_state.items()}
             atomic_save({"version": checkpoint_version, "cfg": asdict(cfg),
                          "model": stage_state,
-                         "model_kind": ("geometry_delta" if args.architecture in ("v32", "v321")
+                         "model_kind": ("geometry_delta" if args.architecture in V32_ARCHITECTURES
                                         else "full"), "history": history,
                          "stage_index": stage_index, "global_step": global_step,
                          "nonfinite_skips": nonfinite_skips,
@@ -516,7 +609,7 @@ def main():
         status = ("promotion_gate_passed" if last_report and last_report["valid"] and
                   test_report["valid"] and not pipeline_blocked
                   else "blocked_by_causal_ood_gate")
-        stem = {"v32": "jwm_eye_v32", "v321": "jwm_eye_v321"}.get(
+        stem = {"v32": "jwm_eye_v32", "v321": "jwm_eye_v321", "v322": "jwm_eye_v322"}.get(
             args.architecture, "jwm_eye_v31")
         final = output / (f"{stem}.pt" if status == "promotion_gate_passed"
                           else f"{stem}_blocked.pt")

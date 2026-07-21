@@ -107,6 +107,11 @@ class JWMConfig:
     geometry_confidence_weight: float = 0.0
     geometry_visibility_weight: float = 0.0
     geometry_temporal_weight: float = 0.0
+    geometry_depth_absrel_weight: float = 0.0
+    geometry_depth_gradient_weight: float = 0.0
+    geometry_initial_pose_weight: float = 0.0
+    geometry_pose_counterfactual_weight: float = 0.0
+    geometry_temporal_margin: float = 0.0
     geometry_track_robust_delta: float = 3.0
     geometry_confidence_threshold_px: float = 3.0
 

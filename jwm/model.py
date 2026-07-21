@@ -326,6 +326,12 @@ class JWM(nn.Module):
                          "confidence": self.cfg.geometry_confidence_weight,
                          "visibility": self.cfg.geometry_visibility_weight,
                          "temporal": self.cfg.geometry_temporal_weight,
+                         "depth_absrel": self.cfg.geometry_depth_absrel_weight,
+                         "depth_gradient": self.cfg.geometry_depth_gradient_weight,
+                         "initial_pose": self.cfg.geometry_initial_pose_weight,
+                         "pose_counterfactual":
+                             self.cfg.geometry_pose_counterfactual_weight,
+                         "temporal_margin": self.cfg.geometry_temporal_margin,
                          "confidence_threshold_px":
                              self.cfg.geometry_confidence_threshold_px})
         elif version == "v2_pairwise":

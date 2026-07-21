@@ -146,3 +146,45 @@ def warmstart_eye_v32(model, checkpoint: str | Path) -> dict:
         "skipped": skipped, "missing_after_load": list(result.missing_keys),
         "unexpected_after_load": list(result.unexpected_keys),
     }
+
+
+EYE_V322_CORRECTIVE_RESET_PREFIXES = (
+    "geometry.depth.", "geometry.depth_film.", "geometry.pose_head.",
+    "geometry.temporal_compatibility.", "geometry.tracker.dynamic.",
+    "geometry.ray_head.",
+)
+
+
+def warmstart_eye_v322(model, checkpoint: str | Path) -> dict:
+    """Retain v3.2.1 tracking but reset its collapsed geometry heads."""
+    payload = torch.load(checkpoint, map_location="cpu", weights_only=False)
+    if payload.get("version") != "jwm-eye-v3.2.1-robust-causal-geometry":
+        return warmstart_eye_v32(model, checkpoint)
+    source = payload.get("model", payload.get("state_dict", payload))
+    target = model.state_dict()
+    admitted, skipped = {}, {}
+    for name, tensor in source.items():
+        if any(name.startswith(prefix)
+               for prefix in EYE_V322_CORRECTIVE_RESET_PREFIXES):
+            skipped[name] = "corrective_head_reset"
+        elif name not in target:
+            skipped[name] = "not_in_target"
+        elif target[name].shape != tensor.shape:
+            skipped[name] = f"shape:{tuple(tensor.shape)}->{tuple(target[name].shape)}"
+        else:
+            admitted[name] = tensor
+    result = model.load_state_dict(admitted, strict=False)
+    return {
+        "source_version": payload.get("version"),
+        "loaded_tensors": len(admitted),
+        "corrective_reset_tensors": sum(
+            value == "corrective_head_reset" for value in skipped.values()),
+        "retained_tracker_tensors": sum(
+            name.startswith("geometry.tracker.") and
+            not any(name.startswith(prefix)
+                    for prefix in EYE_V322_CORRECTIVE_RESET_PREFIXES)
+            for name in admitted),
+        "skipped": skipped,
+        "missing_after_load": list(result.missing_keys),
+        "unexpected_after_load": list(result.unexpected_keys),
+    }

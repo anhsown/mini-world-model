@@ -209,6 +209,11 @@ def eye_physical_v32_scale() -> JWMConfig:
           geometry_confidence_weight=0.15,
           geometry_visibility_weight=0.15,
           geometry_temporal_weight=0.25,
+          geometry_depth_absrel_weight=0.75,
+          geometry_depth_gradient_weight=0.25,
+          geometry_initial_pose_weight=0.75,
+          geometry_pose_counterfactual_weight=0.25,
+          geometry_temporal_margin=0.50,
           geometry_track_robust_delta=3.0,
           geometry_confidence_threshold_px=3.0,
       )

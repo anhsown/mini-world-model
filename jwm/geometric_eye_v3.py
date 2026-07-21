@@ -487,6 +487,26 @@ class CTPGPhysicalEye(nn.Module):
                        output["depth_log_sigma"])
         depth_nll = (depth_terms.masked_select(valid).mean() if bool(valid.any()) else
                      torch.nan_to_num(depth_terms).sum() * 0)
+        # Aleatoric NLL alone can improve by inflating sigma while metric depth
+        # remains worse than a constant prior. Keep uncertainty-independent
+        # metric and edge terms.
+        relative_error = ((output["depth"] - depth_gt).abs() /
+                          depth_gt.clamp_min(0.10)).clamp_max(5.0)
+        depth_absrel = (relative_error.masked_select(valid).mean()
+                        if bool(valid.any()) else relative_error.sum() * 0)
+        pred_log = output["depth"].clamp_min(1e-4).log()
+        truth_log = depth_gt.clamp_min(1e-4).log()
+        grad_terms = []
+        for axis in (-1, -2):
+            pred_delta = torch.diff(pred_log, dim=axis)
+            truth_delta = torch.diff(truth_log, dim=axis)
+            pair_valid = (valid[..., 1:] & valid[..., :-1] if axis == -1 else
+                          valid[..., 1:, :] & valid[..., :-1, :])
+            delta = (pred_delta - truth_delta).abs()
+            if bool(pair_valid.any()):
+                grad_terms.append(delta.masked_select(pair_valid).mean())
+        depth_gradient = (torch.stack(grad_terms).mean() if grad_terms else
+                          depth_absrel.new_zeros(()))
 
         gt_relative = torch.stack([
             camera_transform(pose_gt_c2w[:, i], pose_gt_c2w[:, i + 1])
@@ -497,6 +517,13 @@ class CTPGPhysicalEye(nn.Module):
         gt_motion = gt_relative[..., :3, 3].norm(dim=-1).detach().clamp_min(.01)
         translation_loss = ((pred_relative[..., :3, 3] - gt_relative[..., :3, 3])
                             .norm(dim=-1) / gt_motion).clamp(max=10).mean()
+        initial_relative = output["initial_relative_pose"]
+        initial_rotation = rotation_geodesic(initial_relative[..., :3, :3],
+                                             gt_relative[..., :3, :3]).mean()
+        initial_translation = ((initial_relative[..., :3, 3] -
+                                gt_relative[..., :3, 3]).norm(dim=-1) /
+                               gt_motion).clamp(max=10).mean()
+        initial_pose_loss = initial_rotation + initial_translation
 
         track_loss = depth_nll.new_zeros(())
         dynamic_loss = depth_nll.new_zeros(())
@@ -588,23 +615,48 @@ class CTPGPhysicalEye(nn.Module):
                 output["dynamic_logit"], labels, pos_weight=pos_weight, reduction="none")
             probability = output["dynamic_probability"]
             pt = labels * probability + (1 - labels) * (1 - probability)
-            dynamic_loss = ((1 - pt).square() * dynamic_bce).mean()
+            focal = ((1 - pt).square() * dynamic_bce).mean()
+            intersection = (probability * labels).sum()
+            dice = 1 - ((2 * intersection + 1) /
+                        (probability.sum() + labels.sum() + 1))
+            dynamic_loss = focal + dice
         ba = torch.nan_to_num(output["ba_residual_history"], nan=1e3,
                               posinf=1e3, neginf=1e3)
         ba_monotonic = F.relu(ba[..., -1] - ba[..., 0]).mean()
         calibration_contrast = depth_nll.new_zeros(())
+        pose_counterfactual = depth_nll.new_zeros(())
         if counterfactual_output is not None:
             wrong_ba = counterfactual_output["ba_residual_history"][..., -1]
             calibration_contrast = F.relu(.05 + ba[..., -1] - wrong_ba).mean()
+            wrong_relative = counterfactual_output["initial_relative_pose"]
+            wrong_rotation = rotation_geodesic(
+                wrong_relative[..., :3, :3], gt_relative[..., :3, :3])
+            wrong_translation = ((wrong_relative[..., :3, 3] -
+                                  gt_relative[..., :3, 3]).norm(dim=-1) /
+                                 gt_motion).clamp(max=10)
+            normal_error = (
+                rotation_geodesic(initial_relative[..., :3, :3],
+                                  gt_relative[..., :3, :3]) +
+                ((initial_relative[..., :3, 3] - gt_relative[..., :3, 3])
+                 .norm(dim=-1) / gt_motion).clamp(max=10))
+            pose_counterfactual = F.relu(
+                .10 + normal_error - (wrong_rotation + wrong_translation)).mean()
         if temporal_negative_output is not None:
             negative_logits = temporal_negative_output["temporal_compatibility_logit"]
             temporal_loss = temporal_loss + F.binary_cross_entropy_with_logits(
                 negative_logits, torch.zeros_like(negative_logits))
+            temporal_loss = temporal_loss + F.relu(
+                w("temporal_margin", 0.0) -
+                output["temporal_compatibility_logit"] + negative_logits).mean()
         total = (w("depth", 1.0) * depth_nll + w("rotation", 1.0) * rotation_loss +
                  w("translation", 1.0) * translation_loss + w("track", 1.0) * track_loss +
+                 w("depth_absrel", 0.0) * depth_absrel +
+                 w("depth_gradient", 0.0) * depth_gradient +
+                 w("initial_pose", 0.0) * initial_pose_loss +
                  w("rigid", .25) * rigid_consistency + w("dynamic", .2) * dynamic_loss +
                  w("ba", .2) * ba_monotonic +
                  w("counterfactual", .15) * calibration_contrast +
+                 w("pose_counterfactual", 0.0) * pose_counterfactual +
                  w("ray", 0.0) * ray_loss +
                  w("track_cycle", 0.0) * track_cycle +
                  w("confidence", 0.0) * confidence_loss +
@@ -616,14 +668,18 @@ class CTPGPhysicalEye(nn.Module):
             1 - ba[..., -1] / ba_initial.clamp_min(1e-6),
             torch.zeros_like(ba_initial)).mean()
         metrics = {"geometry_depth_nll": float(depth_nll.detach()),
+                   "geometry_depth_absrel_loss": float(depth_absrel.detach()),
+                   "geometry_depth_gradient": float(depth_gradient.detach()),
                    "geometry_rotation": float(rotation_loss.detach()),
                    "geometry_translation": float(translation_loss.detach()),
+                   "geometry_initial_pose": float(initial_pose_loss.detach()),
                    "geometry_track_epe": float(track_loss.detach()),
                    "geometry_track_valid_fraction": float(track_valid_fraction.detach()),
                    "geometry_rigid_epe": float(rigid_consistency.detach()),
                    "geometry_dynamic_bce": float(dynamic_loss.detach()),
                    "geometry_ba_monotonic": float(ba_monotonic.detach()),
                    "geometry_calibration_contrast": float(calibration_contrast.detach()),
+                   "geometry_pose_counterfactual": float(pose_counterfactual.detach()),
                    "geometry_ray_angular": float(ray_loss.detach()),
                    "geometry_track_cycle": float(track_cycle.detach()),
                    "geometry_confidence_bce": float(confidence_loss.detach()),

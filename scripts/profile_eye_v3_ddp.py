@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path: sys.path.insert(0, str(ROOT))
 
 from jwm import JWM
-from jwm.checkpoint_utils import warmstart_eye_physical, warmstart_eye_v32
+from jwm.checkpoint_utils import warmstart_eye_physical, warmstart_eye_v32, warmstart_eye_v322
 from jwm.configs import (eye_physical_v3_scale, eye_physical_v32_scale,
                          eye_physical_v32_smoke_scale)
 from jwm.geometry_v3_data import make_counterfactuals, procedural_v3_row, stack_geometry_v3_rows
@@ -25,14 +25,15 @@ from jwm.geometry_v3_trainer import (
     missing_trainable_gradients, move_geometry_batch,
     set_eye_v3_physical_trainable,
 )
-from scripts.train_eye_v3_ddp import STAGES, V3Sampler, make_datasets
+from scripts.train_eye_v3_ddp import (STAGES, V32_ARCHITECTURES, V3Sampler,
+                                      apply_stage_weight_profile, make_datasets)
 
 
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--warmstart", required=True)
     p.add_argument("--output", required=True)
-    p.add_argument("--architecture", choices=("v31", "v32", "v321"), default="v31")
+    p.add_argument("--architecture", choices=("v31", "v32", "v321", "v322"), default="v31")
     p.add_argument("--steps", type=int, default=250)
     p.add_argument("--per-gpu-batch", type=int, default=1)
     p.add_argument("--tiny", action="store_true")
@@ -55,17 +56,19 @@ def main():
         dist.init_process_group("nccl" if device.type == "cuda" else "gloo",
                                 device_id=device if device.type == "cuda" else None)
     torch.manual_seed(20260723 + rank)
-    cfg = (eye_physical_v32_scale() if args.architecture in ("v32", "v321")
+    cfg = (eye_physical_v32_scale() if args.architecture in V32_ARCHITECTURES
            else eye_physical_v3_scale())
-    if args.tiny and args.architecture in ("v32", "v321"):
+    if args.tiny and args.architecture in V32_ARCHITECTURES:
         cfg = eye_physical_v32_smoke_scale()
     elif args.tiny:
         cfg.image_size = 64; cfg.geometry_v3_width = 32
         cfg.geometry_track_points = 12; cfg.geometry_track_iterations = 1
         cfg.geometry_ba_iterations = 1
     model = JWM(cfg)
-    (warmstart_eye_v32(model, args.warmstart)
-     if args.architecture in ("v32", "v321") else warmstart_eye_physical(model, args.warmstart))
+    (warmstart_eye_v322(model, args.warmstart) if args.architecture == "v322" else
+     warmstart_eye_v32(model, args.warmstart) if args.architecture in V32_ARCHITECTURES else
+     warmstart_eye_physical(model, args.warmstart))
+    apply_stage_weight_profile(cfg, 0)
     active_names = set_eye_v3_physical_trainable(model)
     model.to(device)
     trainable = [p for p in model.parameters() if p.requires_grad]
@@ -77,9 +80,8 @@ def main():
     scaler = torch.amp.GradScaler("cuda", init_scale=256,
                                   enabled=device.type == "cuda")
     size = cfg.image_size
-    real_paths = args.tartan_train + args.tum_train + args.bonn_train
-    if real_paths:
-        sources = make_datasets(args)["train"]
+    sources = make_datasets(args)["train"]
+    if any(name in sources for name in ("tartanair", "tum", "bonn")):
         sampler = V3Sampler(sources, world, rank, 20260731)
         mixture = STAGES[0][5]
         cached = [sampler.batch(i, 0, args.per_gpu_batch, mixture) for i in range(24)]
@@ -96,8 +98,10 @@ def main():
     for step in range(args.steps):
         batch = move_geometry_batch(cached[step % len(cached)], device)
         controls = make_counterfactuals(batch)
-        wrong = controls["wrong_intrinsics"] if step % 2 else None
-        wrong_window = controls["wrong_window_image"] if wrong is None else None
+        mode = step % 3
+        wrong = controls["wrong_intrinsics"] if mode == 0 else None
+        wrong_window = (controls["reverse_image"] if mode == 1 else
+                        controls["wrong_window_image"] if mode == 2 else None)
         optimizer.zero_grad(set_to_none=True)
         with torch.autocast(device_type=device.type, dtype=torch.float16,
                             enabled=device.type == "cuda"):
@@ -128,6 +132,8 @@ def main():
             mean = lambda key: sum(row[key] for row in window) / len(window)
             print(f"profile [{step+1}/{args.steps}] loss={sum(losses[-20:])/len(losses[-20:]):.4f} "
                   f"depth={mean('geometry_depth_nll'):.4f} "
+                  f"absrel={mean('geometry_depth_absrel_loss'):.3f} "
+                  f"edge={mean('geometry_depth_gradient'):.3f} "
                   f"track={mean('geometry_track_epe'):.4f} "
                   f"valid={mean('geometry_track_valid_fraction'):.3f} "
                   f"ba={mean('geometry_ba_reduction'):.3f} "
