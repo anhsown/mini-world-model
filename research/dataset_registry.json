@@ -1,0 +1,29 @@
+{
+  "policy": {
+    "default_mode": "metadata",
+    "raw_download_blocked_below_free_gb": 30,
+    "note": "Full raw corpora exceed 27 TB before SDG-Warehouse and other sources. Metadata mode is the only safe local mode."
+  },
+  "huggingface": [
+    {"id": "nvidia/Cosmos-HumanEval-v1", "tier": "complete-small", "purpose": "physical and visual evaluation"},
+    {"id": "nvidia/PhysicalAI-Traffic-Anomaly-Reasoning", "tier": "annotations", "purpose": "traffic anomaly temporal and causal reasoning"},
+    {"id": "nvidia/PhysicalAI-Spatial-Intelligence-Warehouse", "tier": "metadata", "purpose": "warehouse RGB-D spatial reasoning", "gated": true},
+    {"id": "nvidia/Cosmos3-DROID", "tier": "metadata", "purpose": "robot policy, forward and inverse dynamics"},
+    {"id": "nvidia/PhysicalAI-WorldModel-Synthetic-Physical-Interaction-Scenes", "tier": "metadata", "purpose": "rigid-body physics and dense geometry"},
+    {"id": "nvidia/PhysicalAI-WorldModel-Synthetic-Embodied-Robot-Scenes", "tier": "metadata", "purpose": "robot collision, manipulation and embodiment"},
+    {"id": "nvidia/PhysicalAI-WorldModel-Synthetic-Autonomous-Driving-Scenarios", "tier": "metadata", "purpose": "long-tail autonomous-driving scenarios"},
+    {"id": "nvidia/PhysicalAI-WorldModel-Synthetic-Digital-Human-Scenes", "tier": "metadata", "purpose": "human motion, depth and camera trajectories"},
+    {"id": "nvidia/PhysicalAI-WorldModel-Synthetic-Warehouse-Operations-Scenes", "tier": "metadata-index", "purpose": "industrial safety, depth, masks and boxes"},
+    {"id": "IPEC-COMMUNITY/EO-Data1.5M", "tier": "metadata", "purpose": "embodied QA and vision-text-action"},
+    {"id": "nexar-ai/nexar_collision_prediction", "tier": "metadata", "purpose": "real dashcam collision prediction"},
+    {"id": "FactoryBench/FactoryBench", "tier": "audit-samples", "purpose": "industrial sensor/control/context-to-text causal reasoning", "license": "CC BY-NC 4.0", "revision": "e2ad55f2c4a66d3f3190170cfe06a50cc93a2e46"}
+  ],
+  "external_official": [
+    {"name": "DROID", "url": "https://droid-dataset.github.io/", "availability": "public", "purpose": "real robot demonstrations"},
+    {"name": "MimicGen", "url": "https://mimicgen.github.io/", "availability": "public code and datasets", "purpose": "robot demonstration generation"},
+    {"name": "BEHAVIOR-1K", "url": "https://behavior.stanford.edu/", "availability": "public simulator and benchmark", "purpose": "long-horizon embodied planning"},
+    {"name": "VideoPhy-2", "url": "https://github.com/Hritikbansal/videophy", "availability": "public data links from official repository", "purpose": "physical commonsense"},
+    {"name": "LocateAnything-Data", "url": "https://research.nvidia.com/labs/lpr/locate-anything/LocateAnything.pdf", "availability": "exact Cosmos subset not established", "purpose": "grounding, boxes and points"},
+    {"name": "MADS", "url": "https://research.nvidia.com/labs/cosmos-lab/cosmos3/technical-report.pdf", "availability": "public download not established", "purpose": "multicamera world-scenario-map and 3D grounding"}
+  ]
+}
