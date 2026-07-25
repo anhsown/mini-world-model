@@ -1,0 +1,26 @@
+{
+  "valid": true,
+  "schema_version": "factorytraj-bench-0.1.0",
+  "items": 10,
+  "levels": {
+    "1": 2,
+    "2": 2,
+    "3": 3,
+    "4": 3
+  },
+  "stream_relationships": {
+    "paired": 2,
+    "single": 8
+  },
+  "hypotheses": {
+    "H_item_schema_valid": true,
+    "H_output_schema_valid": true,
+    "H_exactly_ten_examples": true,
+    "H_levels_1_to_4_covered": true,
+    "H_single_and_paired_stream_covered": true,
+    "H_no_model_input_target_leakage": true,
+    "H_episode_split_invariants": true,
+    "H_research_license_enforced": true
+  },
+  "errors": []
+}

@@ -1,0 +1,364 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://celesnity.ai/schemas/factorytraj-bench/0.1/item.schema.json",
+  "title": "FactoryTraj-Bench v0.1 Item",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "item_id",
+    "source",
+    "trajectory",
+    "model_input",
+    "task",
+    "ground_truth",
+    "governance",
+    "split",
+    "created_at"
+  ],
+  "properties": {
+    "schema_version": {"const": "factorytraj-bench-0.1.0"},
+    "item_id": {"type": "string", "minLength": 1},
+    "source": {"$ref": "#/$defs/source"},
+    "trajectory": {"$ref": "#/$defs/trajectory"},
+    "model_input": {"$ref": "#/$defs/modelInput"},
+    "task": {"$ref": "#/$defs/task"},
+    "ground_truth": {"$ref": "#/$defs/groundTruth"},
+    "governance": {"$ref": "#/$defs/governance"},
+    "split": {"$ref": "#/$defs/split"},
+    "created_at": {"type": "string", "format": "date-time"}
+  },
+  "$defs": {
+    "nullableString": {"type": ["string", "null"]},
+    "scalar": {"type": ["number", "integer", "string", "boolean", "null"]},
+    "sourceEpisode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dataset", "episode"],
+      "properties": {
+        "dataset": {"type": "string", "minLength": 1},
+        "episode": {"type": "string", "minLength": 1}
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dataset",
+        "record_id",
+        "uri",
+        "revision",
+        "license",
+        "derivation",
+        "source_episodes",
+        "original_provenance"
+      ],
+      "properties": {
+        "dataset": {"type": "string", "minLength": 1},
+        "record_id": {"type": "string", "minLength": 1},
+        "uri": {"type": "string", "minLength": 1},
+        "revision": {"type": ["string", "null"]},
+        "license": {"type": "string", "minLength": 1},
+        "derivation": {"type": "string", "minLength": 1},
+        "source_episodes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/sourceEpisode"}
+        },
+        "original_provenance": {"type": "object"}
+      }
+    },
+    "trajectory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["trajectory_id", "run_id", "stream_relationship"],
+      "properties": {
+        "trajectory_id": {"type": "string", "minLength": 1},
+        "run_id": {"$ref": "#/$defs/nullableString"},
+        "stream_relationship": {
+          "enum": ["single", "paired", "multiple", "option_only"]
+        }
+      }
+    },
+    "productionContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cell_id",
+        "machine_id",
+        "asset_type",
+        "product",
+        "work_order",
+        "machine_mode",
+        "target_rate",
+        "metadata"
+      ],
+      "properties": {
+        "cell_id": {"$ref": "#/$defs/nullableString"},
+        "machine_id": {"$ref": "#/$defs/nullableString"},
+        "asset_type": {"$ref": "#/$defs/nullableString"},
+        "product": {"$ref": "#/$defs/nullableString"},
+        "work_order": {"$ref": "#/$defs/nullableString"},
+        "machine_mode": {"$ref": "#/$defs/nullableString"},
+        "target_rate": {"type": ["number", "null"]},
+        "metadata": {"type": "object"}
+      }
+    },
+    "channel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "channel_id",
+        "unit",
+        "sampling_rate_hz",
+        "description"
+      ],
+      "properties": {
+        "channel_id": {"type": "string", "minLength": 1},
+        "unit": {"$ref": "#/$defs/nullableString"},
+        "sampling_rate_hz": {
+          "type": ["number", "null"],
+          "exclusiveMinimum": 0
+        },
+        "description": {"$ref": "#/$defs/nullableString"}
+      }
+    },
+    "signalBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["channels", "values", "validity_mask"],
+      "properties": {
+        "channels": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/channel"}
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {"$ref": "#/$defs/scalar"}
+          }
+        },
+        "validity_mask": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {"type": "boolean"}
+          }
+        }
+      }
+    },
+    "media": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["media_id", "modality", "uri", "start_offset_s"],
+      "properties": {
+        "media_id": {"type": "string", "minLength": 1},
+        "modality": {"enum": ["video", "image", "audio", "spectrogram", "plot"]},
+        "uri": {"type": "string", "minLength": 1},
+        "start_offset_s": {"type": "number", "minimum": 0}
+      }
+    },
+    "stream": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stream_id",
+        "relation",
+        "timestamps",
+        "timestamp_unit",
+        "sensor_history",
+        "control_signals",
+        "machine_context",
+        "media",
+        "data_quality"
+      ],
+      "properties": {
+        "stream_id": {"type": "string", "minLength": 1},
+        "relation": {
+          "enum": ["primary", "comparison", "counterfactual", "candidate"]
+        },
+        "timestamps": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/scalar"}
+        },
+        "timestamp_unit": {"type": "string", "minLength": 1},
+        "sensor_history": {"$ref": "#/$defs/signalBlock"},
+        "control_signals": {"$ref": "#/$defs/signalBlock"},
+        "machine_context": {"$ref": "#/$defs/signalBlock"},
+        "media": {"type": "array", "items": {"$ref": "#/$defs/media"}},
+        "data_quality": {"type": "object"}
+      }
+    },
+    "candidateAction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action_id",
+        "action_type",
+        "target",
+        "parameters",
+        "preconditions",
+        "authorization"
+      ],
+      "properties": {
+        "action_id": {"type": "string", "minLength": 1},
+        "action_type": {"type": "string", "minLength": 1},
+        "target": {"type": "string", "minLength": 1},
+        "parameters": {"type": "object"},
+        "preconditions": {"type": "array", "items": {"type": "string"}},
+        "authorization": {"type": "string", "minLength": 1}
+      }
+    },
+    "sopStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["document_id", "step_id", "text"],
+      "properties": {
+        "document_id": {"type": "string", "minLength": 1},
+        "step_id": {"type": "string", "minLength": 1},
+        "text": {"type": "string", "minLength": 1}
+      }
+    },
+    "modelInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "production_context",
+        "observation_window",
+        "candidate_actions",
+        "sop",
+        "question",
+        "options"
+      ],
+      "properties": {
+        "production_context": {"$ref": "#/$defs/productionContext"},
+        "observation_window": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["requested_history_s", "actual_duration_s", "streams"],
+          "properties": {
+            "requested_history_s": {"type": "number", "exclusiveMinimum": 0},
+            "actual_duration_s": {"type": ["number", "null"], "minimum": 0},
+            "streams": {
+              "type": "array",
+              "minItems": 1,
+              "items": {"$ref": "#/$defs/stream"}
+            }
+          }
+        },
+        "candidate_actions": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/candidateAction"}
+        },
+        "sop": {"type": "array", "items": {"$ref": "#/$defs/sopStep"}},
+        "question": {"type": "string", "minLength": 1},
+        "options": {"type": "object"}
+      }
+    },
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "benchmark_tasks",
+        "causal_level",
+        "template_id",
+        "template_type",
+        "answer_format"
+      ],
+      "properties": {
+        "benchmark_tasks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "enum": ["B0", "B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B9", "B10"]
+          }
+        },
+        "causal_level": {"type": "integer", "minimum": 1, "maximum": 4},
+        "template_id": {"type": "string"},
+        "template_type": {"type": "string", "minLength": 1},
+        "answer_format": {
+          "enum": [
+            "choice",
+            "multilabel_tf",
+            "numeric",
+            "numeric_array",
+            "ranking",
+            "free_form",
+            "text"
+          ]
+        }
+      }
+    },
+    "groundTruth": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "belief_state",
+        "events",
+        "root_causes",
+        "action",
+        "outcome",
+        "response",
+        "acceptance_bounds",
+        "evidence",
+        "label_confidence",
+        "label_provenance"
+      ],
+      "properties": {
+        "belief_state": {"type": "object"},
+        "events": {"type": "array", "items": {"type": "object"}},
+        "root_causes": {"type": "array", "items": {"type": "string"}},
+        "action": {"type": ["object", "null"]},
+        "outcome": {"type": "object"},
+        "response": {},
+        "acceptance_bounds": {"type": ["object", "null"]},
+        "evidence": {"type": "array", "items": {"type": "object"}},
+        "label_confidence": {"type": "number", "minimum": 0, "maximum": 1},
+        "label_provenance": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["method", "source_record_id"],
+            "properties": {
+              "method": {"type": "string", "minLength": 1},
+              "source_record_id": {"type": "string", "minLength": 1}
+            }
+          }
+        }
+      }
+    },
+    "governance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "permitted_use",
+        "commercial_training_allowed",
+        "redistribution_allowed",
+        "contains_personal_data"
+      ],
+      "properties": {
+        "permitted_use": {
+          "enum": ["public", "research_only", "internal_only"]
+        },
+        "commercial_training_allowed": {"type": "boolean"},
+        "redistribution_allowed": {"type": "boolean"},
+        "contains_personal_data": {"type": "boolean"}
+      }
+    },
+    "split": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "split_group", "ood_tags"],
+      "properties": {
+        "name": {
+          "enum": ["train", "validation", "test_public", "test_private"]
+        },
+        "split_group": {"type": "string", "minLength": 1},
+        "ood_tags": {"type": "array", "items": {"type": "string"}}
+      }
+    }
+  }
+}

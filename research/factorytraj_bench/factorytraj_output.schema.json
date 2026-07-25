@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://celesnity.ai/schemas/factorytraj-bench/0.1/output.schema.json",
+  "title": "FactoryTraj-Bench v0.1 Model Output",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "item_id",
+    "belief_state",
+    "evidence",
+    "next_events",
+    "root_causes",
+    "ranked_actions",
+    "expected_outcomes",
+    "response",
+    "confidence",
+    "abstain",
+    "abstain_reason"
+  ],
+  "properties": {
+    "schema_version": {"const": "factorytraj-output-0.1.0"},
+    "item_id": {"type": "string", "minLength": 1},
+    "belief_state": {
+      "type": "object",
+      "required": ["state_id", "probability"],
+      "properties": {
+        "state_id": {"type": ["string", "null"]},
+        "probability": {"type": "number", "minimum": 0, "maximum": 1}
+      },
+      "additionalProperties": true
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["stream_id", "timestamp", "channel_id", "claim"],
+        "properties": {
+          "stream_id": {"type": "string", "minLength": 1},
+          "timestamp": {"type": ["number", "string"]},
+          "channel_id": {"type": ["string", "null"]},
+          "claim": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "next_events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["event_id", "horizon_s", "probability"],
+        "properties": {
+          "event_id": {"type": "string", "minLength": 1},
+          "horizon_s": {"type": "number", "minimum": 0},
+          "probability": {"type": "number", "minimum": 0, "maximum": 1}
+        }
+      }
+    },
+    "root_causes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["cause_id", "probability"],
+        "properties": {
+          "cause_id": {"type": "string", "minLength": 1},
+          "probability": {"type": "number", "minimum": 0, "maximum": 1}
+        }
+      }
+    },
+    "ranked_actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["action_id", "rank", "probability_of_success", "valid"],
+        "properties": {
+          "action_id": {"type": "string", "minLength": 1},
+          "rank": {"type": "integer", "minimum": 1},
+          "probability_of_success": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "valid": {"type": "boolean"}
+        }
+      }
+    },
+    "expected_outcomes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["action_id", "outcome_id", "probability"],
+        "properties": {
+          "action_id": {"type": "string", "minLength": 1},
+          "outcome_id": {"type": "string", "minLength": 1},
+          "probability": {"type": "number", "minimum": 0, "maximum": 1}
+        }
+      }
+    },
+    "response": {},
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "abstain": {"type": "boolean"},
+    "abstain_reason": {"type": ["string", "null"]}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"abstain": {"const": true}}},
+      "then": {
+        "properties": {
+          "abstain_reason": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  ]
+}
