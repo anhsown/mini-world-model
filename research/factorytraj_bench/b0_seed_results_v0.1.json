@@ -1,0 +1,99 @@
+{
+  "benchmark": "FactoryTraj-B0 seed v0.1",
+  "items_total": 244,
+  "items_train": 82,
+  "items_evaluation": 162,
+  "source_count": 10,
+  "authoritative_range_count": 89,
+  "results": {
+    "majority": {
+      "b0_contract_macro_score": 0.16785395324402416,
+      "components": {
+        "data_type_exact_accuracy": 0.7839506172839507,
+        "unit_exact_accuracy": 0.0,
+        "role_macro_f1": 0.0553191489361702,
+        "range_score": 0.0,
+        "relationship_macro_f1": 0.0
+      },
+      "label_coverage": {
+        "data_type": 1.0,
+        "engineering_unit": 0.7654320987654321,
+        "authoritative_range": 0.5493827160493827,
+        "role": 1.0,
+        "relationships": 0.3765432098765432
+      },
+      "items": 162
+    },
+    "rule_full_name": {
+      "b0_contract_macro_score": 0.41336972873271405,
+      "components": {
+        "data_type_exact_accuracy": 1.0,
+        "unit_exact_accuracy": 0.07258064516129033,
+        "role_macro_f1": 0.6008253755514603,
+        "range_score": 0.0,
+        "relationship_macro_f1": 0.39344262295081966
+      },
+      "label_coverage": {
+        "data_type": 1.0,
+        "engineering_unit": 0.7654320987654321,
+        "authoritative_range": 0.5493827160493827,
+        "role": 1.0,
+        "relationships": 0.3765432098765432
+      },
+      "items": 162
+    },
+    "rule_anonymized_name": {
+      "b0_contract_macro_score": 0.20192771084337352,
+      "components": {
+        "data_type_exact_accuracy": 1.0,
+        "unit_exact_accuracy": 0.0,
+        "role_macro_f1": 0.009638554216867469,
+        "range_score": 0.0,
+        "relationship_macro_f1": 0.0
+      },
+      "label_coverage": {
+        "data_type": 1.0,
+        "engineering_unit": 0.7654320987654321,
+        "authoritative_range": 0.5493827160493827,
+        "role": 1.0,
+        "relationships": 0.3765432098765432
+      },
+      "items": 162
+    },
+    "rule_anonymized_with_docs": {
+      "b0_contract_macro_score": 0.33492634207240946,
+      "components": {
+        "data_type_exact_accuracy": 1.0,
+        "unit_exact_accuracy": 0.0,
+        "role_macro_f1": 0.6746317103620474,
+        "range_score": 0.0,
+        "relationship_macro_f1": 0.0
+      },
+      "label_coverage": {
+        "data_type": 1.0,
+        "engineering_unit": 0.7654320987654321,
+        "authoritative_range": 0.5493827160493827,
+        "role": 1.0,
+        "relationships": 0.3765432098765432
+      },
+      "items": 162
+    }
+  },
+  "dataset_admission": {
+    "H_item_count_at_least_100": true,
+    "H_at_least_two_source_families": true,
+    "H_unit_coverage_at_least_50pct": true,
+    "H_at_least_50_authoritative_ranges": true,
+    "H_relationship_coverage_at_least_20pct": true,
+    "H_no_name_shortcut": true
+  },
+  "benchmark_admitted": true,
+  "current_jwm_evaluated": false,
+  "current_jwm_passed_b0": false,
+  "decision": "ready_to_freeze_threshold_and_evaluate_jwm",
+  "required_next_data": [
+    "authoritative OPC UA tag exports with EngineeringUnits and EURange",
+    "SME-reviewed cross-tag relationships",
+    "anonymized-name evaluation records with representative samples/docs"
+  ]
+}

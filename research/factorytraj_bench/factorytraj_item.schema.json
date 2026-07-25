@@ -109,18 +109,109 @@
       "additionalProperties": false,
       "required": [
         "channel_id",
-        "unit",
+        "data_type",
+        "engineering_unit",
+        "instrument_range",
+        "eu_range",
+        "observed_range",
+        "role",
+        "relationships",
         "sampling_rate_hz",
-        "description"
+        "description",
+        "documentation_ref"
       ],
       "properties": {
         "channel_id": {"type": "string", "minLength": 1},
-        "unit": {"$ref": "#/$defs/nullableString"},
+        "data_type": {
+          "enum": ["boolean", "integer", "float", "string", "enum", "array", "unknown"]
+        },
+        "engineering_unit": {
+          "oneOf": [
+            {"$ref": "#/$defs/engineeringUnit"},
+            {"type": "null"}
+          ]
+        },
+        "instrument_range": {
+          "oneOf": [
+            {"$ref": "#/$defs/range"},
+            {"type": "null"}
+          ]
+        },
+        "eu_range": {
+          "oneOf": [
+            {"$ref": "#/$defs/range"},
+            {"type": "null"}
+          ]
+        },
+        "observed_range": {
+          "oneOf": [
+            {"$ref": "#/$defs/range"},
+            {"type": "null"}
+          ]
+        },
+        "role": {
+          "enum": [
+            "sensor_feedback",
+            "control_setpoint",
+            "control_command",
+            "actuator_command",
+            "machine_context",
+            "unknown"
+          ]
+        },
+        "relationships": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/channelRelationship"}
+        },
         "sampling_rate_hz": {
           "type": ["number", "null"],
           "exclusiveMinimum": 0
         },
-        "description": {"$ref": "#/$defs/nullableString"}
+        "description": {"$ref": "#/$defs/nullableString"},
+        "documentation_ref": {"$ref": "#/$defs/nullableString"}
+      }
+    },
+    "engineeringUnit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["namespace_uri", "unit_id", "display_name", "description"],
+      "properties": {
+        "namespace_uri": {"type": "string", "minLength": 1},
+        "unit_id": {"type": "integer"},
+        "display_name": {"type": "string", "minLength": 1},
+        "description": {"type": "string", "minLength": 1}
+      }
+    },
+    "range": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["low", "high", "kind"],
+      "properties": {
+        "low": {"type": "number"},
+        "high": {"type": "number"},
+        "kind": {
+          "enum": ["instrument", "engineering", "observed_full", "observed_compact_sample"]
+        }
+      }
+    },
+    "channelRelationship": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target_channel_id", "relation"],
+      "properties": {
+        "target_channel_id": {"type": "string", "minLength": 1},
+        "relation": {
+          "enum": [
+            "commands",
+            "tracks",
+            "measures",
+            "controls",
+            "interlocks",
+            "derived_from",
+            "correlated_with",
+            "located_on"
+          ]
+        }
       }
     },
     "signalBlock": {

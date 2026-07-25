@@ -1,0 +1,593 @@
+{
+  "schema_version": "factorytraj-task-contracts-0.1.0",
+  "status": "b0_frozen_after_seed_admission_other_tasks_provisional",
+  "principles": [
+    "Evaluate observable outputs and evidence pointers, not private chain-of-thought.",
+    "Report every task by dataset, source, machine, condition and OOD split.",
+    "Use trajectory/run splits with boundary embargo; never random overlapping windows.",
+    "Prediction, diagnosis and action tasks require correct, shuffled and zero-context controls.",
+    "Safety and abstention metrics cannot be averaged away by task accuracy."
+  ],
+  "tasks": [
+    {
+      "id": "B0",
+      "capability": "Schema and tag understanding",
+      "research_question": "Can the model recover machine-variable semantics without using target or fault labels?",
+      "required_inputs": [
+        "tag names or anonymized tag IDs",
+        "representative samples and validity masks",
+        "declared data types when available",
+        "engineering units and ranges when available",
+        "partial tag dictionary or topology documentation"
+      ],
+      "required_ground_truth": [
+        "data_type",
+        "engineering_unit",
+        "instrument_range or eu_range",
+        "role",
+        "relationships"
+      ],
+      "required_outputs": {
+        "tags": [
+          "tag_id",
+          "data_type",
+          "engineering_unit",
+          "range",
+          "role",
+          "relationships",
+          "confidence"
+        ]
+      },
+      "primary_metric": "b0_contract_macro_score",
+      "metric_components": [
+        "data_type_exact_accuracy",
+        "unit_exact_accuracy",
+        "role_macro_f1",
+        "range_normalized_error",
+        "relationship_macro_f1"
+      ],
+      "mandatory_controls": [
+        "metadata_lookup_oracle",
+        "majority_role_baseline",
+        "anonymized_tag_name",
+        "samples_only",
+        "documentation_only"
+      ],
+      "baseline_families": [
+        "deterministic metadata lookup",
+        "rule-based name parser",
+        "general LLM with documentation retrieval"
+      ],
+      "dataset_coverage": {
+        "FactoryBench": "partial: samples and inferred roles; units/ranges/docs often missing",
+        "FactoryWave_FactoryNet": "strong candidate: raw channels and machine metadata",
+        "Tennessee_Eastman": "strong for variable role and process relationships",
+        "SWaT": "strong for sensor/actuator role and topology",
+        "MIMII": "not suitable beyond audio stream metadata"
+      },
+      "gate": "Frozen in b0_pass_threshold_v0.1.json; all primary and anonymized-robustness thresholds must pass."
+    },
+    {
+      "id": "B1",
+      "capability": "State estimation",
+      "research_question": "Can the model infer current observable and latent operating state?",
+      "required_inputs": [
+        "synchronized observation window",
+        "production context",
+        "tag metadata",
+        "optional vision/audio"
+      ],
+      "required_ground_truth": [
+        "state_id",
+        "state interval",
+        "label confidence",
+        "label provenance"
+      ],
+      "required_outputs": {
+        "belief_state": ["state_id", "class_probabilities", "evidence", "confidence"]
+      },
+      "primary_metric": "macro_f1",
+      "metric_components": [
+        "balanced_accuracy",
+        "brier_score",
+        "expected_calibration_error",
+        "evidence_precision"
+      ],
+      "mandatory_controls": [
+        "context_blind",
+        "shuffled_context",
+        "zero_context",
+        "sensor_only",
+        "control_only"
+      ],
+      "baseline_families": [
+        "PLC state machine",
+        "XGBoost or LightGBM",
+        "specialist time-series classifier",
+        "LLM/VLM/Cosmos representations"
+      ],
+      "dataset_coverage": {
+        "FactoryBench": "supported for state-oriented L1/L2 items",
+        "Tennessee_Eastman": "supported through process mode/fault state",
+        "SWaT": "supported with operating/attack state labels",
+        "MIMII": "partial acoustic machine state"
+      },
+      "gate": "Provisional same-machine target: macro-F1 >= 0.90 with calibrated probabilities."
+    },
+    {
+      "id": "B2",
+      "capability": "Cycle and event segmentation",
+      "research_question": "Can the model localize cycle boundaries, stop onset and recovery?",
+      "required_inputs": [
+        "continuous synchronized streams",
+        "sampling metadata",
+        "optional event/alarm stream"
+      ],
+      "required_ground_truth": [
+        "event_id",
+        "start_time",
+        "end_time",
+        "event_type"
+      ],
+      "required_outputs": {
+        "events": ["event_id", "event_type", "start_time", "end_time", "confidence"]
+      },
+      "primary_metric": "range_event_f1",
+      "metric_components": [
+        "onset_absolute_error_s",
+        "offset_absolute_error_s",
+        "detection_delay_s",
+        "false_events_per_hour"
+      ],
+      "mandatory_controls": [
+        "persistence",
+        "threshold_detector",
+        "shuffled_context",
+        "future_leakage_check"
+      ],
+      "baseline_families": [
+        "PLC transition rules",
+        "change-point detector",
+        "specialist temporal segmentation model"
+      ],
+      "dataset_coverage": {
+        "FactoryBench": "partial: some temporal localization questions",
+        "ALPI": "strong for alarm sequence events",
+        "Tennessee_Eastman": "supported for injected fault intervals",
+        "SWaT": "supported for attack intervals",
+        "MIMII": "partial if event boundaries are available"
+      },
+      "gate": "Provisional micro-stop target: event-F1 >= 0.85 at a pre-registered timing tolerance."
+    },
+    {
+      "id": "B3",
+      "capability": "Anomaly and fault localization",
+      "research_question": "Can the model identify an anomalous interval and responsible subsystem?",
+      "required_inputs": [
+        "observation window",
+        "machine topology",
+        "production context"
+      ],
+      "required_ground_truth": [
+        "anomaly interval",
+        "subsystem_id",
+        "fault family",
+        "label provenance"
+      ],
+      "required_outputs": {
+        "anomalies": ["start_time", "end_time", "subsystem_id", "fault_family", "confidence"]
+      },
+      "primary_metric": "event_auprc",
+      "metric_components": [
+        "range_event_f1",
+        "top_k_subsystem_accuracy",
+        "detection_delay_s",
+        "false_events_per_hour"
+      ],
+      "mandatory_controls": [
+        "class_prevalence_baseline",
+        "shuffled_context",
+        "zero_context",
+        "point_accuracy_not_primary"
+      ],
+      "baseline_families": [
+        "rules and thresholds",
+        "isolation forest or one-class baseline",
+        "specialist anomaly detector",
+        "LLM/VLM/Cosmos representations"
+      ],
+      "dataset_coverage": {
+        "FactoryBench": "supported for anomaly/fault questions",
+        "Tennessee_Eastman": "strong",
+        "SWaT": "strong",
+        "MIMII": "strong for acoustic anomaly, weak subsystem context"
+      },
+      "gate": "Threshold frozen after seed benchmark; event-level metrics and delay are mandatory."
+    },
+    {
+      "id": "B4",
+      "capability": "Causal diagnosis",
+      "research_question": "Can the model rank causal mechanisms and ground them in observed evidence?",
+      "required_inputs": [
+        "trajectory before and during interruption",
+        "machine topology",
+        "alarm/context stream",
+        "optional SOP"
+      ],
+      "required_ground_truth": [
+        "root cause",
+        "alternative causes",
+        "evidence pointers",
+        "verification status"
+      ],
+      "required_outputs": {
+        "root_causes": ["cause_id", "rank", "probability", "evidence"]
+      },
+      "primary_metric": "top_1_root_cause_accuracy",
+      "metric_components": [
+        "top_3_root_cause_accuracy",
+        "mean_reciprocal_rank",
+        "evidence_precision",
+        "unsupported_claim_rate"
+      ],
+      "mandatory_controls": [
+        "context_blind",
+        "shuffled_context",
+        "zero_context",
+        "answer_template_novelty"
+      ],
+      "baseline_families": [
+        "fault tree or FMEA lookup",
+        "classical classifier",
+        "LLM with retrieved documentation",
+        "Cosmos/hybrid reasoner"
+      ],
+      "dataset_coverage": {
+        "FactoryBench": "supported but L4 template reuse requires evidence controls",
+        "Tennessee_Eastman": "fault labels available; explanations must be curated",
+        "SWaT": "attack labels available; physical root causes limited",
+        "IndustryAssetEQA": "strong candidate for evidence-grounded diagnosis"
+      },
+      "gate": "Must beat context-blind and shuffled-context controls with grounded evidence."
+    },
+    {
+      "id": "B5",
+      "capability": "Next-state and event prediction",
+      "research_question": "Can the model forecast operational events and state over 30–120 seconds?",
+      "required_inputs": [
+        "past observation window only",
+        "production context",
+        "known scheduled controls"
+      ],
+      "required_ground_truth": [
+        "future state sequence",
+        "future event sequence",
+        "forecast horizon"
+      ],
+      "required_outputs": {
+        "next_events": ["event_id", "horizon_s", "probability"],
+        "next_states": ["state_id", "start_time", "end_time", "probability"]
+      },
+      "primary_metric": "next_event_auprc",
+      "metric_components": [
+        "brier_score",
+        "sequence_edit_distance",
+        "state_macro_f1",
+        "quantile_loss_or_nrmse",
+        "calibration_by_horizon"
+      ],
+      "mandatory_controls": [
+        "persistence",
+        "moving_average",
+        "no_future_leakage",
+        "shuffled_context",
+        "zero_context"
+      ],
+      "baseline_families": [
+        "persistence and moving average",
+        "XGBoost/LightGBM",
+        "specialist forecasting model",
+        "Chronos-like model",
+        "Cosmos/hybrid reasoner"
+      ],
+      "dataset_coverage": {
+        "FactoryBench": "supported for selected predictive questions",
+        "Tennessee_Eastman": "strong",
+        "ALPI": "strong for alarm sequence prediction",
+        "SWaT": "supported",
+        "MIMII": "weak for operational forecast"
+      },
+      "gate": "Must improve both discrimination and calibration over persistence/specialist baselines."
+    },
+    {
+      "id": "B6",
+      "capability": "SOP grounding",
+      "research_question": "Can the model select applicable SOP steps without unsafe contradictions?",
+      "required_inputs": [
+        "current belief state",
+        "alarms",
+        "retrieved SOP candidates",
+        "authorization context"
+      ],
+      "required_ground_truth": [
+        "applicable_step_ids",
+        "blocked_step_ids",
+        "required_checks",
+        "safety clauses"
+      ],
+      "required_outputs": {
+        "sop_decision": ["applicable_steps", "blocked_steps", "required_checks", "evidence"]
+      },
+      "primary_metric": "sop_step_accuracy",
+      "metric_components": [
+        "precondition_recall",
+        "contradiction_rate",
+        "unsupported_safety_claim_rate",
+        "evidence_precision"
+      ],
+      "mandatory_controls": [
+        "no_sop",
+        "full_sop",
+        "retrieved_steps",
+        "structured_precondition_graph"
+      ],
+      "baseline_families": [
+        "deterministic rule lookup",
+        "retrieval plus LLM",
+        "Cosmos/hybrid reasoner"
+      ],
+      "dataset_coverage": {
+        "FactoryBench": "insufficient: SOP is not consistently present",
+        "IndustryAssetEQA": "partial evidence/document grounding",
+        "Celesnity_microfactory": "required for authoritative SOP labels"
+      },
+      "gate": "No critical safety contradiction; threshold frozen with SME-reviewed seed set."
+    },
+    {
+      "id": "B7",
+      "capability": "Workflow execution planning",
+      "research_question": "Can the model produce a valid typed action sequence with preconditions?",
+      "required_inputs": [
+        "goal",
+        "belief state",
+        "available tools/actions",
+        "SOP/precondition graph",
+        "authorization"
+      ],
+      "required_ground_truth": [
+        "valid workflow",
+        "precondition satisfaction",
+        "simulator or hardware outcome"
+      ],
+      "required_outputs": {
+        "workflow": ["ordered_actions", "parameters", "preconditions", "authorization", "timeouts"]
+      },
+      "primary_metric": "simulator_success_rate",
+      "metric_components": [
+        "constraint_violation_count",
+        "invalid_action_rate",
+        "workflow_edit_distance",
+        "human_rejection_rate"
+      ],
+      "mandatory_controls": [
+        "deterministic_validator",
+        "no_execution_on_invalid_output",
+        "human_approval",
+        "simulator_before_hardware"
+      ],
+      "baseline_families": [
+        "fixed PLC/SOP workflow",
+        "symbolic planner",
+        "LLM tool planner",
+        "hybrid constrained planner"
+      ],
+      "dataset_coverage": {
+        "FactoryBench": "not sufficient",
+        "public_datasets": "generally insufficient for authoritative execution",
+        "Celesnity_simulator_microfactory": "required"
+      },
+      "gate": "Zero critical constraint violations before hardware-in-loop."
+    },
+    {
+      "id": "B8",
+      "capability": "Recovery action ranking",
+      "research_question": "Can the model rank safe recovery actions by measured operational utility?",
+      "required_inputs": [
+        "belief state",
+        "candidate actions",
+        "action preconditions",
+        "history and SOP"
+      ],
+      "required_ground_truth": [
+        "action relevance or preference",
+        "measured outcome",
+        "oracle utility or cost"
+      ],
+      "required_outputs": {
+        "ranked_actions": ["action_id", "rank", "probability_of_success", "expected_utility", "valid"]
+      },
+      "primary_metric": "ndcg_at_k",
+      "metric_components": [
+        "recall_at_3",
+        "regret_vs_oracle",
+        "invalid_action_rate",
+        "success_probability_brier"
+      ],
+      "mandatory_controls": [
+        "popularity_prior",
+        "observation_only_ablation",
+        "shuffled_action_outcomes",
+        "deterministic_safety_filter"
+      ],
+      "baseline_families": [
+        "SOP order",
+        "historical action success rate",
+        "learning-to-rank baseline",
+        "Cosmos/hybrid ranker"
+      ],
+      "dataset_coverage": {
+        "FactoryBench": "partial decision-language supervision, incomplete measured outcomes",
+        "FactoryNet": "insufficient without action outcomes",
+        "Celesnity_simulator_microfactory": "required for reliable ranking labels"
+      },
+      "gate": "Provisional target Recall@3 >= 0.80 with zero unsafe recommendations after filtering."
+    },
+    {
+      "id": "B9",
+      "capability": "Action-conditioned outcome prediction",
+      "research_question": "Does conditioning on action improve prediction of measured outcomes?",
+      "required_inputs": [
+        "belief state",
+        "candidate action",
+        "pre-action history",
+        "production context"
+      ],
+      "required_ground_truth": [
+        "post-action state/event distribution",
+        "immediate outcome",
+        "delayed outcome",
+        "success/failure"
+      ],
+      "required_outputs": {
+        "expected_outcomes": ["action_id", "outcome_id", "probability", "horizon_s"]
+      },
+      "primary_metric": "outcome_brier_score",
+      "metric_components": [
+        "outcome_accuracy",
+        "action_effect_delta",
+        "calibration_by_action",
+        "counterfactual_pair_accuracy"
+      ],
+      "mandatory_controls": [
+        "observation_only_ablation",
+        "shuffled_action",
+        "shuffled_outcome",
+        "action_frequency_prior"
+      ],
+      "baseline_families": [
+        "action-independent transition model",
+        "tabular/classical action-conditioned model",
+        "specialist transition model",
+        "Cosmos/hybrid transition model"
+      ],
+      "dataset_coverage": {
+        "FactoryBench": "partial intervention/counterfactual supervision",
+        "Tennessee_Eastman": "partial manipulated-variable experiments",
+        "SWaT": "partial actuator-state trajectories",
+        "Celesnity_simulator_microfactory": "required for controlled interventions"
+      },
+      "gate": "Action-conditioned model must significantly beat observation-only prediction before any world-model claim."
+    },
+    {
+      "id": "B10",
+      "capability": "OOD recognition and abstention",
+      "research_question": "Can the model remain calibrated and abstain on unseen machines, products and faults?",
+      "required_inputs": [
+        "unseen or shifted trajectory",
+        "training-support metadata",
+        "optional candidate actions"
+      ],
+      "required_ground_truth": [
+        "ood_type",
+        "known_or_unknown",
+        "correct prediction if answerable",
+        "unsafe decision indicator"
+      ],
+      "required_outputs": {
+        "selective_prediction": ["prediction", "confidence", "abstain", "abstain_reason"]
+      },
+      "primary_metric": "area_under_risk_coverage_curve",
+      "metric_components": [
+        "ood_auroc",
+        "ood_auprc",
+        "selective_risk_at_coverage",
+        "unsafe_confident_action_rate",
+        "expected_calibration_error"
+      ],
+      "mandatory_controls": [
+        "iid_vs_ood_locked_split",
+        "confidence_threshold_sweep",
+        "machine_ood",
+        "condition_ood",
+        "fault_ood",
+        "action_ood"
+      ],
+      "baseline_families": [
+        "maximum-softmax threshold",
+        "distance-to-training embedding",
+        "specialist OOD detector",
+        "selective hybrid model"
+      ],
+      "dataset_coverage": {
+        "FactoryBench": "derived OOD splits possible but machine diversity is limited",
+        "Tennessee_Eastman": "fault/mode OOD",
+        "SWaT": "scenario OOD",
+        "MIMII": "machine/domain-shift OOD",
+        "Celesnity_microfactory": "required for product/condition/machine OOD"
+      },
+      "gate": "No unsafe confident action; report complete risk-coverage curve rather than one abstention threshold."
+    }
+  ],
+  "global_reporting": {
+    "aggregation": [
+      "per-task",
+      "per-source",
+      "per-machine",
+      "per-condition",
+      "macro over classes",
+      "macro over tasks"
+    ],
+    "uncertainty": [
+      "bootstrap 95% confidence interval by trajectory",
+      "Brier score for probabilistic classification",
+      "expected calibration error",
+      "risk-coverage curve for abstention"
+    ],
+    "causal_controls": [
+      "correct context",
+      "shuffled context within matched task/source",
+      "zero context",
+      "observation-only versus action-conditioned"
+    ],
+    "prohibited_shortcuts": [
+      "template ID as model input",
+      "causal level as model input",
+      "random overlapping-window split",
+      "test-driven prompt tuning",
+      "synthetic transformation of locked real test",
+      "point accuracy as sole anomaly metric"
+    ]
+  },
+  "research_basis": [
+    {
+      "name": "FactoryBench",
+      "url": "https://arxiv.org/abs/2605.07675",
+      "use": "causal levels, structured/free-form task families"
+    },
+    {
+      "name": "OPC UA Part 8 Data Access",
+      "url": "https://reference.opcfoundation.org/specs/OPC-10000-8/5",
+      "use": "engineering units, instrument/EU ranges and data-access semantics"
+    },
+    {
+      "name": "TSRBench",
+      "url": "https://arxiv.org/abs/2601.18744",
+      "use": "separate perception, reasoning, prediction and decision representations"
+    },
+    {
+      "name": "Precision and Recall for Time Series",
+      "url": "https://papers.nips.cc/paper_files/paper/2018/hash/8f468c873a32bb0619eaeb2050ba45d1-Abstract.html",
+      "use": "range/event anomaly evaluation"
+    },
+    {
+      "name": "SelectiveNet",
+      "url": "https://proceedings.mlr.press/v97/geifman19a.html",
+      "use": "risk-coverage evaluation for abstention"
+    },
+    {
+      "name": "IndustryBench",
+      "url": "https://arxiv.org/abs/2605.10267",
+      "use": "source-grounded and safety-aware industrial evaluation"
+    }
+  ]
+}

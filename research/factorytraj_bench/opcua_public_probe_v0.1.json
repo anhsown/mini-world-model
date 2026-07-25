@@ -1,0 +1,142 @@
+{
+  "schema_version": "factorytraj-b0-opcua-probe-0.1.0",
+  "endpoint": "opc.tcp://uademo.prosysopc.com:53530/OPCUA/SimulationServer",
+  "roots": [
+    "ns=3;s=85/0:Simulation",
+    "ns=6;s=MyObjectsFolder"
+  ],
+  "variables": [
+    {
+      "node_id": "ExpandedNodeId(Identifier=1001, NamespaceIndex=3, NodeIdType=<NodeIdType.FourByte: 1>, NamespaceUri=None, ServerIndex=0)",
+      "browse_name": "Counter",
+      "data_type": "Double",
+      "description": {
+        "Encoding": 0,
+        "Locale": null,
+        "Text": null
+      },
+      "engineering_unit": null,
+      "instrument_range": null,
+      "eu_range": null,
+      "representative_samples": [
+        18.0,
+        19.0
+      ]
+    },
+    {
+      "node_id": "ExpandedNodeId(Identifier=1002, NamespaceIndex=3, NodeIdType=<NodeIdType.FourByte: 1>, NamespaceUri=None, ServerIndex=0)",
+      "browse_name": "Random",
+      "data_type": "Double",
+      "description": {
+        "Encoding": 0,
+        "Locale": null,
+        "Text": null
+      },
+      "engineering_unit": null,
+      "instrument_range": null,
+      "eu_range": null,
+      "representative_samples": [
+        -0.05208623,
+        -1.172928
+      ]
+    },
+    {
+      "node_id": "ExpandedNodeId(Identifier=1003, NamespaceIndex=3, NodeIdType=<NodeIdType.FourByte: 1>, NamespaceUri=None, ServerIndex=0)",
+      "browse_name": "Sawtooth",
+      "data_type": "Double",
+      "description": {
+        "Encoding": 0,
+        "Locale": null,
+        "Text": null
+      },
+      "engineering_unit": null,
+      "instrument_range": null,
+      "eu_range": null,
+      "representative_samples": [
+        -2.0,
+        -1.6
+      ]
+    },
+    {
+      "node_id": "ExpandedNodeId(Identifier=1004, NamespaceIndex=3, NodeIdType=<NodeIdType.FourByte: 1>, NamespaceUri=None, ServerIndex=0)",
+      "browse_name": "Sinusoid",
+      "data_type": "Double",
+      "description": {
+        "Encoding": 0,
+        "Locale": null,
+        "Text": null
+      },
+      "engineering_unit": null,
+      "instrument_range": null,
+      "eu_range": null,
+      "representative_samples": [
+        1.989044,
+        1.989044
+      ]
+    },
+    {
+      "node_id": "ExpandedNodeId(Identifier=1005, NamespaceIndex=3, NodeIdType=<NodeIdType.FourByte: 1>, NamespaceUri=None, ServerIndex=0)",
+      "browse_name": "Square",
+      "data_type": "Double",
+      "description": {
+        "Encoding": 0,
+        "Locale": null,
+        "Text": null
+      },
+      "engineering_unit": null,
+      "instrument_range": null,
+      "eu_range": null,
+      "representative_samples": [
+        2.0,
+        2.0
+      ]
+    },
+    {
+      "node_id": "ExpandedNodeId(Identifier=1006, NamespaceIndex=3, NodeIdType=<NodeIdType.FourByte: 1>, NamespaceUri=None, ServerIndex=0)",
+      "browse_name": "Triangle",
+      "data_type": "Double",
+      "description": {
+        "Encoding": 0,
+        "Locale": null,
+        "Text": null
+      },
+      "engineering_unit": null,
+      "instrument_range": null,
+      "eu_range": null,
+      "representative_samples": [
+        1.066667,
+        0.8000001
+      ]
+    },
+    {
+      "node_id": "ExpandedNodeId(Identifier='MyLevel', NamespaceIndex=6, NodeIdType=<NodeIdType.String: 3>, NamespaceUri=None, ServerIndex=0)",
+      "browse_name": "MyLevel",
+      "data_type": "Double",
+      "description": null,
+      "engineering_unit": null,
+      "instrument_range": null,
+      "eu_range": null,
+      "representative_samples": [
+        70.0,
+        70.0
+      ]
+    },
+    {
+      "node_id": "ExpandedNodeId(Identifier='MySwitch', NamespaceIndex=6, NodeIdType=<NodeIdType.String: 3>, NamespaceUri=None, ServerIndex=0)",
+      "browse_name": "MySwitch",
+      "data_type": "Boolean",
+      "description": null,
+      "engineering_unit": null,
+      "instrument_range": null,
+      "eu_range": null,
+      "representative_samples": [
+        true,
+        true
+      ]
+    }
+  ],
+  "coverage": {
+    "engineering_unit": 0.0,
+    "instrument_or_eu_range": 0.0
+  }
+}

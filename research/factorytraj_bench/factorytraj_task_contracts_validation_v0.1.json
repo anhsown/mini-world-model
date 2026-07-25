@@ -1,0 +1,27 @@
+{
+  "valid": true,
+  "schema_version": "factorytraj-task-contracts-0.1.0",
+  "task_count": 11,
+  "task_ids": [
+    "B0",
+    "B1",
+    "B2",
+    "B3",
+    "B4",
+    "B5",
+    "B6",
+    "B7",
+    "B8",
+    "B9",
+    "B10"
+  ],
+  "hypotheses": {
+    "H_complete_B0_B10": true,
+    "H_every_task_has_io_gt_metric": true,
+    "H_B0_is_operational": true,
+    "H_causal_tasks_have_controls": true,
+    "H_OOD_abstention_is_safety_aware": true,
+    "H_research_basis_is_traceable": true
+  },
+  "errors": []
+}

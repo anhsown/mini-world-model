@@ -1,0 +1,18 @@
+{
+  "schema_version": "factorytraj-b0-threshold-0.1.0",
+  "frozen": true,
+  "frozen_after_dataset_admission": true,
+  "primary_thresholds": {
+    "b0_contract_macro_score": 0.6,
+    "data_type_exact_accuracy": 0.95,
+    "unit_exact_accuracy": 0.6,
+    "role_macro_f1": 0.7,
+    "range_score": 0.6,
+    "relationship_macro_f1": 0.6
+  },
+  "robustness_thresholds": {
+    "maximum_full_to_anonymized_macro_drop": 0.1
+  },
+  "pass_rule": "All primary and robustness thresholds must pass; no averaging away a failed component.",
+  "rationale": "Thresholds exceed transparent seed baselines while requiring usable performance on every contract field."
+}

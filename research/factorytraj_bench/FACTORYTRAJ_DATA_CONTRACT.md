@@ -65,6 +65,11 @@ Each numerical block stores channel metadata, a `[time, channel]` value matrix
 and a matching validity mask. Missing values remain missing and are never
 silently zero-filled.
 
+Channel metadata distinguishes `engineering_unit`, `instrument_range`,
+`eu_range`, the compact sample's `observed_range`, semantic `role`, and typed
+`relationships` between channels. An observed range must never be promoted to
+an instrument or engineering range without authoritative source metadata.
+
 `stream_relationship` distinguishes single, paired, multiple and option-only
 items. Paired FactoryBench records must preserve both series.
 
@@ -76,6 +81,11 @@ document/step records. The model ranks or describes actions; deterministic
 safety and authorization remain external.
 
 ## Task and target
+
+Exact inputs, hidden ground truth, outputs, metrics, controls, baselines and
+admission gates for B0-B10 are defined in
+`factorytraj_task_contracts_v0.1.json` and explained in
+`FACTORYTRAJ_TASK_CONTRACTS.md`.
 
 `task.benchmark_tasks` maps an item to FactoryTraj capabilities B0–B10.
 `causal_level` preserves FactoryBench L1–L4 for stratified reporting.
