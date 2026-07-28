@@ -1,0 +1,42 @@
+Analyze this industrial assembly video and produce an evidence-grounded report.
+
+Return the report using these sections:
+
+1. VIDEO OVERVIEW
+2. TEMPORAL OBSERVATIONS
+3. VISIBLE OBJECTS AND WORK AREA
+4. OPERATOR ACTIONS
+5. ACTION SEQUENCE
+6. CURRENT ASSEMBLY STATE
+7. POSSIBLE ANOMALIES OR SAFETY CONCERNS
+8. MOST LIKELY HATREC TASK
+9. CONFIDENCE AND LIMITATIONS
+
+For every important statement, explicitly classify it as OBSERVED, INFERRED, or UNKNOWN.
+
+For MOST LIKELY HATREC TASK, select exactly one class:
+
+0. Assembling the spring
+1. Placing the white plastic part
+2. Screwing-1
+3. Inflating the valve
+4. Placing the black plastic part
+5. Screwing-2
+6. Fixing the cable
+
+Requirements:
+
+- Base the analysis only on visible evidence from the video.
+- Do not use the filename or file path as evidence.
+- Describe the sequence in chronological order.
+- Do not invent hidden objects, measurements, machine states, defects, intentions, or outcomes.
+- Do not claim that an operation succeeded or failed unless the result is clearly visible.
+- If an object, action, anomaly, or safety condition cannot be verified, classify it as UNKNOWN.
+- Provide a confidence score from 0 to 100% for the selected HATREC task.
+- Explain which visible evidence supports the selected task.
+- Mention plausible alternative tasks when the evidence is ambiguous.
+- Keep internal reasoning inside the <think> tags.
+- Write the complete structured report immediately after the </think> tag.
+
+Answer the question using the following format:<think>Your reasoning.</think> Write your final answer immediately after the </think> tag
+

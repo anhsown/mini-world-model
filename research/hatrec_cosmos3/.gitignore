@@ -1,0 +1,9 @@
+.env
+.nvidia_email
+.nvidia_browser_profile/
+.nvidia_browser_sessions/
+outputs/
+*.mp4
+*.zip
+__pycache__/
+*.pyc
