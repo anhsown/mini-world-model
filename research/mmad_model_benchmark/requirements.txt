@@ -1,0 +1,5 @@
+Pillow>=10
+playwright>=1.52,<2
+remotezip>=0.12
+requests>=2.31
+

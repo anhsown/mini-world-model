@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+data/mmad.json
+data/images/
+outputs/
+.nvidia_browser_sessions/
+
