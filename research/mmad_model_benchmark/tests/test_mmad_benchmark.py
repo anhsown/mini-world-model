@@ -7,7 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from common.mmad import CANONICAL_TYPES, evaluate_records, parse_prediction
+from common.mmad import CANONICAL_TYPES, build_full, evaluate_records, parse_prediction
 
 
 def test_strict_answer_parser():
@@ -47,3 +47,13 @@ def test_materialized_images_are_complete():
     manifest = json.loads((ROOT / "data" / "subset_manifest.json").read_text(encoding="utf-8"))
     expected = {row["image_file"] for row in manifest["records"]}
     assert all((ROOT / "data" / relative).stat().st_size > 0 for relative in expected)
+
+
+def test_full_manifest_contract():
+    raw = json.loads((ROOT / "data" / "mmad.json").read_text(encoding="utf-8"))
+    manifest = build_full(raw)
+    assert manifest["setting"] == "zero_shot_full"
+    assert len(manifest["records"]) == 39_670
+    assert manifest["unique_images"] == 8_366
+    assert len({row["sample_id"] for row in manifest["records"]}) == 39_670
+    assert len({row["image_file"] for row in manifest["records"]}) == 8_366

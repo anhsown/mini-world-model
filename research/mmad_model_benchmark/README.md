@@ -39,6 +39,15 @@ python models/cosmos3/run_nvidia_build.py --limit 3 --delay 1
 
 Upload and run `models/qwen2_vl/Qwen2VL_2B_MMAD_ZeroShot.ipynb` in Colab or Kaggle with a T4 GPU. The notebook clones the public repository, materializes the exact shared subset, runs FP16 deterministic inference, plots metrics and creates `qwen2_vl_mmad_results.zip`.
 
+### Full MMAD run
+
+After validating the 140-question protocol, upload and run
+`models/qwen2_vl/Qwen2VL_2B_MMAD_Full.ipynb` in Google Colab with a T4.
+It runs all 39,670 valid questions over 8,366 images. Source archives are
+downloaded and removed one at a time, inference is batched with automatic OOM
+fallback, and predictions are mirrored to Google Drive every 100 records for
+shutdown-safe resume.
+
 ## Outputs
 
 Each model directory contains:

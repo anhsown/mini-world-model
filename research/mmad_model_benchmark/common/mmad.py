@@ -197,6 +197,37 @@ def build_subset(raw: dict, questions_per_task: int = 20, seed: int = 20260729) 
     return public_payload
 
 
+def build_full(raw: dict) -> dict:
+    """Build the complete valid MMAD zero-shot manifest with neutral media names."""
+    selected = flatten_annotations(raw)
+    selected.sort(
+        key=lambda row: (
+            CANONICAL_TYPES.index(row["question_type"]),
+            row["private_key"],
+        )
+    )
+    image_ids: dict[str, str] = {}
+    for row_index, row in enumerate(selected, start=1):
+        source_path = row["source_image_path"]
+        if source_path not in image_ids:
+            suffix = Path(source_path).suffix.lower() or ".png"
+            image_ids[source_path] = f"image_{len(image_ids) + 1:06d}{suffix}"
+        row["sample_id"] = f"mmad_full_{row_index:05d}"
+        row["image_file"] = f"images/{image_ids[source_path]}"
+        row["prompt"] = format_prompt(row["question"], row["options"])
+
+    public_payload = {
+        "benchmark": "MMAD",
+        "setting": "zero_shot_full",
+        "canonical_question_types": list(CANONICAL_TYPES),
+        "unique_images": len(image_ids),
+        "records": selected,
+    }
+    canonical = json.dumps(public_payload, sort_keys=True, ensure_ascii=False).encode()
+    public_payload["manifest_sha256"] = hashlib.sha256(canonical).hexdigest()
+    return public_payload
+
+
 def load_jsonl(path: Path) -> list[dict]:
     if not path.exists():
         return []
