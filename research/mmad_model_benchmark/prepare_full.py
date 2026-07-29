@@ -3,11 +3,13 @@ from __future__ import annotations
 import argparse
 import json
 import shutil
+import time
 import zipfile
 from collections import defaultdict
 from pathlib import Path
 
 import requests
+from PIL import Image
 from remotezip import RemoteZip
 
 from common.mmad import ARCHIVE_URLS, MMAD_JSON_URL, build_full
@@ -15,6 +17,17 @@ from prepare_subset import download
 
 
 ROOT = Path(__file__).resolve().parent
+
+
+def valid_image(path: Path) -> bool:
+    if not path.exists() or path.stat().st_size == 0:
+        return False
+    try:
+        with Image.open(path) as image:
+            image.verify()
+        return True
+    except (OSError, ValueError):
+        return False
 
 
 def download_archive(url: str, destination: Path) -> None:
@@ -52,27 +65,51 @@ def materialize_all_images(
         missing = {
             member: relative
             for member, relative in members.items()
-            if not (output / relative).exists()
+            if not valid_image(output / relative)
         }
         if not missing:
             print(f"[{archive}] already complete: {len(members)} images")
             continue
         if range_download:
             print(f"[{archive}] HTTP-range fetching {len(missing)} images")
-            with RemoteZip(ARCHIVE_URLS[archive]) as bundle:
-                available = set(bundle.namelist())
-                absent = sorted(set(missing) - available)
-                if absent:
-                    raise FileNotFoundError(
-                        f"{archive}: {len(absent)} members missing; first={absent[0]}"
-                    )
+            bundle: RemoteZip | None = None
+            try:
                 for index, (member, relative) in enumerate(sorted(missing.items()), 1):
                     destination = output / relative
                     destination.parent.mkdir(parents=True, exist_ok=True)
-                    with bundle.open(member) as source, destination.open("wb") as target:
-                        shutil.copyfileobj(source, target, 4 * 1024 * 1024)
+                    partial = destination.with_suffix(destination.suffix + ".partial")
+                    for attempt in range(1, 9):
+                        try:
+                            if bundle is None:
+                                # Reopening refreshes Hugging Face's expiring signed CDN URL.
+                                bundle = RemoteZip(ARCHIVE_URLS[archive])
+                            if member not in bundle.namelist():
+                                raise FileNotFoundError(f"{member} not found in {archive}.zip")
+                            partial.unlink(missing_ok=True)
+                            with bundle.open(member) as source, partial.open("wb") as target:
+                                shutil.copyfileobj(source, target, 4 * 1024 * 1024)
+                            if not valid_image(partial):
+                                raise OSError(f"downloaded image failed validation: {member}")
+                            partial.replace(destination)
+                            break
+                        except Exception as error:
+                            partial.unlink(missing_ok=True)
+                            if bundle is not None:
+                                bundle.close()
+                                bundle = None
+                            if attempt == 8:
+                                raise
+                            delay = min(2**attempt, 60)
+                            print(
+                                f"  retry {attempt}/8 for {member}: "
+                                f"{type(error).__name__}; waiting {delay}s"
+                            )
+                            time.sleep(delay)
                     if index % 250 == 0 or index == len(missing):
                         print(f"  fetched {index}/{len(missing)}")
+            finally:
+                if bundle is not None:
+                    bundle.close()
             continue
         archive_path = cache / f"{archive}.zip"
         print(f"[{archive}] downloading archive for {len(missing)} missing images")
