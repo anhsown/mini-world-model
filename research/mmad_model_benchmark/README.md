@@ -42,11 +42,11 @@ Upload and run `models/qwen2_vl/Qwen2VL_2B_MMAD_ZeroShot.ipynb` in Colab or Kagg
 ### Full MMAD run
 
 After validating the 140-question protocol, upload and run
-`models/qwen2_vl/Qwen2VL_2B_MMAD_Full.ipynb` in Google Colab with a T4.
+`models/qwen2_vl/Qwen2VL_2B_MMAD_Full.ipynb` on Kaggle with a T4.
 It runs all 39,670 valid questions over 8,366 images. Source archives are
-downloaded and removed one at a time, inference is batched with automatic OOM
-fallback, and predictions are mirrored to Google Drive every 100 records for
-shutdown-safe resume.
+processed one at a time with HTTP-range image retrieval, inference is batched
+with automatic OOM fallback, and partial/final archives are written under
+`/kaggle/working`.
 
 ## Outputs
 

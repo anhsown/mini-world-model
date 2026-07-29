@@ -65,6 +65,11 @@ def main() -> None:
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--checkpoint-every", type=int, default=100)
     parser.add_argument("--limit", type=int, default=0)
+    parser.add_argument(
+        "--archives",
+        nargs="+",
+        help="Run only records from these source archives.",
+    )
     args = parser.parse_args()
 
     manifest_path = args.data / "full_manifest.json"
@@ -79,7 +84,11 @@ def main() -> None:
         for row in previous
         if row.get("status") in {"ok", "parse_failure"}
     }
-    records = manifest["records"][: args.limit or None]
+    records = manifest["records"]
+    if args.archives:
+        selected_archives = set(args.archives)
+        records = [row for row in records if row["source_archive"] in selected_archives]
+    records = records[: args.limit or None]
     pending = [row for row in records if row["sample_id"] not in done]
     print(
         f"manifest={manifest['manifest_sha256']} total={len(records)} "
