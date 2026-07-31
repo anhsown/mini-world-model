@@ -20,15 +20,23 @@ from common.mmad import (  # noqa: E402
     SYSTEM_PROMPT,
     append_jsonl,
     evaluate_records,
+    image_input_profile,
     load_jsonl,
     parse_prediction,
+    split_reasoning_response,
     write_evaluation,
+)
+from common.shared_checkpoint import (  # noqa: E402
+    SharedCheckpointStore,
+    discover_checkpoint_repo,
 )
 
 
 MODEL_PAGE = "https://build.nvidia.com/nvidia/cosmos3-nano-reasoner"
 SIGNIN_PAGE = "https://build.nvidia.com/models?modal=signin"
 DEFAULT_PROFILE = ROOT.parent / "hatrec_cosmos3" / ".nvidia_browser_sessions" / "cosmos3_authenticated"
+SUBSET_DATA = ROOT / "data"
+FULL_DATA = ROOT / "data_full"
 
 
 def ensure_playwright():
@@ -130,6 +138,8 @@ def read_output(page) -> str:
 
 def detect_blocker(page) -> str | None:
     text = page.locator("body").inner_text(timeout=10_000).lower()
+    if "blocked_by_safety" in text or "input rejected by content safety" in text:
+        return "safety_block"
     if "too many requests" in text or "rate limit" in text:
         return "rate_limit"
     if page.locator('iframe[src*="captcha"]:visible').count():
@@ -139,10 +149,80 @@ def detect_blocker(page) -> str | None:
     return None
 
 
-def wait_for_answer(page, previous: str, timeout_seconds: int) -> tuple[str, str]:
+def failure_category(status: str, completion: str, error: str = "") -> str | None:
+    value = error.lower()
+    for category in ("safety_block", "rate_limit", "captcha", "login_required"):
+        if category in value:
+            return category
+    if status == "no_output" or completion == "timeout_no_output":
+        return "no_output"
+    if status == "partial":
+        return "output_parse_failure"
+    if status == "error":
+        return "ui_or_upload_error"
+    return None
+
+
+def write_sample_artifacts(records_dir: Path, row: dict) -> None:
+    records_dir.mkdir(parents=True, exist_ok=True)
+    stem = records_dir / row["sample_id"]
+    stem.with_suffix(".json").write_text(
+        json.dumps(row, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    markdown = (
+        f"# {row['sample_id']}\n\n"
+        f"- Status: `{row['status']}`\n"
+        f"- Completion: `{row['completion']}`\n"
+        f"- Prediction: `{row.get('prediction')}`\n"
+        f"- Failure category: `{row.get('failure_category')}`\n\n"
+        f"## Reasoning\n\n{row.get('reasoning') or '*No reasoning captured.*'}\n\n"
+        f"## Response\n\n{row.get('response') or '*No response captured.*'}\n"
+    )
+    stem.with_suffix(".md").write_text(markdown, encoding="utf-8")
+
+
+def full_data_ready(root: Path) -> bool:
+    manifest_path = root / "full_manifest.json"
+    if not manifest_path.exists():
+        return False
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return False
+    if len(manifest.get("records", [])) != 39_670:
+        return False
+    # Several questions can share one image. Checking the distinct paths keeps
+    # startup inexpensive while still preventing an incomplete full run.
+    images = {row["image_file"] for row in manifest["records"]}
+    return len(images) == 8_366 and all((root / relative).exists() for relative in images)
+
+
+def prepare_full_data(root: Path) -> None:
+    if full_data_ready(root):
+        print(f"Full MMAD data already complete: {root}")
+        return
+    print("Preparing/resuming all 8,366 MMAD images for the 39,670-question run...")
+    subprocess.run(
+        [
+            sys.executable,
+            str(ROOT / "prepare_full.py"),
+            "--output", str(root),
+            "--range-download",
+        ],
+        check=True,
+    )
+    if not full_data_ready(root):
+        raise RuntimeError("Full MMAD preparation ended without all 8,366 valid images")
+
+
+def wait_for_answer(
+    page, previous: str, timeout_seconds: int, poll_seconds: float = 0.2,
+) -> tuple[str, str]:
     deadline = time.time() + timeout_seconds
     last = ""
     stable = 0
+    last_prediction = None
+    prediction_stable = 0
     while time.time() < deadline:
         blocker = detect_blocker(page)
         if blocker:
@@ -150,14 +230,30 @@ def wait_for_answer(page, previous: str, timeout_seconds: int) -> tuple[str, str
         current = read_output(page)
         stable = stable + 1 if current and current == last and current != previous else 0
         last = current
-        parsed = parse_prediction(current)
+        separated = split_reasoning_response(current)
+        parsed = parse_prediction(separated["response"] or current)
+        if parsed and parsed == last_prediction:
+            prediction_stable += 1
+        elif parsed:
+            last_prediction = parsed
+            prediction_stable = 0
+        else:
+            last_prediction = None
+            prediction_stable = 0
+        changed = bool(current and current != previous)
+        structured_final = separated["parse_format"] in {"think_tags", "nvidia_ui"}
         run = page.get_by_role("button", name="Run", exact=True)
         run_ready = run.count() and run.is_enabled()
+        # A structured final answer after </think> is already an unambiguous
+        # completion signal. Capture it immediately; the NVIDIA spinner may
+        # remain active long after the answer is visible.
+        if changed and structured_final and parsed:
+            return current, "complete_output_captured"
         if parsed and stable >= 2 and run_ready:
             return current, "complete"
         if parsed and stable >= 4:
             return current, "complete_spinner_stuck"
-        time.sleep(1)
+        time.sleep(poll_seconds)
     current = read_output(page)
     if current and current != previous:
         return current, "partial_timeout"
@@ -176,22 +272,105 @@ def reset_page(page) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run MMAD zero-shot on Cosmos 3 NVIDIA Build UI")
-    parser.add_argument("--manifest", type=Path, default=ROOT / "data" / "subset_manifest.json")
-    parser.add_argument("--data-root", type=Path, default=ROOT / "data")
-    parser.add_argument("--output", type=Path, default=ROOT / "outputs" / "cosmos3" / "predictions.jsonl")
+    parser.add_argument("--manifest", type=Path)
+    parser.add_argument("--data-root", type=Path)
+    parser.add_argument("--output", type=Path)
     parser.add_argument("--profile", type=Path, default=DEFAULT_PROFILE)
+    parser.add_argument(
+        "--full", action="store_true",
+        help="Prepare/resume and run all 39,670 MMAD questions over 8,366 images",
+    )
     parser.add_argument("--limit", type=int, default=0)
-    parser.add_argument("--timeout", type=int, default=45)
+    parser.add_argument("--timeout", type=int, default=10)
+    parser.add_argument(
+        "--poll-ms", type=int, default=200,
+        help="Poll the NVIDIA output this often and leave immediately on a final answer",
+    )
     parser.add_argument("--delay", type=float, default=5.0)
     parser.add_argument("--headless", action="store_true")
+    parser.add_argument(
+        "--skip-attempted", action="store_true",
+        help="Skip previous failures too; by default only successful records are skipped",
+    )
+    parser.add_argument(
+        "--resume-from", type=Path, action="append", default=[],
+        help=(
+            "Additional JSONL checkpoint to use for sample_id deduplication. "
+            "May be repeated. Successful rows are skipped; failed rows are retried "
+            "unless --skip-attempted is also set."
+        ),
+    )
+    parser.add_argument(
+        "--no-shared-checkpoint", action="store_true",
+        help="Disable automatic GitHub checkpoint pull/push.",
+    )
+    parser.add_argument(
+        "--checkpoint-repo", type=Path,
+        help="Git clone used for shared checkpoint shards (auto-discovered by default).",
+    )
+    parser.add_argument(
+        "--checkpoint-push-every", type=int, default=50,
+        help="Create and push an immutable shared shard after this many successful answers.",
+    )
+    parser.add_argument("--records-dir", type=Path, default=None)
     args = parser.parse_args()
+
+    if args.full:
+        data_root = args.data_root or FULL_DATA
+        prepare_full_data(data_root)
+        args.data_root = data_root
+        args.manifest = args.manifest or data_root / "full_manifest.json"
+        args.output = args.output or ROOT / "outputs" / "cosmos3_full" / "predictions.jsonl"
+    else:
+        args.data_root = args.data_root or SUBSET_DATA
+        args.manifest = args.manifest or args.data_root / "subset_manifest.json"
+        args.output = args.output or ROOT / "outputs" / "cosmos3" / "predictions.jsonl"
 
     manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
     records = manifest["records"][: args.limit or None]
+    prior_rows = load_jsonl(args.output)
+    resume_rows = list(prior_rows)
+    for checkpoint in args.resume_from:
+        if not checkpoint.exists():
+            raise FileNotFoundError(f"Resume checkpoint does not exist: {checkpoint}")
+        extra_rows = load_jsonl(checkpoint)
+        incompatible = {
+            row.get("manifest_sha256")
+            for row in extra_rows
+            if row.get("manifest_sha256")
+            and row.get("manifest_sha256") != manifest["manifest_sha256"]
+        }
+        if incompatible:
+            raise ValueError(
+                f"Resume checkpoint uses a different MMAD manifest: {checkpoint}"
+            )
+        resume_rows.extend(extra_rows)
+        print(f"Loaded resume checkpoint: {checkpoint} ({len(extra_rows)} rows)")
     completed = {
-        row["sample_id"] for row in load_jsonl(args.output)
-        if row.get("status") in {"ok", "parse_failure", "partial"}
+        row["sample_id"] for row in resume_rows
+        if row.get("status") == "ok" or args.skip_attempted
     }
+    shared_store = None
+    if not args.no_shared_checkpoint:
+        try:
+            code_repo = ROOT.parents[1]
+            checkpoint_repo = args.checkpoint_repo or discover_checkpoint_repo(code_repo)
+            shared_store = SharedCheckpointStore(
+                checkpoint_repo,
+                manifest["manifest_sha256"],
+                "nvidia_build",
+                push_every=args.checkpoint_push_every,
+            )
+            shared_store.sync_from_remote()
+            completed.update(shared_store.completed_ids)
+            print(
+                f"Shared checkpoint repo={checkpoint_repo} "
+                f"completed={len(shared_store.completed_ids)}"
+            )
+        except Exception as exc:
+            print(f"Shared checkpoint disabled after initialization warning: {exc}")
+            shared_store = None
+    records_dir = args.records_dir or args.output.parent / "records"
     print(f"MMAD manifest={manifest['manifest_sha256']} records={len(records)} resumed={len(completed)}")
     args.profile.mkdir(parents=True, exist_ok=True)
     args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -217,6 +396,7 @@ def main() -> None:
                         raise FileNotFoundError(f"Run prepare_subset.py first: {source}")
                     neutral = Path(temp_dir) / f"sample_{index:04d}{source.suffix.lower()}"
                     shutil.copy2(source, neutral)
+                    profile = image_input_profile(source)
                     started = time.perf_counter()
                     try:
                         reset_page(page)
@@ -239,9 +419,12 @@ def main() -> None:
                             raise RuntimeError("Run button did not enable")
                         previous = read_output(page)
                         run.click()
-                        raw, completion = wait_for_answer(page, previous, args.timeout)
-                        prediction = parse_prediction(raw)
-                        status = "ok" if prediction else ("partial" if raw else "parse_failure")
+                        raw, completion = wait_for_answer(
+                            page, previous, args.timeout, max(args.poll_ms, 50) / 1000.0,
+                        )
+                        separated = split_reasoning_response(raw)
+                        prediction = parse_prediction(separated["response"] or raw)
+                        status = "ok" if prediction else ("partial" if raw else "no_output")
                         row = {
                             "sample_id": sample["sample_id"],
                             "model": "nvidia/cosmos3-nano-reasoner",
@@ -249,24 +432,53 @@ def main() -> None:
                             "manifest_sha256": manifest["manifest_sha256"],
                             "status": status,
                             "completion": completion,
+                            "failure_category": failure_category(status, completion),
                             "prediction": prediction,
+                            "reasoning": separated["reasoning"],
+                            "response": separated["response"],
+                            "output_parse_format": separated["parse_format"],
+                            "reasoning_chars": len(separated["reasoning"]),
+                            "response_chars": len(separated["response"]),
                             "raw_response": raw,
+                            "question_type": sample["question_type"],
+                            "source_dataset": sample["source_dataset"],
+                            "category": sample["category"],
+                            "is_normal": sample["is_normal"],
+                            "ground_truth": sample["answer"],
+                            "image_file": sample["image_file"],
+                            "image_profile": profile,
                             "latency_seconds": round(time.perf_counter() - started, 3),
                             "created_at": datetime.now(timezone.utc).isoformat(),
                         }
                         append_jsonl(args.output, row)
+                        write_sample_artifacts(records_dir, row)
+                        if shared_store is not None:
+                            shared_store.record(row)
                         print(f"[{index}/{len(records)}] {status.upper()} pred={prediction} "
                               f"truth={sample['answer']} {row['latency_seconds']:.1f}s")
                     except Exception as exc:
                         screenshot = args.output.parent / "errors" / f"{sample['sample_id']}.png"
                         screenshot.parent.mkdir(parents=True, exist_ok=True)
                         page.screenshot(path=str(screenshot), full_page=True)
-                        append_jsonl(args.output, {
+                        error_text = str(exc)
+                        error_row = {
                             "sample_id": sample["sample_id"], "model": "nvidia/cosmos3-nano-reasoner",
-                            "status": "error", "error": str(exc), "screenshot": str(screenshot),
+                            "status": "error", "completion": "exception",
+                            "failure_category": failure_category("error", "exception", error_text),
+                            "error": error_text, "screenshot": str(screenshot),
+                            "reasoning": "", "response": "", "prediction": None,
+                            "question_type": sample["question_type"],
+                            "source_dataset": sample["source_dataset"],
+                            "category": sample["category"],
+                            "is_normal": sample["is_normal"],
+                            "ground_truth": sample["answer"],
+                            "image_file": sample["image_file"],
+                            "image_profile": profile,
                             "latency_seconds": round(time.perf_counter() - started, 3),
                             "created_at": datetime.now(timezone.utc).isoformat(),
-                        })
+                        }
+                        append_jsonl(args.output, error_row)
+                        write_sample_artifacts(records_dir, error_row)
                         print(f"[{index}/{len(records)}] ERROR {exc}")
                         if any(key in str(exc).lower() for key in ("rate_limit", "captcha", "login_required")):
                             break
@@ -275,6 +487,11 @@ def main() -> None:
                     neutral.unlink(missing_ok=True)
                     time.sleep(args.delay)
         finally:
+            if shared_store is not None:
+                try:
+                    shared_store.flush(push=True)
+                except Exception as exc:
+                    print(f"Shared checkpoint final flush warning: {exc}")
             context.close()
 
     summary, scored = evaluate_records(manifest, load_jsonl(args.output))

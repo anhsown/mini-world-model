@@ -1,0 +1,10 @@
+{
+  "benchmark": "MMAD",
+  "manifest_sha256": "ff6bf9547135bb9b58dcafcbfafb73e0cfbf804edea0b6dee57fa4dbbf5fb5d6",
+  "record_key": "sample_id",
+  "completion_policy": "status == ok",
+  "retry_policy": "partial, parse_failure, no_output, and error remain eligible",
+  "storage": "immutable backend-specific JSONL shards",
+  "contains_images": false,
+  "contains_credentials": false
+}

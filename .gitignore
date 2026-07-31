@@ -5,6 +5,10 @@ __pycache__/
 *.pth
 *.safetensors
 checkpoints/
+!research/mmad_model_benchmark/checkpoints/
+!research/mmad_model_benchmark/checkpoints/cosmos3_mmad/
+!research/mmad_model_benchmark/checkpoints/cosmos3_mmad/**
 data/
 *.ipynb
+!research/mmad_model_benchmark/models/cosmos3/Cosmos3_Nano_MMAD_T4x2_UI_Parity.ipynb
 .venv/
