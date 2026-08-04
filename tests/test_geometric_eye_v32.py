@@ -49,7 +49,9 @@ def test_v32_depth_ray_register_track_contract_and_gradients():
     assert torch.isfinite(loss)
     assert {"geometry_ray_angular", "geometry_track_cycle",
             "geometry_confidence_bce", "geometry_visibility_bce",
-            "geometry_temporal_bce"} <= set(metrics)
+            "geometry_temporal_bce", "geometry_depth_absrel_loss",
+            "geometry_depth_gradient", "geometry_initial_pose",
+            "geometry_pose_counterfactual"} <= set(metrics)
     loss.backward()
     assert active
     assert missing_trainable_gradients(model) == []

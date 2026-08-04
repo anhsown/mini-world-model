@@ -1,0 +1,103 @@
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:23:25.286409+00:00", "event_type": "runtime_started", "state": "standby"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:23:25.287408+00:00", "event_type": "state_transition", "previous": "standby", "state": "active", "reason": "wake_detected"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:23:25.289410+00:00", "event_type": "state_transition", "previous": "active", "state": "vision", "reason": "vision_active"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:23:25.290408+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:23:25.291411+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:23:25.292408+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:23:25.293412+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:23:25.294411+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:23:25.295407+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:23:25.296744+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:23:25.297742+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:23:25.298750+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:23:25.299749+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:23:25.302759+00:00", "event_type": "runtime_started", "state": "standby"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:23:25.304757+00:00", "event_type": "state_transition", "previous": "standby", "state": "active", "reason": "wake_detected"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:23:25.305758+00:00", "event_type": "empty_input", "state": "active", "silent_rounds": 1}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:23:25.305758+00:00", "event_type": "empty_input", "state": "active", "silent_rounds": 2}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:23:25.307156+00:00", "event_type": "state_transition", "previous": "active", "state": "standby", "reason": "silence_limit"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:23:25.311667+00:00", "event_type": "runtime_started", "state": "standby"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:23:25.313676+00:00", "event_type": "state_transition", "previous": "standby", "state": "active", "reason": "wake_detected"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:23:25.314997+00:00", "event_type": "state_transition", "previous": "active", "state": "recovering", "reason": "turn_exception"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:23:25.316503+00:00", "event_type": "turn_recovered", "error": "fixture", "vision_active": true}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:23:25.317509+00:00", "event_type": "state_transition", "previous": "recovering", "state": "vision", "reason": "recovery_complete"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:26:15.130442+00:00", "event_type": "reasoner_loaded", "model_id": "unsloth/Qwen3-VL-2B-Instruct-bnb-4bit", "load_ms": 25575.05}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:26:17.152265+00:00", "event_type": "camera_started", "camera_index": 0, "startup_ms": 1846.77}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:32:55.103412+00:00", "event_type": "runtime_started", "state": "standby"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:32:55.103412+00:00", "event_type": "state_transition", "previous": "standby", "state": "active", "reason": "wake_detected"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:32:55.103412+00:00", "event_type": "state_transition", "previous": "active", "state": "vision", "reason": "vision_active"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:32:55.103412+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:32:55.103412+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:32:55.103412+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:32:55.103412+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:32:55.103412+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:32:55.103412+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:32:55.103412+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:32:55.103412+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:32:55.103412+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:32:55.103412+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:32:55.103412+00:00", "event_type": "runtime_started", "state": "standby"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:32:55.103412+00:00", "event_type": "state_transition", "previous": "standby", "state": "active", "reason": "wake_detected"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:32:55.103412+00:00", "event_type": "empty_input", "state": "active", "silent_rounds": 1}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:32:55.119063+00:00", "event_type": "empty_input", "state": "active", "silent_rounds": 2}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:32:55.119063+00:00", "event_type": "state_transition", "previous": "active", "state": "standby", "reason": "silence_limit"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:32:55.122800+00:00", "event_type": "runtime_started", "state": "standby"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:32:55.122800+00:00", "event_type": "state_transition", "previous": "standby", "state": "active", "reason": "wake_detected"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:32:55.122800+00:00", "event_type": "state_transition", "previous": "active", "state": "recovering", "reason": "turn_exception"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:32:55.124809+00:00", "event_type": "turn_recovered", "error": "fixture", "vision_active": true}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:32:55.124809+00:00", "event_type": "state_transition", "previous": "recovering", "state": "vision", "reason": "recovery_complete"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:33:34.875572+00:00", "event_type": "reasoner_loaded", "model_id": "unsloth/Qwen3-VL-2B-Instruct-bnb-4bit", "load_ms": 18441.37, "worker_pid": 25656}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:33:36.626870+00:00", "event_type": "camera_started", "camera_index": 0, "startup_ms": 1735.47}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:33:57.779766+00:00", "event_type": "vision_answered", "query": "What am I holding?", "answer": "nothing", "latency_ms": 21100.66929999448, "confidence": 0.0, "interaction_id": "vision-163357-ca5d5f11"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:33:58.045987+00:00", "event_type": "camera_stopped", "session_id": "20260715T163336Z-4b70a1bb"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:35:39.681571+00:00", "event_type": "runtime_started", "state": "standby"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:35:39.683580+00:00", "event_type": "state_transition", "previous": "standby", "state": "active", "reason": "wake_detected"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:35:39.685588+00:00", "event_type": "state_transition", "previous": "active", "state": "vision", "reason": "vision_active"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:35:39.692500+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:35:39.698579+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:35:39.704361+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:35:39.706392+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:35:39.716436+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:35:39.718554+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:35:39.730010+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:35:39.734040+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:35:39.736048+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:35:39.740066+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:35:39.744807+00:00", "event_type": "runtime_started", "state": "standby"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:35:39.744807+00:00", "event_type": "state_transition", "previous": "standby", "state": "active", "reason": "wake_detected"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:35:39.748848+00:00", "event_type": "empty_input", "state": "active", "silent_rounds": 1}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:35:39.752868+00:00", "event_type": "empty_input", "state": "active", "silent_rounds": 2}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:35:39.752868+00:00", "event_type": "state_transition", "previous": "active", "state": "standby", "reason": "silence_limit"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:35:39.758634+00:00", "event_type": "runtime_started", "state": "standby"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:35:39.765572+00:00", "event_type": "state_transition", "previous": "standby", "state": "active", "reason": "wake_detected"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:35:39.787241+00:00", "event_type": "state_transition", "previous": "active", "state": "recovering", "reason": "turn_exception"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:35:39.789242+00:00", "event_type": "turn_recovered", "error": "fixture", "vision_active": true}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:35:39.790241+00:00", "event_type": "state_transition", "previous": "recovering", "state": "vision", "reason": "recovery_complete"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:36:13.181329+00:00", "event_type": "runtime_started", "state": "standby"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:36:23.626121+00:00", "event_type": "reasoner_loaded", "model_id": "unsloth/Qwen3-VL-2B-Instruct-bnb-4bit", "load_ms": 24226.7, "worker_pid": 26260}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:37:49.301054+00:00", "event_type": "runtime_started", "state": "standby"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:37:49.303066+00:00", "event_type": "state_transition", "previous": "standby", "state": "active", "reason": "wake_detected"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:37:49.305054+00:00", "event_type": "state_transition", "previous": "active", "state": "vision", "reason": "vision_active"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:37:49.306057+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:37:49.307566+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:37:49.308573+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:37:49.309581+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:37:49.311582+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:37:49.313603+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:37:49.315582+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:37:49.317591+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:37:49.319096+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:37:49.321108+00:00", "event_type": "empty_input", "state": "vision", "action": "keep_vision_alive"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:37:49.325620+00:00", "event_type": "runtime_started", "state": "standby"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:37:49.326621+00:00", "event_type": "state_transition", "previous": "standby", "state": "active", "reason": "wake_detected"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:37:49.329141+00:00", "event_type": "empty_input", "state": "active", "silent_rounds": 1}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:37:49.330150+00:00", "event_type": "empty_input", "state": "active", "silent_rounds": 2}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:37:49.331155+00:00", "event_type": "state_transition", "previous": "active", "state": "standby", "reason": "silence_limit"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:37:49.335157+00:00", "event_type": "runtime_started", "state": "standby"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:37:49.337703+00:00", "event_type": "state_transition", "previous": "standby", "state": "active", "reason": "wake_detected"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:37:49.339213+00:00", "event_type": "state_transition", "previous": "active", "state": "recovering", "reason": "turn_exception"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:37:49.341230+00:00", "event_type": "turn_recovered", "error": "fixture", "vision_active": true}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:37:49.342229+00:00", "event_type": "state_transition", "previous": "recovering", "state": "vision", "reason": "recovery_complete"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:38:19.184588+00:00", "event_type": "tts_completed", "text": "Good evening, sir. JARVIS at your service.", "synthesis_ms": 905.67, "playback_ms": 6020.67}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:38:19.198113+00:00", "event_type": "runtime_started", "state": "standby"}
+{"schema_version": "jarvis-runtime-v1", "created_at": "2026-07-15T16:38:28.556269+00:00", "event_type": "reasoner_loaded", "model_id": "unsloth/Qwen3-VL-2B-Instruct-bnb-4bit", "load_ms": 22968.65, "worker_pid": 3276}

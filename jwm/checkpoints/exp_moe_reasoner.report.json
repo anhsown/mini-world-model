@@ -1,0 +1,66 @@
+{
+ "baseline_dense_v3": {
+  "r1": 0.545,
+  "r2": 0.572
+ },
+ "params_M": 73.936165,
+ "r1_moe": {
+  "val_qa_acc": 0.58,
+  "per_kind": {
+   "what_held": 0.5802469135802469,
+   "what": 0.11538461538461539,
+   "where": 0.8571428571428571,
+   "exist": 0.8571428571428571,
+   "count": 0.65
+  }
+ },
+ "r2_moe": {
+  "val_qa_acc": 0.608,
+  "per_kind": {
+   "what_held": 0.5925925925925926,
+   "what": 0.15384615384615385,
+   "where": 0.8857142857142857,
+   "exist": 0.9047619047619048,
+   "count": 0.675
+  }
+ },
+ "router_health": {
+  "layer1": {
+   "entropy": 3.28,
+   "max_entropy": 3.466,
+   "dead": 0
+  },
+  "layer2": {
+   "entropy": 3.378,
+   "max_entropy": 3.466,
+   "dead": 0
+  },
+  "layer3": {
+   "entropy": 3.37,
+   "max_entropy": 3.466,
+   "dead": 0
+  },
+  "layer4": {
+   "entropy": 3.397,
+   "max_entropy": 3.466,
+   "dead": 0
+  },
+  "layer5": {
+   "entropy": 3.389,
+   "max_entropy": 3.466,
+   "dead": 0
+  },
+  "layer6": {
+   "entropy": 3.345,
+   "max_entropy": 3.466,
+   "dead": 0
+  },
+  "layer7": {
+   "entropy": 3.318,
+   "max_entropy": 3.466,
+   "dead": 0
+  }
+ },
+ "verdict": "WIN",
+ "minutes": 218.5
+}

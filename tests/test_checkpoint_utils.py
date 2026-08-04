@@ -1,7 +1,8 @@
 import torch
 
 from jwm import JWM, JWMConfig
-from jwm.checkpoint_utils import warmstart_reader_v31
+from jwm.checkpoint_utils import warmstart_eye_v322, warmstart_reader_v31
+from jwm.configs import eye_physical_v32_smoke_scale
 
 
 def _cfg(decoder):
@@ -28,3 +29,24 @@ def test_reader_corrective_warmstart_preserves_backbone_resets_heads(tmp_path):
                               torch.full_like(new.ocr_head.weight, 9.0))
     assert report["loaded_tensors"] > 0
     assert report["reinitialized_tensors"] > 0
+
+
+def test_eye_v322_reuses_tracker_but_resets_collapsed_heads(tmp_path):
+    old = JWM(eye_physical_v32_smoke_scale())
+    with torch.no_grad():
+        old.geometry.tracker.context.weight.fill_(0.123)
+        old.geometry.depth[-1].weight.fill_(9.0)
+        old.geometry.pose_head[0].weight.fill_(8.0)
+    path = tmp_path / "v321.pt"
+    torch.save({"version": "jwm-eye-v3.2.1-robust-causal-geometry",
+                "model": old.state_dict()}, path)
+    new = JWM(eye_physical_v32_smoke_scale())
+    report = warmstart_eye_v322(new, path)
+    assert torch.allclose(new.geometry.tracker.context.weight,
+                          torch.full_like(new.geometry.tracker.context.weight, 0.123))
+    assert not torch.allclose(new.geometry.depth[-1].weight,
+                              torch.full_like(new.geometry.depth[-1].weight, 9.0))
+    assert not torch.allclose(new.geometry.pose_head[0].weight,
+                              torch.full_like(new.geometry.pose_head[0].weight, 8.0))
+    assert report["retained_tracker_tensors"] > 0
+    assert report["corrective_reset_tensors"] > 0

@@ -1,0 +1,125 @@
+{
+ "synth": {
+  "tf_acc_correct_img": 0.6068,
+  "tf_acc_shuffled_img": 0.6073,
+  "vision_gain": -0.0005
+ },
+ "doc": {
+  "tf_acc_correct_img": 0.7878,
+  "tf_acc_shuffled_img": 0.7879,
+  "vision_gain": -0.0001
+ },
+ "mtvqa": {
+  "C_mtvqa_vi": {
+   "n": 50,
+   "cer_mean": 3.241,
+   "cer_median": 2.355,
+   "exact": 0.0,
+   "contains": 0.0,
+   "stop_rate": 0.04,
+   "sec_per_sample": 11.0
+  }
+ },
+ "mtvqa_rows": [
+  {
+   "tier": "C_mtvqa_vi",
+   "ref": "Cholimex",
+   "pred": "Thương hiệu của hậu phẩm này là \"Thực hành để",
+   "cer": 5.25,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 10.799713437500031
+  },
+  {
+   "tier": "C_mtvqa_vi",
+   "ref": "gà ác ngũ trảo, yến chưng, gà ác bồ câu, 260 Trưng Nữ Vương - Đà Nẵng",
+   "pred": "Liên kết các thông tin sau về trừ trong bảng là: 1.",
+   "cer": 0.7246376811594203,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 10.799713437500031
+  },
+  {
+   "tier": "C_mtvqa_vi",
+   "ref": "ngày 1 tháng 7",
+   "pred": "Chân mới ngày mai là Nguyễn Thị Tạp và Thứ Năm 20",
+   "cer": 2.9285714285714284,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 10.799713437500031
+  },
+  {
+   "tier": "C_mtvqa_vi",
+   "ref": "Màng chiết xuất Tea Tree",
+   "pred": "Sản phẩm này có hai thông tin chính: 1.",
+   "cer": 1.2916666666666667,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 10.799713437500031
+  },
+  {
+   "tier": "C_mtvqa_vi",
+   "ref": "Sting là nước tăng lực",
+   "pred": "Sau khi giải bài toán, các bạn có chứa bất kỳ và",
+   "cer": 1.6818181818181819,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 10.799713437500031
+  },
+  {
+   "tier": "C_mtvqa_vi",
+   "ref": "Thịt bằm cà chua",
+   "pred": "Theo tài liệu, trong tài liệu này được nêu rõ ở p",
+   "cer": 2.5,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 10.799713437500031
+  },
+  {
+   "tier": "C_mtvqa_vi",
+   "ref": "Thiết kế, Thi công sân vườn, làm hồ cá Koi, hòn non bộ, tiểu cảnh, thác nước",
+   "pred": "Dựa vào thông tin trong ảnh, vị trí của trang vở l�",
+   "cer": 0.7236842105263158,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 10.799713437500031
+  },
+  {
+   "tier": "C_mtvqa_vi",
+   "ref": "La vache qui rit",
+   "pred": "Thương hiệu và sự sắp xếp các nhóm sau khi họp x�",
+   "cer": 2.5625,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 10.799713437500031
+  },
+  {
+   "tier": "C_mtvqa_vi",
+   "ref": "Shopee Express",
+   "pred": "Đường chuyển là thứ hai (theo chú thích dưới hình",
+   "cer": 3.2857142857142856,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 10.836721925003076
+  },
+  {
+   "tier": "C_mtvqa_vi",
+   "ref": "18 tháng kể từ ngày sản xuất",
+   "pred": "Học sinh cần chuẩn bị những nội dung sau cho số b�",
+   "cer": 1.3928571428571428,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 10.836721925003076
+  }
+ ]
+}

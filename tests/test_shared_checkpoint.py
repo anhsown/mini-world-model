@@ -49,6 +49,37 @@ def test_shared_checkpoint_rejects_other_manifest(tmp_path):
     assert not store.completed_ids
 
 
+def test_shared_checkpoint_honours_custom_relative_root(tmp_path):
+    """PIADE and other benchmarks must not land in the MMAD checkpoint tree."""
+    subprocess.run(["git", "init", str(tmp_path)], check=True, capture_output=True)
+    store = SharedCheckpointStore(
+        tmp_path,
+        "episodes-a",
+        "kaggle_t4_text_direct",
+        push_every=50,  # keep flushing explicit; push_every=1 auto-flushes in record()
+        relative_root="research/piade_b0_b5/checkpoints",
+    )
+    assert store.record(
+        {"sample_id": "text|direct|piade_test_M1_00012", "status": "ok",
+         "manifest_sha256": "episodes-a"},
+        push=False,
+    )
+    shard = store.flush(push=False)
+    assert shard is not None
+    assert "piade_b0_b5" in shard.as_posix()
+    assert "mmad_model_benchmark" not in shard.as_posix()
+
+    resumed = SharedCheckpointStore(
+        tmp_path, "episodes-a", "other_backend",
+        relative_root="research/piade_b0_b5/checkpoints",
+    )
+    assert resumed.completed_ids == {"text|direct|piade_test_M1_00012"}
+
+    # The MMAD default root must not see PIADE shards.
+    mmad = SharedCheckpointStore(tmp_path, "episodes-a", "kaggle_t4x2")
+    assert not mmad.completed_ids
+
+
 def test_shared_checkpoint_pushes_immutable_shard(tmp_path):
     remote = tmp_path / "remote.git"
     writer = tmp_path / "writer"

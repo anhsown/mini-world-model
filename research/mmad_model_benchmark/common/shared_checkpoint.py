@@ -90,6 +90,7 @@ class SharedCheckpointStore:
         push_every: int = 50,
         token: str | None = None,
         branch: str = "main",
+        relative_root: Path | str | None = None,
     ) -> None:
         self.repo = ensure_checkpoint_repo(repo)
         self.manifest_sha256 = manifest_sha256
@@ -97,7 +98,9 @@ class SharedCheckpointStore:
         self.push_every = max(1, int(push_every))
         self.token = token or os.environ.get("GITHUB_TOKEN")
         self.branch = branch
-        self.root = self.repo / CHECKPOINT_RELATIVE_ROOT
+        # Benchmarks other than MMAD pass their own root so their shards do not
+        # land in the MMAD checkpoint tree.
+        self.root = self.repo / (relative_root or CHECKPOINT_RELATIVE_ROOT)
         self.backend_root = self.root / self.backend
         self.backend_root.mkdir(parents=True, exist_ok=True)
         self._known: set[str] = set()

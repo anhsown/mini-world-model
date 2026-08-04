@@ -1,0 +1,105 @@
+== World Brain trials -> C:\Users\ASUS\OneDrive\Desktop\Jarvis-Vision\data\world_brain_trials\20260717T110747Z
+   checkpoint loaded on cuda; abstain_threshold=0.5
+
+-- Arm A: 40 synthetic trials (GT exact) --
+  [A000] correct_abstain      conf=0.03 lat=8050ms q='where is the orange object?'
+  [A001] ok                   conf=0.99 lat=6369ms q='vật màu cam ở đâu?'
+  [A002] correct_abstain      conf=0.08 lat=6831ms q='where is the green object?'
+  [A003] correct_abstain      conf=0.09 lat=8104ms q='vật màu xanh dương ở đâu?'
+  [A004] correct_abstain      conf=0.09 lat=7079ms q='where is the red object?'
+  [A005] correct_abstain      conf=0.07 lat=6059ms q='vật màu tím ở đâu?'
+  [A006] ok                   conf=1.00 lat=6786ms q='vật màu đỏ ở đâu?'
+  [A007] ok                   conf=1.00 lat=6387ms q='vật màu cam ở đâu?'
+  [A008] ok                   conf=1.00 lat=5861ms q='vật màu vàng ở đâu?'
+  [A009] wrong_abstain        conf=0.09 lat=6768ms q='vật màu đỏ ở đâu?'
+  [A010] correct_abstain      conf=0.21 lat=8211ms q='where is the blue object?'
+  [A011] correct_abstain      conf=0.14 lat=6275ms q='tam giác màu xanh lá ở đâu?'
+  [A012] correct_abstain      conf=0.24 lat=6730ms q='vật màu xanh lá ở đâu?'
+  [A013] ok                   conf=1.00 lat=6879ms q='where is the yellow object?'
+  [A014] correct_abstain      conf=0.08 lat=6359ms q='where is the yellow object?'
+  [A015] correct_abstain      conf=0.32 lat=7250ms q='vật màu đỏ ở đâu?'
+  [A016] correct_abstain      conf=0.02 lat=6972ms q='where is the orange object?'
+  [A017] wrong_abstain        conf=0.21 lat=6232ms q='vật màu vàng ở đâu?'
+  [A018] correct_abstain      conf=0.03 lat=6341ms q='vật màu xanh lá ở đâu?'
+  [A019] wrong_abstain        conf=0.31 lat=6699ms q='hình vuông màu cam ở đâu?'
+  [A020] correct_abstain      conf=0.18 lat=7353ms q='vật màu xanh dương ở đâu?'
+  [A021] wrong_abstain        conf=0.15 lat=6552ms q='where is the green object?'
+  [A022] correct_abstain      conf=0.45 lat=6058ms q='vật màu cam ở đâu?'
+  [A023] correct_abstain      conf=0.05 lat=6019ms q='where is the green object?'
+  [A024] correct_abstain      conf=0.18 lat=6204ms q='hình vuông màu tím ở đâu?'
+  [A025] correct_abstain      conf=0.09 lat=5559ms q='vật màu vàng ở đâu?'
+  [A026] correct_abstain      conf=0.06 lat=6284ms q='vật màu vàng ở đâu?'
+  [A027] correct_abstain      conf=0.05 lat=5870ms q='vật màu đỏ ở đâu?'
+  [A028] ok                   conf=0.91 lat=6875ms q='vật màu xanh dương ở đâu?'
+  [A029] grounding_miss       conf=0.57 lat=5995ms q='vật màu tím ở đâu?'
+  [A030] correct_abstain      conf=0.14 lat=6306ms q='vật màu cam ở đâu?'
+  [A031] correct_abstain      conf=0.13 lat=6444ms q='vật màu tím ở đâu?'
+  [A032] correct_abstain      conf=0.06 lat=6597ms q='vật màu cam ở đâu?'
+  [A033] ok                   conf=1.00 lat=6734ms q='vật màu xanh lá ở đâu?'
+  [A034] correct_abstain      conf=0.04 lat=6014ms q='vật màu vàng ở đâu?'
+  [A035] wrong_abstain        conf=0.16 lat=6007ms q='vật màu vàng ở đâu?'
+  [A036] correct_abstain      conf=0.09 lat=6134ms q='vật màu đỏ ở đâu?'
+  [A037] ok                   conf=1.00 lat=6894ms q='vật màu xanh dương ở đâu?'
+  [A038] wrong_abstain        conf=0.05 lat=5833ms q='vật màu tím ở đâu?'
+  [A039] wrong_abstain        conf=0.33 lat=5645ms q='vật màu vàng ở đâu?'
+
+-- Arm B: 34 real-audio trials over 12 real frames --
+C:\Users\ASUS\AppData\Local\Programs\Python\Python310\lib\site-packages\requests\__init__.py:113: RequestsDependencyWarning: urllib3 (2.2.1) or chardet (7.4.3)/charset_normalizer (3.3.2) doesn't match a supported version!
+  warnings.warn(
+  [B000] asr_fallback+no_ground_truth conf=0.03 lat=8046ms q=''
+  [B001] asr_fallback+no_ground_truth conf=0.05 lat=8112ms q='You are set to camera.'
+  [B002] asr_fallback+no_ground_truth conf=0.04 lat=10422ms q=''
+  [B003] asr_fallback+correct_abstain_ood conf=0.03 lat=10093ms q=''
+  [B004] no_ground_truth      conf=0.06 lat=7467ms q='What I am holding'
+  [B005] no_ground_truth      conf=0.05 lat=8595ms q='What I am holding'
+  [B006] correct_abstain_ood  conf=0.02 lat=7791ms q='What I am holding'
+  [B007] correct_abstain_ood  conf=0.04 lat=7660ms q='What I am holding'
+  [B008] asr_fallback+no_ground_truth conf=0.04 lat=12157ms q='camera'
+  [B009] asr_fallback+no_ground_truth conf=0.02 lat=10079ms q='Okay, move on.'
+  [B010] asr_fallback+no_ground_truth conf=0.06 lat=9834ms q='access to camera'
+  [B011] asr_fallback+no_ground_truth conf=0.05 lat=11158ms q='1,2,3,4,4,5,5,5,5,5,5,5,5'
+  [B012] asr_fallback+no_ground_truth conf=0.03 lat=9829ms q='チーカッカメだ'
+  [B013] asr_fallback+no_ground_truth conf=0.03 lat=11734ms q='Hikap kamera'
+  [B014] asr_fallback+no_ground_truth conf=0.03 lat=11514ms q='チーカッカメだ'
+  [B015] asr_fallback+correct_abstain_ood conf=0.03 lat=10961ms q=''
+  [B016] asr_fallback+no_ground_truth conf=0.03 lat=12331ms q='Can you access the camera?'
+  [B017] asr_fallback+no_ground_truth conf=0.03 lat=12292ms q='Assess the camera.'
+  [B018] asr_fallback+correct_abstain_ood conf=0.03 lat=10863ms q='Assess the camera.'
+  [B019] asr_fallback+correct_abstain_ood conf=0.03 lat=10886ms q='camera'
+  [B020] asr_fallback+no_ground_truth conf=0.03 lat=11348ms q='camera'
+  [B021] asr_fallback+no_ground_truth conf=0.02 lat=10993ms q='access the camera please'
+  [B022] asr_fallback+no_ground_truth conf=0.05 lat=10060ms q='So...'
+  [B023] asr_fallback+no_ground_truth conf=0.05 lat=11530ms q='Look at this'
+  [B024] asr_fallback+no_ground_truth conf=0.03 lat=9604ms q=''
+  [B025] asr_fallback+no_ground_truth conf=0.04 lat=9969ms q=''
+  [B026] asr_fallback+no_ground_truth conf=0.05 lat=11413ms q='berbicara untuk berbicara lagi.'
+  [B027] asr_fallback+correct_abstain_ood conf=0.03 lat=8816ms q='6°C'
+  [B028] asr_fallback+no_ground_truth conf=0.05 lat=10853ms q='Assess to Camera please.'
+  [B029] asr_fallback+no_ground_truth conf=0.04 lat=11913ms q=''
+  [B030] asr_fallback+correct_abstain_ood conf=0.02 lat=12003ms q=''
+  [B031] correct_abstain_ood  conf=0.05 lat=8829ms q='Wrapping my holding.'
+  [B032] asr_fallback+no_ground_truth conf=0.03 lat=11574ms q="It's in the..."
+  [B033] asr_fallback+no_ground_truth conf=0.02 lat=11349ms q='ini kamera'
+
+== SUMMARY ==
+{
+ "session": "20260717T110747Z",
+ "n_trials": 74,
+ "categories": {
+  "correct_abstain": 24,
+  "ok": 8,
+  "wrong_abstain": 7,
+  "grounding_miss": 1,
+  "asr_fallback+no_ground_truth": 23,
+  "asr_fallback+correct_abstain_ood": 6,
+  "no_ground_truth": 2,
+  "correct_abstain_ood": 3
+ },
+ "synthetic": {
+  "n": 40,
+  "ok_rate": 0.2,
+  "mean_iou": 0.373,
+  "iou_at_05": 0.375
+ },
+ "mean_latency_ms": 8293.2
+}

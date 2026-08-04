@@ -1,0 +1,15 @@
+{
+ "stage": "r1_reasoner_pretrain",
+ "finished_at": "2026-07-17T00:23:16",
+ "params_M": 31.01,
+ "steps": 3000,
+ "lr": 0.0003,
+ "val_qa_acc": 0.545,
+ "val_qa_per_kind": {
+  "what_held": 0.5223880597014925,
+  "what": 0.17142857142857143,
+  "where": 0.7,
+  "exist": 0.7631578947368421,
+  "count": 0.6
+ }
+}

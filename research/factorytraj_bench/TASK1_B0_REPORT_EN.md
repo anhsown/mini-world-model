@@ -626,4 +626,36 @@ simulator data.
 
 ---
 
+## 15. Short presentation for Bill
+
+In Task 1, I operationalized B0 — Schema and Tag Understanding — as an
+automatically measurable benchmark. Its purpose is to determine whether a
+model understands the data type, unit, range, role and relationships of
+machine tags, rather than relying on tag names.
+
+The benchmark now contains 244 records from 10 source families, including
+FactoryNet, Tennessee Eastman and official OPC Foundation NodeSets covering
+CNC, mining, machinery and other industrial domains. Engineering-unit
+coverage is 76.5%, it contains 89 authoritative ranges with 54.9% coverage,
+and relationship coverage is 37.7%.
+
+In the initial seed, the full-name rule baseline scored 0.521 but dropped to
+0.202 when names were hidden. This demonstrated substantial leakage through
+tag prefixes. I added anonymized and partial-documentation controls to
+separate name parsing from genuine schema understanding.
+
+Every range label has explicit provenance. Disturbance spans, observed
+minima/maxima and one-sided shutdown thresholds were not misused as physical
+ranges. Range labels come from simulator semantics, the physical domain of
+mol-% values and normative OPC UA metadata.
+
+The final dataset passed all six admission gates. Model-pass criteria were
+frozen before running JWM: B0 macro must be at least 0.60, type accuracy 0.95,
+unit accuracy 0.60, role F1 0.70, range score 0.60, relationship F1 0.60 and
+the full-to-anonymized drop no greater than 0.10.
+
+The B0 benchmark is now complete, but JWM is not yet considered to have passed
+because it does not have a structured industrial-tag adapter. The next step
+is to build that adapter, produce full and anonymized predictions, and apply
+the frozen criteria to determine whether the checkpoint passes or fails.
 

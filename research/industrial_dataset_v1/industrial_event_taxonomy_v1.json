@@ -1,0 +1,57 @@
+{
+  "taxonomy_version": "1.0.0",
+  "severity": {
+    "0": "normal or informational",
+    "1": "minor deviation with no immediate production impact",
+    "2": "degraded operation or quality risk requiring attention",
+    "3": "major fault, stoppage, rework or safety escalation",
+    "4": "critical safety, equipment or production consequence"
+  },
+  "events": [
+    {"id": "STATE.NORMAL_OPERATION", "parent": "STATE", "name": "Normal operation", "default_severity": 0},
+    {"id": "STATE.STARTUP", "parent": "STATE", "name": "Startup", "default_severity": 0},
+    {"id": "STATE.SHUTDOWN", "parent": "STATE", "name": "Planned shutdown", "default_severity": 0},
+    {"id": "FAULT.MECHANICAL.CAVITATION", "parent": "FAULT.MECHANICAL", "name": "Cavitation", "default_severity": 2},
+    {"id": "FAULT.MECHANICAL.BEARING_IMBALANCE", "parent": "FAULT.MECHANICAL", "name": "Bearing or rotating imbalance", "default_severity": 2},
+    {"id": "FAULT.MECHANICAL.MISALIGNMENT", "parent": "FAULT.MECHANICAL", "name": "Mechanical misalignment", "default_severity": 2},
+    {"id": "FAULT.MECHANICAL.JAM", "parent": "FAULT.MECHANICAL", "name": "Jam or obstruction", "default_severity": 3},
+    {"id": "FAULT.FLUID.LEAKAGE", "parent": "FAULT.FLUID", "name": "Fluid or pneumatic leakage", "default_severity": 2},
+    {"id": "FAULT.THERMAL.OVERHEAT", "parent": "FAULT.THERMAL", "name": "Overheating", "default_severity": 3},
+    {"id": "FAULT.ELECTRICAL.OVERCURRENT", "parent": "FAULT.ELECTRICAL", "name": "Overcurrent", "default_severity": 3},
+    {"id": "FAULT.PROCESS.PRESSURE_DROP", "parent": "FAULT.PROCESS", "name": "Unexpected pressure drop", "default_severity": 2},
+    {"id": "FAULT.SENSOR.DRIFT", "parent": "FAULT.SENSOR", "name": "Sensor drift", "default_severity": 2},
+    {"id": "FAULT.SENSOR.DROPOUT", "parent": "FAULT.SENSOR", "name": "Sensor dropout", "default_severity": 2},
+    {"id": "QUALITY.SURFACE_CRACK", "parent": "QUALITY", "name": "Surface crack", "default_severity": 2},
+    {"id": "QUALITY.GEOMETRY_OUT_OF_TOLERANCE", "parent": "QUALITY", "name": "Geometry out of tolerance", "default_severity": 2},
+    {"id": "QUALITY.MISSING_COMPONENT", "parent": "QUALITY", "name": "Missing component", "default_severity": 2},
+    {"id": "PROCEDURE.MISSING_STEP", "parent": "PROCEDURE", "name": "Required step omitted", "default_severity": 2},
+    {"id": "PROCEDURE.INCORRECT_SEQUENCE", "parent": "PROCEDURE", "name": "Incorrect operation sequence", "default_severity": 2},
+    {"id": "SAFETY.NEAR_MISS", "parent": "SAFETY", "name": "Near miss", "default_severity": 3},
+    {"id": "SAFETY.UNSAFE_ZONE_ENTRY", "parent": "SAFETY", "name": "Unsafe zone entry", "default_severity": 3},
+    {"id": "RECOVERY.STABLE_AFTER_INTERVENTION", "parent": "RECOVERY", "name": "Stable after intervention", "default_severity": 0},
+    {"id": "UNKNOWN.AMBIGUOUS", "parent": "UNKNOWN", "name": "Ambiguous evidence", "default_severity": 1},
+    {"id": "UNKNOWN.OOD", "parent": "UNKNOWN", "name": "Out-of-distribution condition", "default_severity": 1}
+  ],
+  "actions": [
+    {"id": "ACTION.NO_ACTION", "actor": ["source"], "description": "Explicitly observed absence of intervention"},
+    {"id": "ACTION.START", "actor": ["plc", "operator"], "description": "Start machine or process"},
+    {"id": "ACTION.STOP", "actor": ["plc", "operator", "safety"], "description": "Controlled stop"},
+    {"id": "ACTION.EMERGENCY_STOP", "actor": ["operator", "safety"], "description": "Emergency stop"},
+    {"id": "ACTION.SETPOINT_CHANGE", "actor": ["plc", "operator"], "description": "Change speed, pressure, temperature or other target"},
+    {"id": "ACTION.RESET", "actor": ["plc", "operator"], "description": "Reset alarm or controller state"},
+    {"id": "ACTION.REJECT_PRODUCT", "actor": ["plc", "operator"], "description": "Divert or hold a product"},
+    {"id": "ACTION.MAINTENANCE_INSPECTION", "actor": ["maintenance"], "description": "Inspect condition or verify fault"},
+    {"id": "ACTION.MAINTENANCE_REPAIR", "actor": ["maintenance"], "description": "Repair or replace a component"},
+    {"id": "ACTION.ROBOT_CORRECTION", "actor": ["plc", "operator"], "description": "Correct or retry a robot action"}
+  ],
+  "outcome_status": [
+    "normal_completion",
+    "quality_pass",
+    "quality_fail",
+    "recovered",
+    "degraded_continuing",
+    "stopped",
+    "unknown"
+  ]
+}
+

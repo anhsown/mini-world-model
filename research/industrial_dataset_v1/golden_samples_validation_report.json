@@ -1,0 +1,26 @@
+{
+  "valid": true,
+  "schema_version": "1.0.0",
+  "episodes": 10,
+  "features": 58,
+  "event_classes": 23,
+  "action_classes": 10,
+  "splits": [
+    "test_private",
+    "test_public",
+    "train",
+    "validation"
+  ],
+  "asset_types": [
+    "air_compressor",
+    "belt_conveyor",
+    "centrifugal_pump",
+    "electric_motor",
+    "forklift_zone",
+    "induction_motor",
+    "inspection_station",
+    "pneumatic_valve",
+    "robot_assembly_cell"
+  ],
+  "errors": []
+}

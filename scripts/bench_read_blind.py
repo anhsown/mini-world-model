@@ -45,6 +45,8 @@ def tf_acc(model, cfg, samples, shuffle_imgs):
 
 
 def main():
+    out_name = f"bench_read_blind_{b._ARGS.tag}.json" if b._ARGS.tag != "v1" \
+        else "bench_read_blind.json"
     blob = torch.load(b.CKPT, map_location="cpu", weights_only=False)
     cfg = b.JWMConfig(**blob["cfg"])
     model = b.JWM(cfg)
@@ -72,7 +74,7 @@ def main():
     except Exception as e:
         print("mtvqa failed:", e)
 
-    out = ROOT / "data" / "bench_read_blind.json"
+    out = ROOT / "data" / out_name
     out.write_text(json.dumps(results, ensure_ascii=False, indent=1), encoding="utf-8")
     print("wrote", out)
 

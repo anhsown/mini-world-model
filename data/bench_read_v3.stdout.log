@@ -1,0 +1,62 @@
+device=cuda input=1024x768 n=186
+  4/186 T0_char_200px 0.7s/sample
+  8/186 T0_char_200px 0.8s/sample
+  12/186 T0_char_200px 0.7s/sample
+  16/186 T1_word_120px 0.7s/sample
+  20/186 T1_word_120px 0.7s/sample
+  24/186 T1_word_120px 0.7s/sample
+  28/186 T1_word_80px 0.7s/sample
+  32/186 T1_word_80px 0.7s/sample
+  36/186 T1_word_80px 0.7s/sample
+  40/186 T1_word_48px 0.7s/sample
+  44/186 T1_word_48px 0.7s/sample
+  48/186 T1_word_48px 0.8s/sample
+  52/186 T1_word_28px 0.7s/sample
+  56/186 T1_word_28px 0.8s/sample
+  60/186 T1_word_28px 0.7s/sample
+  64/186 T2_line_L2 1.2s/sample
+  68/186 T2_line_L2 1.1s/sample
+  72/186 T2_line_L2 1.3s/sample
+  76/186 T3_para_L4 0.7s/sample
+  80/186 T3_para_L4 0.7s/sample
+  84/186 T3_para_L4 1.3s/sample
+  88/186 T4_word80_degraded 0.7s/sample
+  92/186 T4_word80_degraded 0.7s/sample
+  96/186 T4_word80_degraded 0.7s/sample
+  100/186 B_doc_real 0.9s/sample
+  104/186 B_doc_real 1.3s/sample
+  108/186 B_doc_real 1.5s/sample
+  112/186 B_doc_real 0.7s/sample
+  116/186 B_doc_real 0.5s/sample
+  120/186 B_doc_real 1.7s/sample
+  124/186 B_doc_real 1.1s/sample
+  128/186 B_doc_real 1.3s/sample
+  132/186 B_doc_real 0.4s/sample
+  136/186 B_doc_real 1.1s/sample
+  140/186 C_mtvqa_vi 1.2s/sample
+  144/186 C_mtvqa_vi 1.0s/sample
+  148/186 C_mtvqa_vi 1.3s/sample
+  152/186 C_mtvqa_vi 1.1s/sample
+  156/186 C_mtvqa_vi 1.3s/sample
+  160/186 C_mtvqa_vi 1.2s/sample
+  164/186 C_mtvqa_vi 1.2s/sample
+  168/186 C_mtvqa_vi 1.3s/sample
+  172/186 C_mtvqa_vi 1.4s/sample
+  176/186 C_mtvqa_vi 1.4s/sample
+  180/186 C_mtvqa_vi 1.0s/sample
+  184/186 C_mtvqa_vi 1.0s/sample
+  186/186 C_mtvqa_vi 0.9s/sample
+
+=== SUMMARY ===
+B_doc_real {"n": 40, "cer": 1.0366148936933368, "exact": 0.0, "contains": 0.0, "stopped": 1.0, "seconds": 1.1259699074998935}
+C_mtvqa_vi {"n": 50, "cer": 1.1949849963919728, "exact": 0.0, "contains": 0.0, "stopped": 1.0, "seconds": 1.1737626280001132}
+T0_char_200px {"n": 12, "cer": 1.0, "exact": 0.0, "contains": 0.0, "stopped": 1.0, "ctc_cer": 1.0, "box_iou": 0.0, "seconds": 0.8910856000020431}
+T1_word_120px {"n": 12, "cer": 1.0, "exact": 0.0, "contains": 0.0, "stopped": 1.0, "ctc_cer": 1.0, "box_iou": 0.028696589171886444, "seconds": 0.7232998666677304}
+T1_word_28px {"n": 12, "cer": 0.9791666666666666, "exact": 0.0, "contains": 0.0, "stopped": 1.0, "ctc_cer": 1.0, "box_iou": 0.0, "seconds": 0.7345860166672841}
+T1_word_48px {"n": 12, "cer": 1.0333333333333332, "exact": 0.0, "contains": 0.0, "stopped": 1.0, "ctc_cer": 1.0, "box_iou": 0.0, "seconds": 0.8221512666671819}
+T1_word_80px {"n": 12, "cer": 0.9513888888888888, "exact": 0.0, "contains": 0.0, "stopped": 1.0, "ctc_cer": 1.0, "box_iou": 0.014227418384204308, "seconds": 0.7411177750000206}
+T2_line_L2 {"n": 12, "cer": 0.9160984752174683, "exact": 0.0, "contains": 0.0, "stopped": 1.0, "ctc_cer": 1.0, "box_iou": 0.08148322316507499, "seconds": 1.025953308332949}
+T3_para_L4 {"n": 12, "cer": 0.9766151270233925, "exact": 0.0, "contains": 0.0, "stopped": 1.0, "ctc_cer": 1.0, "box_iou": 0.2754500259955724, "seconds": 0.9980146833337736}
+T4_word80_degraded {"n": 12, "cer": 1.0, "exact": 0.0, "contains": 0.0, "stopped": 1.0, "ctc_cer": 1.0, "box_iou": 0.00514536847670873, "seconds": 0.709841316666522}
+blind {"loss_gap_shuffled_minus_correct": 0.5543400111951327, "correct_image_win_rate": 0.631578947368421, "n_batches": 38}
+wrote C:\Users\ASUS\OneDrive\Desktop\Jarvis-Vision\data\bench_read_v3.json

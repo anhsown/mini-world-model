@@ -1,0 +1,11 @@
+{
+ "stage": "g3_post_text2image",
+ "finished_at": "2026-07-17T17:33:27",
+ "params_M": 73.94,
+ "steps": 400,
+ "lr": 8e-05,
+ "post_tier_n": 2001,
+ "val_t2i_pos": 0.6041666666666666,
+ "val_t2i_neg": 0.8541666666666666,
+ "val_t2i_mse": 1.8840864896774292
+}

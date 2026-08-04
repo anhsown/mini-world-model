@@ -83,7 +83,8 @@ def test_exact_physical_graph_has_no_orphan_trainable_parameters():
 
 
 def test_no_valid_rigid_tracks_remains_finite_and_backpropagates():
-    model = JWM(tiny_v3()); set_eye_v3_physical_trainable(model)
+    model = JWM(tiny_v3())
+    set_eye_v3_physical_trainable(model)
     batch = stack_geometry_v3_rows([procedural_v3_row(14, 3, 32)])
     batch["rigid_flow_valid"].zero_()
     loss, metrics = model(
@@ -94,11 +95,13 @@ def test_no_valid_rigid_tracks_remains_finite_and_backpropagates():
     assert torch.isfinite(loss)
     assert metrics["geometry_track_valid_fraction"] == 0.0
     loss.backward()
-    assert all(p.grad is None or torch.isfinite(p.grad).all() for p in model.parameters())
+    assert all(parameter.grad is None or torch.isfinite(parameter.grad).all()
+               for parameter in model.parameters())
 
 
 def test_short_optimizer_stress_has_finite_loss_and_gradients():
-    model = JWM(tiny_v3()); set_eye_v3_physical_trainable(model)
+    model = JWM(tiny_v3())
+    set_eye_v3_physical_trainable(model)
     parameters = [p for p in model.parameters() if p.requires_grad]
     optimizer = torch.optim.AdamW(parameters, lr=1e-4)
     for seed in range(20, 24):
@@ -109,6 +112,8 @@ def test_short_optimizer_stress_has_finite_loss_and_gradients():
             batch["depth_valid"], batch["dynamic_mask"], None,
             batch["intrinsics"], batch["projection_y_sign"],
             batch["rigid_flow"], batch["rigid_flow_valid"])
-        assert torch.isfinite(loss); loss.backward()
+        assert torch.isfinite(loss)
+        loss.backward()
         norm = torch.nn.utils.clip_grad_norm_(parameters, 1.0)
-        assert torch.isfinite(norm); optimizer.step()
+        assert torch.isfinite(norm)
+        optimizer.step()

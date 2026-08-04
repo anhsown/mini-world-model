@@ -1,4 +1,4 @@
-"""Adaptive T4x2 training for CTPG-Eye v3.
+﻿"""Adaptive T4x2 training for CTPG-Eye v3.
 
 Full training is admitted only after dataset hypotheses and controlled probes
 pass. Stage length is decided from held-out causal/OOD metrics under hard
@@ -57,6 +57,8 @@ from jwm.training_metrics_v2 import metric_catalog
 STAGES = (
     # name, min, max, eval_every, lr, source mixture
     ("g0_calibrated_tracks", 800, 1800, 200, 1e-4,
+     # v3.2.1 silently collapsed to 100% synthetic when TartanAir was absent.
+     # Keep an explicit real anchor in every admissible fallback mixture.
      {"procedural": .35, "tartanair": .25, "tum": .25, "bonn": .15}),
     ("g1_metric_odometry", 1200, 3200, 300, 8e-5,
      {"procedural": .15, "tartanair": .35, "tum": .35, "bonn": .15}),
@@ -68,13 +70,17 @@ STAGES = (
 CHECKPOINT_VERSION = "jwm-eye-v3.1-ctpg"
 V32_ARCHITECTURES = ("v32", "v321", "v322")
 
+
 STAGE_WEIGHT_PROFILES = (
+    # Metric/edge depth and calibrated tracks first; prevent pose/BA gradients
+    # from dominating before the front-end has useful correspondences.
     {"geometry_depth_weight": 1.0, "geometry_depth_absrel_weight": 1.50,
      "geometry_depth_gradient_weight": .50, "geometry_rel_pose_weight": .25,
      "geometry_rel_translation_weight": .25, "geometry_initial_pose_weight": .25,
      "geometry_track_weight": .75, "geometry_dynamic_weight": .05,
      "geometry_ba_weight": .05, "geometry_counterfactual_weight": .05,
      "geometry_pose_counterfactual_weight": .05, "geometry_temporal_weight": .35},
+    # Direct pre-BA ego-motion is deliberately stronger than refined-pose loss.
     {"geometry_depth_weight": 1.0, "geometry_depth_absrel_weight": 1.00,
      "geometry_depth_gradient_weight": .35, "geometry_rel_pose_weight": 1.50,
      "geometry_rel_translation_weight": 2.00, "geometry_initial_pose_weight": 2.00,
@@ -95,12 +101,16 @@ STAGE_WEIGHT_PROFILES = (
      "geometry_pose_counterfactual_weight": .75, "geometry_temporal_weight": 1.00},
 )
 
+
 def apply_stage_weight_profile(cfg, stage_index: int) -> dict[str, float]:
     profile = STAGE_WEIGHT_PROFILES[stage_index]
-    for name, value in profile.items(): setattr(cfg, name, value)
+    for name, value in profile.items():
+        setattr(cfg, name, value)
     return dict(profile)
 
+
 def should_rollback_and_advance(action: BudgetAction, stage_index: int) -> bool:
+    """Intermediate saturation cannot veto objectives taught in later stages."""
     return (stage_index < len(STAGES) - 1 and
             action in (BudgetAction.STOP_BLOCKED, BudgetAction.STOP_OVERFIT))
 
@@ -130,7 +140,8 @@ def arguments():
     p = argparse.ArgumentParser()
     p.add_argument("--output", required=True)
     p.add_argument("--warmstart", required=True)
-    p.add_argument("--architecture", choices=("v31", "v32", "v321", "v322"), default="v31")
+    p.add_argument("--architecture", choices=("v31", "v32", "v321", "v322"),
+                   default="v31")
     p.add_argument("--probe-report", default="data/eye_v3_probes/probe_report.json")
     for source in ("tartan", "tum", "bonn"):
         for split in ("train", "val", "test"):
@@ -236,7 +247,9 @@ class V3Sampler:
             rows.append(dataset[global_index % len(dataset)])
         return stack_geometry_v3_rows(rows)
 
+
 def validate_stage_mixtures(sampler: V3Sampler, *, minimum_real_share: float = .25):
+    """Resolve every curriculum mix and reject silent synthetic-only fallback."""
     report = {}
     for stage_index, (name, *_, requested) in enumerate(STAGES):
         resolved = sampler.weights(requested)
@@ -359,8 +372,8 @@ def main():
             json.dumps(mixture_contract, indent=2), encoding="utf-8")
         print(json.dumps(mixture_contract, indent=2), flush=True)
     if not args.quick and not mixture_contract["valid"]:
-        raise RuntimeError("real-data stage mixture contract failed: " +
-                           ", ".join(mixture_contract["failures"]))
+        raise RuntimeError("real-data stage mixture contract failed: "
+                           + ", ".join(mixture_contract["failures"]))
     real_validation = {name: dataset for name, dataset in datasets["validation"].items()
                        if name not in ("procedural", "synthetic_real_anchored")}
     real_test = {name: dataset for name, dataset in datasets["test"].items()
@@ -385,7 +398,8 @@ def main():
         "v321": "jwm-eye-v3.2.1-robust-causal-geometry",
         "v322": "jwm-eye-v3.2.2-stage-safe-factored-geometry",
     }.get(args.architecture, CHECKPOINT_VERSION))
-    if resume.exists():
+    resumed = resume.exists()
+    if resumed:
         state = torch.load(resume, map_location=device, weights_only=False)
         if state.get("version") != checkpoint_version:
             raise RuntimeError("incompatible Eye-v3 resume checkpoint")
@@ -409,9 +423,13 @@ def main():
     for stage_index, (name, min_steps, max_steps, eval_every, base_lr, mixture) in enumerate(STAGES):
         if stage_index < start_stage: continue
         weight_profile = apply_stage_weight_profile(cfg, stage_index)
+        # Adam moments from a different objective can oppose the next stage.
+        # Preserve them only when resuming the exact interrupted stage.
         if stage_index != start_stage:
-            optimizer = torch.optim.AdamW(trainable, lr=base_lr, betas=(.9, .95), weight_decay=.05)
-            scaler = torch.amp.GradScaler("cuda", init_scale=256, enabled=device.type == "cuda")
+            optimizer = torch.optim.AdamW(trainable, lr=base_lr, betas=(.9, .95),
+                                          weight_decay=.05)
+            scaler = torch.amp.GradScaler("cuda", init_scale=256,
+                                          enabled=device.type == "cuda")
         if args.quick: min_steps, max_steps, eval_every = 2, 4, 2
         controller = (AdaptiveTrainingBudget.from_state_dict(resume_controller)
                       if stage_index == start_stage and resume_controller else
@@ -426,7 +444,8 @@ def main():
         best_path = output / f"stage_{stage_index}_{name}_best.pt"
         if rank == 0:
             print(f"\n=== {name} resume={stage_step} budget={min_steps}:{max_steps} "
-                  f"eval={eval_every} mix={sampler.weights(mixture)} weights={weight_profile} ===", flush=True)
+                  f"eval={eval_every} mix={sampler.weights(mixture)} "
+                  f"weights={weight_profile} ===", flush=True)
         while stage_step < max_steps:
             # Short warmup; LR reductions are controlled only by held-out plateaus.
             warm = min(200, max(25, min_steps // 4))
@@ -440,14 +459,18 @@ def main():
                     sampler.batch(global_step + nonfinite_skips, micro,
                                   args.per_gpu_batch, mixture), device)
                 counterfactuals = make_counterfactuals(batch)
-                # Bound compute to two encoder passes: later stages alternate
-                # temporal and calibration negatives instead of running both.
+                # Bound compute to two encoder passes while covering all causal
+                # interventions. Reverse-time and non-local windows alternate
+                # from g0; wrong calibration joins once pose is supervised.
                 negative_mode = (global_step + micro) % (3 if stage_index >= 2 else 2)
                 use_wrong_k = stage_index >= 2 and negative_mode == 0
                 wrong_k = counterfactuals["wrong_intrinsics"] if use_wrong_k else None
-                if use_wrong_k: wrong_window = None
-                elif negative_mode == 1: wrong_window = counterfactuals["reverse_image"]
-                else: wrong_window = counterfactuals["wrong_window_image"]
+                if use_wrong_k:
+                    wrong_window = None
+                elif negative_mode == 1:
+                    wrong_window = counterfactuals["reverse_image"]
+                else:
+                    wrong_window = counterfactuals["wrong_window_image"]
                 with torch.autocast(device_type=device.type, dtype=torch.float16,
                                     enabled=device.type == "cuda"):
                     loss, metrics = wrapped(
@@ -535,8 +558,10 @@ def main():
                               "controller": asdict(decision)}
                     history.append(record)
                     if controller.best_step == stage_step or not best_path.exists():
-                        atomic_save({"version": checkpoint_version, "stage_index": stage_index,
-                                     "stage_step": stage_step, "global_step": global_step,
+                        atomic_save({"version": checkpoint_version,
+                                     "stage_index": stage_index,
+                                     "stage_step": stage_step,
+                                     "global_step": global_step,
                                      "score": controller.best_score,
                                      "geometry": raw.geometry.state_dict()}, best_path)
                     print(json.dumps(record, indent=2), flush=True)
@@ -552,16 +577,24 @@ def main():
                                           BudgetAction.STOP_CONVERGED):
                     break
                 elif should_rollback_and_advance(decision.action, stage_index):
+                    # Intermediate objectives are prerequisites, not final
+                    # promotion gates. Roll back to the best stage evidence and
+                    # continue the curriculum instead of killing later causal
+                    # supervision as v3.2.1 did.
                     if world > 1: dist.barrier()
-                    best = torch.load(best_path, map_location=device, weights_only=False)
+                    best = torch.load(best_path, map_location=device,
+                                      weights_only=False)
                     raw.geometry.load_state_dict(best["geometry"], strict=True)
                     if world > 1: dist.barrier()
                     if rank == 0:
                         best_record = next((row for row in reversed(history)
                                             if row["stage"] == name and
                                             row["stage_step"] == best["stage_step"]), None)
-                        if best_record is not None: last_report = best_record["report"]
-                        print(f"ROLLBACK stage {stage_index} to step {best['stage_step']}; advance", flush=True)
+                        if best_record is not None:
+                            last_report = best_record["report"]
+                        print(f"ROLLBACK stage {stage_index} to step "
+                              f"{best['stage_step']} score={best['score']:.6f}; "
+                              "advance to the next specialized objective", flush=True)
                     break
                 elif decision.action in (BudgetAction.STOP_BLOCKED,
                                           BudgetAction.STOP_OVERFIT,
@@ -609,7 +642,8 @@ def main():
         status = ("promotion_gate_passed" if last_report and last_report["valid"] and
                   test_report["valid"] and not pipeline_blocked
                   else "blocked_by_causal_ood_gate")
-        stem = {"v32": "jwm_eye_v32", "v321": "jwm_eye_v321", "v322": "jwm_eye_v322"}.get(
+        stem = {"v32": "jwm_eye_v32", "v321": "jwm_eye_v321",
+                "v322": "jwm_eye_v322"}.get(
             args.architecture, "jwm_eye_v31")
         final = output / (f"{stem}.pt" if status == "promotion_gate_passed"
                           else f"{stem}_blocked.pt")
@@ -626,3 +660,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

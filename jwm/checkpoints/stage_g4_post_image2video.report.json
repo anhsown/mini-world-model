@@ -1,0 +1,11 @@
+{
+ "stage": "g4_post_image2video",
+ "finished_at": "2026-07-17T17:44:17",
+ "params_M": 73.94,
+ "steps": 400,
+ "lr": 8e-05,
+ "post_tier_n": 1803,
+ "val_fd_psnr_min_over_k": 21.2873477935791,
+ "val_fd_copy_baseline": 22.047157287597656,
+ "val_fd_beats_copy": 0.2916666567325592
+}

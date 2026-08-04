@@ -1,0 +1,1790 @@
+{
+  "dataset": "IWM-Episodes v1 golden samples",
+  "notice": "Illustrative schema-validation records only; all URIs and factory identities are fictitious.",
+  "schema_version": "1.0.0",
+  "samples": [
+    {
+      "schema_version": "1.0.0",
+      "episode_id": "IWM-GOLD-0001",
+      "source_id": "illustrative-source-0001",
+      "site_id": "demo_site_2",
+      "line_id": "demo_line_2",
+      "asset_id": "pump_07",
+      "asset_type": "centrifugal_pump",
+      "product_id": null,
+      "batch_id": null,
+      "time": {
+        "start_time": "2026-07-23T01:05:00Z",
+        "end_time": "2026-07-23T01:05:10Z",
+        "duration_s": 10.0,
+        "original_timezone": "Asia/Ho_Chi_Minh",
+        "clock_source": "ptp",
+        "max_clock_error_ms": 15.0
+      },
+      "observations": {
+        "video": [
+          {
+            "stream_id": "pump_07.cam_side",
+            "uri": "iwm://golden/0001/video/side.mp4",
+            "modality": "rgb",
+            "sampling_rate_hz": 30.0,
+            "clock_error_ms": 8.0,
+            "validity_uri": null,
+            "unit": null,
+            "sensor_type": null,
+            "view": "side",
+            "fps": 30.0,
+            "channels": 3
+          }
+        ],
+        "audio": [
+          {
+            "stream_id": "pump_07.mic_machine",
+            "uri": "iwm://golden/0001/audio/machine.wav",
+            "modality": "audio",
+            "sampling_rate_hz": 48000.0,
+            "clock_error_ms": 6.0,
+            "validity_uri": null,
+            "unit": null,
+            "sensor_type": null,
+            "view": null,
+            "fps": null,
+            "channels": 1
+          }
+        ],
+        "telemetry": [
+          {
+            "stream_id": "pump_07.pressure",
+            "uri": "iwm://golden/0001/telemetry/pressure.parquet",
+            "modality": "telemetry",
+            "sampling_rate_hz": 100.0,
+            "clock_error_ms": 15.0,
+            "validity_uri": null,
+            "unit": "bar",
+            "sensor_type": "pressure",
+            "view": null,
+            "fps": null,
+            "channels": null
+          },
+          {
+            "stream_id": "pump_07.current",
+            "uri": "iwm://golden/0001/telemetry/current.parquet",
+            "modality": "telemetry",
+            "sampling_rate_hz": 1000.0,
+            "clock_error_ms": 15.0,
+            "validity_uri": null,
+            "unit": "A",
+            "sensor_type": "motor_current",
+            "view": null,
+            "fps": null,
+            "channels": null
+          },
+          {
+            "stream_id": "pump_07.vibration",
+            "uri": "iwm://golden/0001/telemetry/vibration.parquet",
+            "modality": "vibration",
+            "sampling_rate_hz": 25600.0,
+            "clock_error_ms": 15.0,
+            "validity_uri": null,
+            "unit": "mm/s",
+            "sensor_type": "vibration",
+            "view": null,
+            "fps": null,
+            "channels": null
+          }
+        ],
+        "other": []
+      },
+      "machine_state": {
+        "operating_mode": "running",
+        "load_pct": 82.0,
+        "setpoints": {
+          "nominal_load_pct": 82.0
+        },
+        "alarms": []
+      },
+      "actions": [
+        {
+          "action_id": "ACT-0001",
+          "type": "ACTION.SETPOINT_CHANGE",
+          "actor": "operator",
+          "start_offset_s": 5.5,
+          "end_offset_s": 5.6,
+          "parameters": {},
+          "safety_authorized": true,
+          "executed": true
+        }
+      ],
+      "events": [
+        {
+          "event_id": "EVT-0001",
+          "taxonomy_id": "FAULT.MECHANICAL.CAVITATION",
+          "start_offset_s": 1.0,
+          "end_offset_s": 8.0,
+          "severity": 2,
+          "confidence": 0.92,
+          "label_source": "multi_source",
+          "reviewed": true,
+          "root_cause_status": "confirmed",
+          "spatial": null
+        }
+      ],
+      "outcome": {
+        "status": "recovered",
+        "quality_disposition": "na",
+        "downtime_s": 0.0,
+        "recovery_time_s": 8.5,
+        "future_state": {
+          "vibration_rms_mm_s": 4.2,
+          "pressure_bar": 3.3
+        }
+      },
+      "data_quality": {
+        "missing_fraction": 0.0,
+        "drift_flags": [],
+        "status": "pass",
+        "validator_version": "1.0.0"
+      },
+      "governance": {
+        "data_owner": "IWM-Episodes illustrative examples",
+        "source_type": "synthetic",
+        "license": "CC-BY-4.0",
+        "permitted_use": "public",
+        "redistribution_allowed": true,
+        "privacy_review": "pass",
+        "redactions": [],
+        "provenance": [
+          "programmatic golden sample",
+          "no real factory media"
+        ]
+      },
+      "split": {
+        "split": "validation",
+        "split_group": "demo_site_2/pump_07/day_01",
+        "ood_tags": []
+      },
+      "world_model_targets": {
+        "reasoner": [
+          "event_classification",
+          "state_explanation"
+        ],
+        "generator": [
+          "future_state_prediction"
+        ],
+        "action": [
+          "inverse_dynamics"
+        ]
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "episode_id": "IWM-GOLD-0002",
+      "source_id": "illustrative-source-0002",
+      "site_id": "demo_site_1",
+      "line_id": "demo_line_3",
+      "asset_id": "motor_12",
+      "asset_type": "induction_motor",
+      "product_id": null,
+      "batch_id": null,
+      "time": {
+        "start_time": "2026-07-23T01:10:00Z",
+        "end_time": "2026-07-23T01:10:12Z",
+        "duration_s": 12.0,
+        "original_timezone": "Asia/Ho_Chi_Minh",
+        "clock_source": "ptp",
+        "max_clock_error_ms": 15.0
+      },
+      "observations": {
+        "video": [
+          {
+            "stream_id": "motor_12.cam_side",
+            "uri": "iwm://golden/0002/video/side.mp4",
+            "modality": "rgb",
+            "sampling_rate_hz": 30.0,
+            "clock_error_ms": 8.0,
+            "validity_uri": null,
+            "unit": null,
+            "sensor_type": null,
+            "view": "side",
+            "fps": 30.0,
+            "channels": 3
+          }
+        ],
+        "audio": [
+          {
+            "stream_id": "motor_12.mic_machine",
+            "uri": "iwm://golden/0002/audio/machine.wav",
+            "modality": "audio",
+            "sampling_rate_hz": 48000.0,
+            "clock_error_ms": 6.0,
+            "validity_uri": null,
+            "unit": null,
+            "sensor_type": null,
+            "view": null,
+            "fps": null,
+            "channels": 1
+          }
+        ],
+        "telemetry": [
+          {
+            "stream_id": "motor_12.speed",
+            "uri": "iwm://golden/0002/telemetry/speed.parquet",
+            "modality": "telemetry",
+            "sampling_rate_hz": 100.0,
+            "clock_error_ms": 15.0,
+            "validity_uri": null,
+            "unit": "rpm",
+            "sensor_type": "rotational_speed",
+            "view": null,
+            "fps": null,
+            "channels": null
+          },
+          {
+            "stream_id": "motor_12.current",
+            "uri": "iwm://golden/0002/telemetry/current.parquet",
+            "modality": "telemetry",
+            "sampling_rate_hz": 1000.0,
+            "clock_error_ms": 15.0,
+            "validity_uri": null,
+            "unit": "A",
+            "sensor_type": "motor_current",
+            "view": null,
+            "fps": null,
+            "channels": null
+          },
+          {
+            "stream_id": "motor_12.vibration",
+            "uri": "iwm://golden/0002/telemetry/vibration.parquet",
+            "modality": "vibration",
+            "sampling_rate_hz": 25600.0,
+            "clock_error_ms": 15.0,
+            "validity_uri": null,
+            "unit": "m/s2",
+            "sensor_type": "vibration",
+            "view": null,
+            "fps": null,
+            "channels": null
+          }
+        ],
+        "other": []
+      },
+      "machine_state": {
+        "operating_mode": "running",
+        "load_pct": 70.0,
+        "setpoints": {
+          "nominal_load_pct": 70.0
+        },
+        "alarms": []
+      },
+      "actions": [
+        {
+          "action_id": "ACT-0002",
+          "type": "ACTION.MAINTENANCE_INSPECTION",
+          "actor": "maintenance",
+          "start_offset_s": 6.6000000000000005,
+          "end_offset_s": 6.7,
+          "parameters": {},
+          "safety_authorized": true,
+          "executed": true
+        }
+      ],
+      "events": [
+        {
+          "event_id": "EVT-0002",
+          "taxonomy_id": "FAULT.MECHANICAL.BEARING_IMBALANCE",
+          "start_offset_s": 1.2000000000000002,
+          "end_offset_s": 9.600000000000001,
+          "severity": 2,
+          "confidence": 0.92,
+          "label_source": "multi_source",
+          "reviewed": true,
+          "root_cause_status": "confirmed",
+          "spatial": null
+        }
+      ],
+      "outcome": {
+        "status": "degraded_continuing",
+        "quality_disposition": "na",
+        "downtime_s": 0.0,
+        "recovery_time_s": null,
+        "future_state": {
+          "inspection_required": true,
+          "speed_rpm": 1450.0
+        }
+      },
+      "data_quality": {
+        "missing_fraction": 0.0,
+        "drift_flags": [],
+        "status": "pass",
+        "validator_version": "1.0.0"
+      },
+      "governance": {
+        "data_owner": "IWM-Episodes illustrative examples",
+        "source_type": "synthetic",
+        "license": "CC-BY-4.0",
+        "permitted_use": "public",
+        "redistribution_allowed": true,
+        "privacy_review": "pass",
+        "redactions": [],
+        "provenance": [
+          "programmatic golden sample",
+          "no real factory media"
+        ]
+      },
+      "split": {
+        "split": "test_public",
+        "split_group": "demo_site_1/motor_12/day_02",
+        "ood_tags": []
+      },
+      "world_model_targets": {
+        "reasoner": [
+          "event_classification",
+          "state_explanation"
+        ],
+        "generator": [
+          "future_state_prediction"
+        ],
+        "action": [
+          "inverse_dynamics"
+        ]
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "episode_id": "IWM-GOLD-0003",
+      "source_id": "illustrative-source-0003",
+      "site_id": "demo_site_2",
+      "line_id": "demo_line_1",
+      "asset_id": "conveyor_03",
+      "asset_type": "belt_conveyor",
+      "product_id": null,
+      "batch_id": null,
+      "time": {
+        "start_time": "2026-07-23T01:15:00Z",
+        "end_time": "2026-07-23T01:15:08Z",
+        "duration_s": 8.0,
+        "original_timezone": "Asia/Ho_Chi_Minh",
+        "clock_source": "ptp",
+        "max_clock_error_ms": 15.0
+      },
+      "observations": {
+        "video": [
+          {
+            "stream_id": "conveyor_03.cam_side",
+            "uri": "iwm://golden/0003/video/side.mp4",
+            "modality": "rgb",
+            "sampling_rate_hz": 30.0,
+            "clock_error_ms": 8.0,
+            "validity_uri": null,
+            "unit": null,
+            "sensor_type": null,
+            "view": "side",
+            "fps": 30.0,
+            "channels": 3
+          }
+        ],
+        "audio": [
+          {
+            "stream_id": "conveyor_03.mic_machine",
+            "uri": "iwm://golden/0003/audio/machine.wav",
+            "modality": "audio",
+            "sampling_rate_hz": 48000.0,
+            "clock_error_ms": 6.0,
+            "validity_uri": null,
+            "unit": null,
+            "sensor_type": null,
+            "view": null,
+            "fps": null,
+            "channels": 1
+          }
+        ],
+        "telemetry": [
+          {
+            "stream_id": "conveyor_03.speed",
+            "uri": "iwm://golden/0003/telemetry/speed.parquet",
+            "modality": "telemetry",
+            "sampling_rate_hz": 100.0,
+            "clock_error_ms": 15.0,
+            "validity_uri": null,
+            "unit": "m/s",
+            "sensor_type": "belt_speed",
+            "view": null,
+            "fps": null,
+            "channels": null
+          },
+          {
+            "stream_id": "conveyor_03.torque",
+            "uri": "iwm://golden/0003/telemetry/torque.parquet",
+            "modality": "telemetry",
+            "sampling_rate_hz": 1000.0,
+            "clock_error_ms": 15.0,
+            "validity_uri": null,
+            "unit": "Nm",
+            "sensor_type": "drive_torque",
+            "view": null,
+            "fps": null,
+            "channels": null
+          },
+          {
+            "stream_id": "conveyor_03.photoeye",
+            "uri": "iwm://golden/0003/telemetry/photoeye.parquet",
+            "modality": "telemetry",
+            "sampling_rate_hz": 100.0,
+            "clock_error_ms": 15.0,
+            "validity_uri": null,
+            "unit": "bool",
+            "sensor_type": "presence",
+            "view": null,
+            "fps": null,
+            "channels": null
+          }
+        ],
+        "other": []
+      },
+      "machine_state": {
+        "operating_mode": "running",
+        "load_pct": 64.0,
+        "setpoints": {
+          "nominal_load_pct": 64.0
+        },
+        "alarms": [
+          {
+            "code": "CONV_TORQUE_HIGH",
+            "start_offset_s": 1.2,
+            "end_offset_s": 8.0
+          }
+        ]
+      },
+      "actions": [
+        {
+          "action_id": "ACT-0003",
+          "type": "ACTION.STOP",
+          "actor": "plc",
+          "start_offset_s": 4.4,
+          "end_offset_s": 4.5,
+          "parameters": {},
+          "safety_authorized": true,
+          "executed": true
+        }
+      ],
+      "events": [
+        {
+          "event_id": "EVT-0003",
+          "taxonomy_id": "FAULT.MECHANICAL.JAM",
+          "start_offset_s": 0.8,
+          "end_offset_s": 6.4,
+          "severity": 3,
+          "confidence": 0.92,
+          "label_source": "multi_source",
+          "reviewed": true,
+          "root_cause_status": "confirmed",
+          "spatial": {
+            "camera_id": "conveyor_03.cam_side",
+            "boxes_xyxy": [
+              [
+                410,
+                250,
+                730,
+                610
+              ]
+            ],
+            "mask_uri": null
+          }
+        }
+      ],
+      "outcome": {
+        "status": "stopped",
+        "quality_disposition": "na",
+        "downtime_s": 44.0,
+        "recovery_time_s": null,
+        "future_state": {
+          "belt_speed_m_s": 0.0,
+          "jam_cleared": false
+        }
+      },
+      "data_quality": {
+        "missing_fraction": 0.0,
+        "drift_flags": [],
+        "status": "pass",
+        "validator_version": "1.0.0"
+      },
+      "governance": {
+        "data_owner": "IWM-Episodes illustrative examples",
+        "source_type": "synthetic",
+        "license": "CC-BY-4.0",
+        "permitted_use": "public",
+        "redistribution_allowed": true,
+        "privacy_review": "pass",
+        "redactions": [],
+        "provenance": [
+          "programmatic golden sample",
+          "no real factory media"
+        ]
+      },
+      "split": {
+        "split": "test_private",
+        "split_group": "demo_site_2/conveyor_03/day_03",
+        "ood_tags": []
+      },
+      "world_model_targets": {
+        "reasoner": [
+          "event_classification",
+          "state_explanation"
+        ],
+        "generator": [
+          "future_state_prediction"
+        ],
+        "action": [
+          "inverse_dynamics"
+        ]
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "episode_id": "IWM-GOLD-0004",
+      "source_id": "illustrative-source-0004",
+      "site_id": "demo_site_1",
+      "line_id": "demo_line_2",
+      "asset_id": "vision_cell_02",
+      "asset_type": "inspection_station",
+      "product_id": "cast_part_0042",
+      "batch_id": "demo_batch_01",
+      "time": {
+        "start_time": "2026-07-23T01:20:00Z",
+        "end_time": "2026-07-23T01:20:03Z",
+        "duration_s": 3.0,
+        "original_timezone": "Asia/Ho_Chi_Minh",
+        "clock_source": "ptp",
+        "max_clock_error_ms": 15.0
+      },
+      "observations": {
+        "video": [
+          {
+            "stream_id": "vision_cell_02.cam_side",
+            "uri": "iwm://golden/0004/video/side.mp4",
+            "modality": "rgb",
+            "sampling_rate_hz": 30.0,
+            "clock_error_ms": 8.0,
+            "validity_uri": null,
+            "unit": null,
+            "sensor_type": null,
+            "view": "side",
+            "fps": 30.0,
+            "channels": 3
+          }
+        ],
+        "audio": [
+          {
+            "stream_id": "vision_cell_02.mic_machine",
+            "uri": "iwm://golden/0004/audio/machine.wav",
+            "modality": "audio",
+            "sampling_rate_hz": 48000.0,
+            "clock_error_ms": 6.0,
+            "validity_uri": null,
+            "unit": null,
+            "sensor_type": null,
+            "view": null,
+            "fps": null,
+            "channels": 1
+          }
+        ],
+        "telemetry": [
+          {
+            "stream_id": "vision_cell_02.conveyor_speed",
+            "uri": "iwm://golden/0004/telemetry/conveyor_speed.parquet",
+            "modality": "telemetry",
+            "sampling_rate_hz": 100.0,
+            "clock_error_ms": 15.0,
+            "validity_uri": null,
+            "unit": "m/s",
+            "sensor_type": "belt_speed",
+            "view": null,
+            "fps": null,
+            "channels": null
+          },
+          {
+            "stream_id": "vision_cell_02.light",
+            "uri": "iwm://golden/0004/telemetry/light.parquet",
+            "modality": "telemetry",
+            "sampling_rate_hz": 10.0,
+            "clock_error_ms": 15.0,
+            "validity_uri": null,
+            "unit": "lux",
+            "sensor_type": "illumination",
+            "view": null,
+            "fps": null,
+            "channels": null
+          },
+          {
+            "stream_id": "vision_cell_02.trigger",
+            "uri": "iwm://golden/0004/telemetry/trigger.parquet",
+            "modality": "telemetry",
+            "sampling_rate_hz": 100.0,
+            "clock_error_ms": 15.0,
+            "validity_uri": null,
+            "unit": "bool",
+            "sensor_type": "camera_trigger",
+            "view": null,
+            "fps": null,
+            "channels": null
+          }
+        ],
+        "other": []
+      },
+      "machine_state": {
+        "operating_mode": "inspection",
+        "load_pct": 35.0,
+        "setpoints": {
+          "nominal_load_pct": 35.0
+        },
+        "alarms": []
+      },
+      "actions": [
+        {
+          "action_id": "ACT-0004",
+          "type": "ACTION.REJECT_PRODUCT",
+          "actor": "plc",
+          "start_offset_s": 1.6500000000000001,
+          "end_offset_s": 1.7500000000000002,
+          "parameters": {},
+          "safety_authorized": true,
+          "executed": true
+        }
+      ],
+      "events": [
+        {
+          "event_id": "EVT-0004",
+          "taxonomy_id": "QUALITY.SURFACE_CRACK",
+          "start_offset_s": 0.30000000000000004,
+          "end_offset_s": 2.4000000000000004,
+          "severity": 2,
+          "confidence": 0.92,
+          "label_source": "multi_source",
+          "reviewed": true,
+          "root_cause_status": "confirmed",
+          "spatial": {
+            "camera_id": "vision_cell_02.cam_side",
+            "boxes_xyxy": [
+              [
+                612,
+                318,
+                704,
+                379
+              ]
+            ],
+            "mask_uri": "iwm://golden/0004/labels/crack.png"
+          }
+        }
+      ],
+      "outcome": {
+        "status": "quality_fail",
+        "quality_disposition": "scrap",
+        "downtime_s": 0.0,
+        "recovery_time_s": null,
+        "future_state": {
+          "reject_gate": "closed",
+          "product_removed": true
+        }
+      },
+      "data_quality": {
+        "missing_fraction": 0.0,
+        "drift_flags": [],
+        "status": "pass",
+        "validator_version": "1.0.0"
+      },
+      "governance": {
+        "data_owner": "IWM-Episodes illustrative examples",
+        "source_type": "synthetic",
+        "license": "CC-BY-4.0",
+        "permitted_use": "public",
+        "redistribution_allowed": true,
+        "privacy_review": "pass",
+        "redactions": [],
+        "provenance": [
+          "programmatic golden sample",
+          "no real factory media"
+        ]
+      },
+      "split": {
+        "split": "train",
+        "split_group": "demo_site_1/vision_cell_02/day_04",
+        "ood_tags": []
+      },
+      "world_model_targets": {
+        "reasoner": [
+          "event_classification",
+          "state_explanation"
+        ],
+        "generator": [
+          "future_state_prediction"
+        ],
+        "action": [
+          "inverse_dynamics"
+        ]
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "episode_id": "IWM-GOLD-0005",
+      "source_id": "illustrative-source-0005",
+      "site_id": "demo_site_2",
+      "line_id": "demo_line_3",
+      "asset_id": "robot_cell_01",
+      "asset_type": "robot_assembly_cell",
+      "product_id": null,
+      "batch_id": null,
+      "time": {
+        "start_time": "2026-07-23T01:25:00Z",
+        "end_time": "2026-07-23T01:25:15Z",
+        "duration_s": 15.0,
+        "original_timezone": "Asia/Ho_Chi_Minh",
+        "clock_source": "ptp",
+        "max_clock_error_ms": 15.0
+      },
+      "observations": {
+        "video": [
+          {
+            "stream_id": "robot_cell_01.cam_side",
+            "uri": "iwm://golden/0005/video/side.mp4",
+            "modality": "rgb",
+            "sampling_rate_hz": 30.0,
+            "clock_error_ms": 8.0,
+            "validity_uri": null,
+            "unit": null,
+            "sensor_type": null,
+            "view": "side",
+            "fps": 30.0,
+            "channels": 3
+          }
+        ],
+        "audio": [
+          {
+            "stream_id": "robot_cell_01.mic_machine",
+            "uri": "iwm://golden/0005/audio/machine.wav",
+            "modality": "audio",
+            "sampling_rate_hz": 48000.0,
+            "clock_error_ms": 6.0,
+            "validity_uri": null,
+            "unit": null,
+            "sensor_type": null,
+            "view": null,
+            "fps": null,
+            "channels": 1
+          }
+        ],
+        "telemetry": [
+          {
+            "stream_id": "robot_cell_01.joint_state",
+            "uri": "iwm://golden/0005/telemetry/joint_state.parquet",
+            "modality": "telemetry",
+            "sampling_rate_hz": 250.0,
+            "clock_error_ms": 15.0,
+            "validity_uri": null,
+            "unit": "rad",
+            "sensor_type": "robot_joint_state",
+            "view": null,
+            "fps": null,
+            "channels": null
+          },
+          {
+            "stream_id": "robot_cell_01.force_torque",
+            "uri": "iwm://golden/0005/telemetry/force_torque.parquet",
+            "modality": "force_torque",
+            "sampling_rate_hz": 1000.0,
+            "clock_error_ms": 15.0,
+            "validity_uri": null,
+            "unit": "N_Nm",
+            "sensor_type": "force_torque",
+            "view": null,
+            "fps": null,
+            "channels": null
+          },
+          {
+            "stream_id": "robot_cell_01.gripper",
+            "uri": "iwm://golden/0005/telemetry/gripper.parquet",
+            "modality": "telemetry",
+            "sampling_rate_hz": 250.0,
+            "clock_error_ms": 15.0,
+            "validity_uri": null,
+            "unit": "mm",
+            "sensor_type": "gripper_width",
+            "view": null,
+            "fps": null,
+            "channels": null
+          }
+        ],
+        "other": []
+      },
+      "machine_state": {
+        "operating_mode": "automatic",
+        "load_pct": 55.0,
+        "setpoints": {
+          "nominal_load_pct": 55.0
+        },
+        "alarms": []
+      },
+      "actions": [
+        {
+          "action_id": "ACT-0005",
+          "type": "ACTION.ROBOT_CORRECTION",
+          "actor": "plc",
+          "start_offset_s": 8.25,
+          "end_offset_s": 8.35,
+          "parameters": {},
+          "safety_authorized": true,
+          "executed": true
+        }
+      ],
+      "events": [
+        {
+          "event_id": "EVT-0005",
+          "taxonomy_id": "FAULT.MECHANICAL.MISALIGNMENT",
+          "start_offset_s": 1.5,
+          "end_offset_s": 12.0,
+          "severity": 2,
+          "confidence": 0.92,
+          "label_source": "multi_source",
+          "reviewed": true,
+          "root_cause_status": "confirmed",
+          "spatial": null
+        }
+      ],
+      "outcome": {
+        "status": "recovered",
+        "quality_disposition": "na",
+        "downtime_s": 0.0,
+        "recovery_time_s": 5.0,
+        "future_state": {
+          "insertion_depth_mm": 22.0,
+          "assembly_complete": true
+        }
+      },
+      "data_quality": {
+        "missing_fraction": 0.0,
+        "drift_flags": [],
+        "status": "pass",
+        "validator_version": "1.0.0"
+      },
+      "governance": {
+        "data_owner": "IWM-Episodes illustrative examples",
+        "source_type": "synthetic",
+        "license": "CC-BY-4.0",
+        "permitted_use": "public",
+        "redistribution_allowed": true,
+        "privacy_review": "pass",
+        "redactions": [],
+        "provenance": [
+          "programmatic golden sample",
+          "no real factory media"
+        ]
+      },
+      "split": {
+        "split": "validation",
+        "split_group": "demo_site_2/robot_cell_01/day_05",
+        "ood_tags": []
+      },
+      "world_model_targets": {
+        "reasoner": [
+          "event_classification",
+          "state_explanation"
+        ],
+        "generator": [
+          "future_state_prediction"
+        ],
+        "action": [
+          "inverse_dynamics"
+        ]
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "episode_id": "IWM-GOLD-0006",
+      "source_id": "illustrative-source-0006",
+      "site_id": "demo_site_1",
+      "line_id": "demo_line_1",
+      "asset_id": "valve_18",
+      "asset_type": "pneumatic_valve",
+      "product_id": null,
+      "batch_id": null,
+      "time": {
+        "start_time": "2026-07-23T01:30:00Z",
+        "end_time": "2026-07-23T01:30:10Z",
+        "duration_s": 10.0,
+        "original_timezone": "Asia/Ho_Chi_Minh",
+        "clock_source": "ptp",
+        "max_clock_error_ms": 15.0
+      },
+      "observations": {
+        "video": [
+          {
+            "stream_id": "valve_18.cam_side",
+            "uri": "iwm://golden/0006/video/side.mp4",
+            "modality": "rgb",
+            "sampling_rate_hz": 30.0,
+            "clock_error_ms": 8.0,
+            "validity_uri": null,
+            "unit": null,
+            "sensor_type": null,
+            "view": "side",
+            "fps": 30.0,
+            "channels": 3
+          }
+        ],
+        "audio": [
+          {
+            "stream_id": "valve_18.mic_machine",
+            "uri": "iwm://golden/0006/audio/machine.wav",
+            "modality": "audio",
+            "sampling_rate_hz": 48000.0,
+            "clock_error_ms": 6.0,
+            "validity_uri": null,
+            "unit": null,
+            "sensor_type": null,
+            "view": null,
+            "fps": null,
+            "channels": 1
+          }
+        ],
+        "telemetry": [
+          {
+            "stream_id": "valve_18.upstream_pressure",
+            "uri": "iwm://golden/0006/telemetry/upstream_pressure.parquet",
+            "modality": "telemetry",
+            "sampling_rate_hz": 100.0,
+            "clock_error_ms": 15.0,
+            "validity_uri": null,
+            "unit": "bar",
+            "sensor_type": "pressure",
+            "view": null,
+            "fps": null,
+            "channels": null
+          },
+          {
+            "stream_id": "valve_18.downstream_pressure",
+            "uri": "iwm://golden/0006/telemetry/downstream_pressure.parquet",
+            "modality": "telemetry",
+            "sampling_rate_hz": 100.0,
+            "clock_error_ms": 15.0,
+            "validity_uri": null,
+            "unit": "bar",
+            "sensor_type": "pressure",
+            "view": null,
+            "fps": null,
+            "channels": null
+          },
+          {
+            "stream_id": "valve_18.flow",
+            "uri": "iwm://golden/0006/telemetry/flow.parquet",
+            "modality": "telemetry",
+            "sampling_rate_hz": 100.0,
+            "clock_error_ms": 15.0,
+            "validity_uri": null,
+            "unit": "L/min",
+            "sensor_type": "flow_rate",
+            "view": null,
+            "fps": null,
+            "channels": null
+          }
+        ],
+        "other": []
+      },
+      "machine_state": {
+        "operating_mode": "open",
+        "load_pct": 76.0,
+        "setpoints": {
+          "nominal_load_pct": 76.0
+        },
+        "alarms": []
+      },
+      "actions": [
+        {
+          "action_id": "ACT-0006",
+          "type": "ACTION.SETPOINT_CHANGE",
+          "actor": "operator",
+          "start_offset_s": 5.5,
+          "end_offset_s": 5.6,
+          "parameters": {},
+          "safety_authorized": true,
+          "executed": true
+        }
+      ],
+      "events": [
+        {
+          "event_id": "EVT-0006",
+          "taxonomy_id": "FAULT.FLUID.LEAKAGE",
+          "start_offset_s": 1.0,
+          "end_offset_s": 8.0,
+          "severity": 2,
+          "confidence": 0.92,
+          "label_source": "multi_source",
+          "reviewed": true,
+          "root_cause_status": "confirmed",
+          "spatial": null
+        }
+      ],
+      "outcome": {
+        "status": "degraded_continuing",
+        "quality_disposition": "na",
+        "downtime_s": 0.0,
+        "recovery_time_s": null,
+        "future_state": {
+          "valve_open_pct": 45.0,
+          "leak_suspected": true
+        }
+      },
+      "data_quality": {
+        "missing_fraction": 0.0,
+        "drift_flags": [],
+        "status": "pass",
+        "validator_version": "1.0.0"
+      },
+      "governance": {
+        "data_owner": "IWM-Episodes illustrative examples",
+        "source_type": "synthetic",
+        "license": "CC-BY-4.0",
+        "permitted_use": "public",
+        "redistribution_allowed": true,
+        "privacy_review": "pass",
+        "redactions": [],
+        "provenance": [
+          "programmatic golden sample",
+          "no real factory media"
+        ]
+      },
+      "split": {
+        "split": "test_public",
+        "split_group": "demo_site_1/valve_18/day_06",
+        "ood_tags": []
+      },
+      "world_model_targets": {
+        "reasoner": [
+          "event_classification",
+          "state_explanation"
+        ],
+        "generator": [
+          "future_state_prediction"
+        ],
+        "action": [
+          "inverse_dynamics"
+        ]
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "episode_id": "IWM-GOLD-0007",
+      "source_id": "illustrative-source-0007",
+      "site_id": "demo_site_2",
+      "line_id": "demo_line_2",
+      "asset_id": "motor_21",
+      "asset_type": "electric_motor",
+      "product_id": null,
+      "batch_id": null,
+      "time": {
+        "start_time": "2026-07-23T01:35:00Z",
+        "end_time": "2026-07-23T01:35:20Z",
+        "duration_s": 20.0,
+        "original_timezone": "Asia/Ho_Chi_Minh",
+        "clock_source": "ptp",
+        "max_clock_error_ms": 15.0
+      },
+      "observations": {
+        "video": [
+          {
+            "stream_id": "motor_21.cam_side",
+            "uri": "iwm://golden/0007/video/side.mp4",
+            "modality": "rgb",
+            "sampling_rate_hz": 30.0,
+            "clock_error_ms": 8.0,
+            "validity_uri": null,
+            "unit": null,
+            "sensor_type": null,
+            "view": "side",
+            "fps": 30.0,
+            "channels": 3
+          }
+        ],
+        "audio": [
+          {
+            "stream_id": "motor_21.mic_machine",
+            "uri": "iwm://golden/0007/audio/machine.wav",
+            "modality": "audio",
+            "sampling_rate_hz": 48000.0,
+            "clock_error_ms": 6.0,
+            "validity_uri": null,
+            "unit": null,
+            "sensor_type": null,
+            "view": null,
+            "fps": null,
+            "channels": 1
+          }
+        ],
+        "telemetry": [
+          {
+            "stream_id": "motor_21.temperature",
+            "uri": "iwm://golden/0007/telemetry/temperature.parquet",
+            "modality": "telemetry",
+            "sampling_rate_hz": 10.0,
+            "clock_error_ms": 15.0,
+            "validity_uri": null,
+            "unit": "degC",
+            "sensor_type": "winding_temperature",
+            "view": null,
+            "fps": null,
+            "channels": null
+          },
+          {
+            "stream_id": "motor_21.current",
+            "uri": "iwm://golden/0007/telemetry/current.parquet",
+            "modality": "telemetry",
+            "sampling_rate_hz": 1000.0,
+            "clock_error_ms": 15.0,
+            "validity_uri": null,
+            "unit": "A",
+            "sensor_type": "motor_current",
+            "view": null,
+            "fps": null,
+            "channels": null
+          },
+          {
+            "stream_id": "motor_21.speed",
+            "uri": "iwm://golden/0007/telemetry/speed.parquet",
+            "modality": "telemetry",
+            "sampling_rate_hz": 100.0,
+            "clock_error_ms": 15.0,
+            "validity_uri": null,
+            "unit": "rpm",
+            "sensor_type": "rotational_speed",
+            "view": null,
+            "fps": null,
+            "channels": null
+          }
+        ],
+        "other": []
+      },
+      "machine_state": {
+        "operating_mode": "running",
+        "load_pct": 94.0,
+        "setpoints": {
+          "nominal_load_pct": 94.0
+        },
+        "alarms": [
+          {
+            "code": "MOTOR_TEMP_HH",
+            "start_offset_s": 3.0,
+            "end_offset_s": 20.0
+          }
+        ]
+      },
+      "actions": [
+        {
+          "action_id": "ACT-0007",
+          "type": "ACTION.STOP",
+          "actor": "safety",
+          "start_offset_s": 11.0,
+          "end_offset_s": 11.1,
+          "parameters": {},
+          "safety_authorized": true,
+          "executed": true
+        }
+      ],
+      "events": [
+        {
+          "event_id": "EVT-0007",
+          "taxonomy_id": "FAULT.THERMAL.OVERHEAT",
+          "start_offset_s": 2.0,
+          "end_offset_s": 16.0,
+          "severity": 3,
+          "confidence": 0.92,
+          "label_source": "multi_source",
+          "reviewed": true,
+          "root_cause_status": "confirmed",
+          "spatial": null
+        }
+      ],
+      "outcome": {
+        "status": "stopped",
+        "quality_disposition": "na",
+        "downtime_s": 180.0,
+        "recovery_time_s": null,
+        "future_state": {
+          "motor_running": false,
+          "temperature_deg_c": 91.0
+        }
+      },
+      "data_quality": {
+        "missing_fraction": 0.0,
+        "drift_flags": [],
+        "status": "pass",
+        "validator_version": "1.0.0"
+      },
+      "governance": {
+        "data_owner": "IWM-Episodes illustrative examples",
+        "source_type": "synthetic",
+        "license": "CC-BY-4.0",
+        "permitted_use": "public",
+        "redistribution_allowed": true,
+        "privacy_review": "pass",
+        "redactions": [],
+        "provenance": [
+          "programmatic golden sample",
+          "no real factory media"
+        ]
+      },
+      "split": {
+        "split": "test_private",
+        "split_group": "demo_site_2/motor_21/day_07",
+        "ood_tags": []
+      },
+      "world_model_targets": {
+        "reasoner": [
+          "event_classification",
+          "state_explanation"
+        ],
+        "generator": [
+          "future_state_prediction"
+        ],
+        "action": [
+          "inverse_dynamics"
+        ]
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "episode_id": "IWM-GOLD-0008",
+      "source_id": "illustrative-source-0008",
+      "site_id": "demo_site_1",
+      "line_id": "demo_line_3",
+      "asset_id": "compressor_04",
+      "asset_type": "air_compressor",
+      "product_id": null,
+      "batch_id": null,
+      "time": {
+        "start_time": "2026-07-23T01:40:00Z",
+        "end_time": "2026-07-23T01:40:14Z",
+        "duration_s": 14.0,
+        "original_timezone": "Asia/Ho_Chi_Minh",
+        "clock_source": "ptp",
+        "max_clock_error_ms": 15.0
+      },
+      "observations": {
+        "video": [
+          {
+            "stream_id": "compressor_04.cam_side",
+            "uri": "iwm://golden/0008/video/side.mp4",
+            "modality": "rgb",
+            "sampling_rate_hz": 30.0,
+            "clock_error_ms": 8.0,
+            "validity_uri": null,
+            "unit": null,
+            "sensor_type": null,
+            "view": "side",
+            "fps": 30.0,
+            "channels": 3
+          }
+        ],
+        "audio": [
+          {
+            "stream_id": "compressor_04.mic_machine",
+            "uri": "iwm://golden/0008/audio/machine.wav",
+            "modality": "audio",
+            "sampling_rate_hz": 48000.0,
+            "clock_error_ms": 6.0,
+            "validity_uri": null,
+            "unit": null,
+            "sensor_type": null,
+            "view": null,
+            "fps": null,
+            "channels": 1
+          }
+        ],
+        "telemetry": [
+          {
+            "stream_id": "compressor_04.pressure",
+            "uri": "iwm://golden/0008/telemetry/pressure.parquet",
+            "modality": "telemetry",
+            "sampling_rate_hz": 100.0,
+            "clock_error_ms": 15.0,
+            "validity_uri": null,
+            "unit": "bar",
+            "sensor_type": "discharge_pressure",
+            "view": null,
+            "fps": null,
+            "channels": null
+          },
+          {
+            "stream_id": "compressor_04.flow",
+            "uri": "iwm://golden/0008/telemetry/flow.parquet",
+            "modality": "telemetry",
+            "sampling_rate_hz": 100.0,
+            "clock_error_ms": 15.0,
+            "validity_uri": null,
+            "unit": "m3/min",
+            "sensor_type": "air_flow",
+            "view": null,
+            "fps": null,
+            "channels": null
+          },
+          {
+            "stream_id": "compressor_04.power",
+            "uri": "iwm://golden/0008/telemetry/power.parquet",
+            "modality": "telemetry",
+            "sampling_rate_hz": 1000.0,
+            "clock_error_ms": 15.0,
+            "validity_uri": null,
+            "unit": "kW",
+            "sensor_type": "electrical_power",
+            "view": null,
+            "fps": null,
+            "channels": null
+          }
+        ],
+        "other": []
+      },
+      "machine_state": {
+        "operating_mode": "loaded",
+        "load_pct": 88.0,
+        "setpoints": {
+          "nominal_load_pct": 88.0
+        },
+        "alarms": []
+      },
+      "actions": [
+        {
+          "action_id": "ACT-0008",
+          "type": "ACTION.MAINTENANCE_INSPECTION",
+          "actor": "maintenance",
+          "start_offset_s": 7.700000000000001,
+          "end_offset_s": 7.800000000000001,
+          "parameters": {},
+          "safety_authorized": true,
+          "executed": true
+        }
+      ],
+      "events": [
+        {
+          "event_id": "EVT-0008",
+          "taxonomy_id": "FAULT.PROCESS.PRESSURE_DROP",
+          "start_offset_s": 1.4000000000000001,
+          "end_offset_s": 11.200000000000001,
+          "severity": 2,
+          "confidence": 0.92,
+          "label_source": "multi_source",
+          "reviewed": true,
+          "root_cause_status": "confirmed",
+          "spatial": null
+        }
+      ],
+      "outcome": {
+        "status": "degraded_continuing",
+        "quality_disposition": "na",
+        "downtime_s": 0.0,
+        "recovery_time_s": null,
+        "future_state": {
+          "pressure_bar": 5.8,
+          "inspection_required": true
+        }
+      },
+      "data_quality": {
+        "missing_fraction": 0.0,
+        "drift_flags": [],
+        "status": "pass",
+        "validator_version": "1.0.0"
+      },
+      "governance": {
+        "data_owner": "IWM-Episodes illustrative examples",
+        "source_type": "synthetic",
+        "license": "CC-BY-4.0",
+        "permitted_use": "public",
+        "redistribution_allowed": true,
+        "privacy_review": "pass",
+        "redactions": [],
+        "provenance": [
+          "programmatic golden sample",
+          "no real factory media"
+        ]
+      },
+      "split": {
+        "split": "train",
+        "split_group": "demo_site_1/compressor_04/day_08",
+        "ood_tags": []
+      },
+      "world_model_targets": {
+        "reasoner": [
+          "event_classification",
+          "state_explanation"
+        ],
+        "generator": [
+          "future_state_prediction"
+        ],
+        "action": [
+          "inverse_dynamics"
+        ]
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "episode_id": "IWM-GOLD-0009",
+      "source_id": "illustrative-source-0009",
+      "site_id": "demo_site_2",
+      "line_id": "demo_line_1",
+      "asset_id": "forklift_zone_02",
+      "asset_type": "forklift_zone",
+      "product_id": null,
+      "batch_id": null,
+      "time": {
+        "start_time": "2026-07-23T01:45:00Z",
+        "end_time": "2026-07-23T01:45:06Z",
+        "duration_s": 6.0,
+        "original_timezone": "Asia/Ho_Chi_Minh",
+        "clock_source": "ptp",
+        "max_clock_error_ms": 15.0
+      },
+      "observations": {
+        "video": [
+          {
+            "stream_id": "forklift_zone_02.cam_side",
+            "uri": "iwm://golden/0009/video/side.mp4",
+            "modality": "rgb",
+            "sampling_rate_hz": 30.0,
+            "clock_error_ms": 8.0,
+            "validity_uri": null,
+            "unit": null,
+            "sensor_type": null,
+            "view": "side",
+            "fps": 30.0,
+            "channels": 3
+          }
+        ],
+        "audio": [
+          {
+            "stream_id": "forklift_zone_02.mic_machine",
+            "uri": "iwm://golden/0009/audio/machine.wav",
+            "modality": "audio",
+            "sampling_rate_hz": 48000.0,
+            "clock_error_ms": 6.0,
+            "validity_uri": null,
+            "unit": null,
+            "sensor_type": null,
+            "view": null,
+            "fps": null,
+            "channels": 1
+          }
+        ],
+        "telemetry": [
+          {
+            "stream_id": "forklift_zone_02.forklift_speed",
+            "uri": "iwm://golden/0009/telemetry/forklift_speed.parquet",
+            "modality": "telemetry",
+            "sampling_rate_hz": 50.0,
+            "clock_error_ms": 15.0,
+            "validity_uri": null,
+            "unit": "m/s",
+            "sensor_type": "vehicle_speed",
+            "view": null,
+            "fps": null,
+            "channels": null
+          },
+          {
+            "stream_id": "forklift_zone_02.zone_occupancy",
+            "uri": "iwm://golden/0009/telemetry/zone_occupancy.parquet",
+            "modality": "telemetry",
+            "sampling_rate_hz": 30.0,
+            "clock_error_ms": 15.0,
+            "validity_uri": null,
+            "unit": "count",
+            "sensor_type": "occupancy",
+            "view": null,
+            "fps": null,
+            "channels": null
+          },
+          {
+            "stream_id": "forklift_zone_02.distance",
+            "uri": "iwm://golden/0009/telemetry/distance.parquet",
+            "modality": "telemetry",
+            "sampling_rate_hz": 30.0,
+            "clock_error_ms": 15.0,
+            "validity_uri": null,
+            "unit": "m",
+            "sensor_type": "minimum_distance",
+            "view": null,
+            "fps": null,
+            "channels": null
+          }
+        ],
+        "other": []
+      },
+      "machine_state": {
+        "operating_mode": "active",
+        "load_pct": 40.0,
+        "setpoints": {
+          "nominal_load_pct": 40.0
+        },
+        "alarms": []
+      },
+      "actions": [
+        {
+          "action_id": "ACT-0009",
+          "type": "ACTION.EMERGENCY_STOP",
+          "actor": "safety",
+          "start_offset_s": 3.3000000000000003,
+          "end_offset_s": 3.4000000000000004,
+          "parameters": {},
+          "safety_authorized": true,
+          "executed": true
+        }
+      ],
+      "events": [
+        {
+          "event_id": "EVT-0009",
+          "taxonomy_id": "SAFETY.NEAR_MISS",
+          "start_offset_s": 0.6000000000000001,
+          "end_offset_s": 4.800000000000001,
+          "severity": 3,
+          "confidence": 0.92,
+          "label_source": "multi_source",
+          "reviewed": true,
+          "root_cause_status": "confirmed",
+          "spatial": {
+            "camera_id": "forklift_zone_02.cam_side",
+            "boxes_xyxy": [
+              [
+                180,
+                190,
+                520,
+                700
+              ],
+              [
+                690,
+                160,
+                1040,
+                720
+              ]
+            ],
+            "mask_uri": null
+          }
+        }
+      ],
+      "outcome": {
+        "status": "stopped",
+        "quality_disposition": "na",
+        "downtime_s": 12.0,
+        "recovery_time_s": null,
+        "future_state": {
+          "minimum_distance_m": 0.7,
+          "collision": false
+        }
+      },
+      "data_quality": {
+        "missing_fraction": 0.0,
+        "drift_flags": [],
+        "status": "pass",
+        "validator_version": "1.0.0"
+      },
+      "governance": {
+        "data_owner": "IWM-Episodes illustrative examples",
+        "source_type": "synthetic",
+        "license": "CC-BY-4.0",
+        "permitted_use": "public",
+        "redistribution_allowed": true,
+        "privacy_review": "pass",
+        "redactions": [],
+        "provenance": [
+          "programmatic golden sample",
+          "no real factory media"
+        ]
+      },
+      "split": {
+        "split": "validation",
+        "split_group": "demo_site_2/forklift_zone_02/day_09",
+        "ood_tags": []
+      },
+      "world_model_targets": {
+        "reasoner": [
+          "event_classification",
+          "state_explanation"
+        ],
+        "generator": [
+          "future_state_prediction"
+        ],
+        "action": [
+          "inverse_dynamics"
+        ]
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "episode_id": "IWM-GOLD-0010",
+      "source_id": "illustrative-source-0010",
+      "site_id": "demo_site_1",
+      "line_id": "demo_line_2",
+      "asset_id": "pump_11",
+      "asset_type": "centrifugal_pump",
+      "product_id": null,
+      "batch_id": null,
+      "time": {
+        "start_time": "2026-07-23T01:50:00Z",
+        "end_time": "2026-07-23T01:50:10Z",
+        "duration_s": 10.0,
+        "original_timezone": "Asia/Ho_Chi_Minh",
+        "clock_source": "ptp",
+        "max_clock_error_ms": 15.0
+      },
+      "observations": {
+        "video": [
+          {
+            "stream_id": "pump_11.cam_side",
+            "uri": "iwm://golden/0010/video/side.mp4",
+            "modality": "rgb",
+            "sampling_rate_hz": 30.0,
+            "clock_error_ms": 8.0,
+            "validity_uri": null,
+            "unit": null,
+            "sensor_type": null,
+            "view": "side",
+            "fps": 30.0,
+            "channels": 3
+          }
+        ],
+        "audio": [
+          {
+            "stream_id": "pump_11.mic_machine",
+            "uri": "iwm://golden/0010/audio/machine.wav",
+            "modality": "audio",
+            "sampling_rate_hz": 48000.0,
+            "clock_error_ms": 6.0,
+            "validity_uri": null,
+            "unit": null,
+            "sensor_type": null,
+            "view": null,
+            "fps": null,
+            "channels": 1
+          }
+        ],
+        "telemetry": [
+          {
+            "stream_id": "pump_11.pressure",
+            "uri": "iwm://golden/0010/telemetry/pressure.parquet",
+            "modality": "telemetry",
+            "sampling_rate_hz": 100.0,
+            "clock_error_ms": 15.0,
+            "validity_uri": null,
+            "unit": "bar",
+            "sensor_type": "pressure",
+            "view": null,
+            "fps": null,
+            "channels": null
+          },
+          {
+            "stream_id": "pump_11.current",
+            "uri": "iwm://golden/0010/telemetry/current.parquet",
+            "modality": "telemetry",
+            "sampling_rate_hz": 1000.0,
+            "clock_error_ms": 15.0,
+            "validity_uri": null,
+            "unit": "A",
+            "sensor_type": "motor_current",
+            "view": null,
+            "fps": null,
+            "channels": null
+          },
+          {
+            "stream_id": "pump_11.vibration",
+            "uri": "iwm://golden/0010/telemetry/vibration.parquet",
+            "modality": "vibration",
+            "sampling_rate_hz": 25600.0,
+            "clock_error_ms": 15.0,
+            "validity_uri": null,
+            "unit": "mm/s",
+            "sensor_type": "vibration",
+            "view": null,
+            "fps": null,
+            "channels": null
+          }
+        ],
+        "other": []
+      },
+      "machine_state": {
+        "operating_mode": "running",
+        "load_pct": 60.0,
+        "setpoints": {
+          "nominal_load_pct": 60.0
+        },
+        "alarms": []
+      },
+      "actions": [
+        {
+          "action_id": "ACT-0010",
+          "type": "ACTION.NO_ACTION",
+          "actor": "source",
+          "start_offset_s": 0.0,
+          "end_offset_s": 0.0,
+          "parameters": {},
+          "safety_authorized": true,
+          "executed": false
+        }
+      ],
+      "events": [
+        {
+          "event_id": "EVT-0010",
+          "taxonomy_id": "STATE.NORMAL_OPERATION",
+          "start_offset_s": 0.0,
+          "end_offset_s": 10.0,
+          "severity": 0,
+          "confidence": 0.98,
+          "label_source": "multi_source",
+          "reviewed": true,
+          "root_cause_status": "unknown",
+          "spatial": null
+        }
+      ],
+      "outcome": {
+        "status": "normal_completion",
+        "quality_disposition": "na",
+        "downtime_s": 0.0,
+        "recovery_time_s": null,
+        "future_state": {
+          "vibration_rms_mm_s": 1.1,
+          "pressure_bar": 3.5
+        }
+      },
+      "data_quality": {
+        "missing_fraction": 0.0,
+        "drift_flags": [],
+        "status": "pass",
+        "validator_version": "1.0.0"
+      },
+      "governance": {
+        "data_owner": "IWM-Episodes illustrative examples",
+        "source_type": "synthetic",
+        "license": "CC-BY-4.0",
+        "permitted_use": "public",
+        "redistribution_allowed": true,
+        "privacy_review": "pass",
+        "redactions": [],
+        "provenance": [
+          "programmatic golden sample",
+          "no real factory media"
+        ]
+      },
+      "split": {
+        "split": "test_public",
+        "split_group": "demo_site_1/pump_11/day_10",
+        "ood_tags": [
+          "unseen_lighting"
+        ]
+      },
+      "world_model_targets": {
+        "reasoner": [
+          "event_classification",
+          "state_explanation"
+        ],
+        "generator": [
+          "future_state_prediction"
+        ],
+        "action": [
+          "forward_dynamics"
+        ]
+      }
+    }
+  ]
+}

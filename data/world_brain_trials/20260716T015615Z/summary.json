@@ -1,0 +1,16 @@
+{
+ "session": "20260716T015615Z",
+ "n_trials": 3,
+ "categories": {
+  "correct_abstain": 1,
+  "ok": 1,
+  "grounding_miss": 1
+ },
+ "synthetic": {
+  "n": 3,
+  "ok_rate": 0.333,
+  "mean_iou": 0.241,
+  "iou_at_05": 0.333
+ },
+ "mean_latency_ms": 1178.1
+}

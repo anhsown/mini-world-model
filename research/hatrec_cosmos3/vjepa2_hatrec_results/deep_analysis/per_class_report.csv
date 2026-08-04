@@ -1,0 +1,11 @@
+,precision,recall,f1-score,support
+Assembling spring,1.0,1.0,1.0,12.0
+White plastic,1.0,1.0,1.0,12.0
+Screwing-1,1.0,1.0,1.0,12.0
+Inflating valve,1.0,1.0,1.0,12.0
+Black plastic,1.0,1.0,1.0,12.0
+Screwing-2,1.0,1.0,1.0,12.0
+Fixing cable,1.0,1.0,1.0,12.0
+accuracy,1.0,1.0,1.0,1.0
+macro avg,1.0,1.0,1.0,84.0
+weighted avg,1.0,1.0,1.0,84.0

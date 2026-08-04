@@ -1,0 +1,175 @@
+{
+  "benchmark": "JWM-Eye-Physical Independent Geometry + Blind Controls",
+  "checkpoint": "C:\\Users\\ASUS\\OneDrive\\Desktop\\Jarvis-Vision\\jwm\\checkpoints\\jwm_eye_physical_v1_artifacts\\jwm_eye_physical_v1.pt",
+  "checkpoint_status": "final",
+  "device": "cuda",
+  "evaluations": {
+    "procedural/normal": {
+      "metrics": {
+        "depth_abs_rel": 0.03013225900940597,
+        "depth_rmse_anchor_scale": 0.06286180671304464,
+        "ate_anchor_scale": 0.015763688017614186,
+        "abs_rotation_deg": 1.1894856616854668,
+        "rpe_translation": 0.004955044511007145,
+        "rpe_rotation_deg": 0.5935682579874992
+      },
+      "samples": 8,
+      "seconds": 3.5201135000024806,
+      "sequence_per_second": 2.2726539925472182,
+      "frame_per_second": 18.181231940377746
+    },
+    "procedural/black": {
+      "metrics": {
+        "depth_abs_rel": 0.48526526615023613,
+        "depth_rmse_anchor_scale": 0.6214507222175598,
+        "ate_anchor_scale": 0.03644833015277982,
+        "abs_rotation_deg": 1.2029828056693077,
+        "rpe_translation": 0.01500124135054648,
+        "rpe_rotation_deg": 0.5933843078091741
+      },
+      "samples": 8,
+      "seconds": 3.0163102000005892,
+      "sequence_per_second": 2.6522471064144653,
+      "frame_per_second": 21.217976851315722
+    },
+    "procedural/mean_only": {
+      "metrics": {
+        "depth_abs_rel": 0.2036239095032215,
+        "depth_rmse_anchor_scale": 0.3679005019366741,
+        "ate_anchor_scale": 0.01648074120748788,
+        "abs_rotation_deg": 1.1908694095909595,
+        "rpe_translation": 0.005251729453448206,
+        "rpe_rotation_deg": 0.5935468282550573
+      },
+      "samples": 8,
+      "seconds": 2.9627946999971755,
+      "sequence_per_second": 2.7001533383354666,
+      "frame_per_second": 21.601226706683732
+    },
+    "procedural/frozen_first": {
+      "metrics": {
+        "depth_abs_rel": 0.050079923355951905,
+        "depth_rmse_anchor_scale": 0.13779838755726814,
+        "ate_anchor_scale": 0.01589704304933548,
+        "abs_rotation_deg": 1.189525295048952,
+        "rpe_translation": 0.005027063249144703,
+        "rpe_rotation_deg": 0.5935690887272358
+      },
+      "samples": 8,
+      "seconds": 2.9637903999973787,
+      "sequence_per_second": 2.6992462085062003,
+      "frame_per_second": 21.593969668049603
+    },
+    "procedural/reverse_time": {
+      "metrics": {
+        "depth_abs_rel": 0.05427405284717679,
+        "depth_rmse_anchor_scale": 0.14562346879392862,
+        "ate_anchor_scale": 0.016364429146051407,
+        "abs_rotation_deg": 1.1895773503929377,
+        "rpe_translation": 0.005066467652795836,
+        "rpe_rotation_deg": 0.5936340084299445
+      },
+      "samples": 8,
+      "seconds": 2.909522800000559,
+      "sequence_per_second": 2.7495917887285373,
+      "frame_per_second": 21.996734309828298
+    },
+    "procedural/wrong_scene": {
+      "metrics": {
+        "depth_abs_rel": 0.157393597997725,
+        "depth_rmse_anchor_scale": 0.3592913318425417,
+        "ate_anchor_scale": 0.016080348403193057,
+        "abs_rotation_deg": 1.1904229205101728,
+        "rpe_translation": 0.005062579992227256,
+        "rpe_rotation_deg": 0.5937381349503994
+      },
+      "samples": 8,
+      "seconds": 2.989532599996892,
+      "sequence_per_second": 2.6760036000304255,
+      "frame_per_second": 21.408028800243404
+    },
+    "procedural/constant_identity_prior": {
+      "metrics": {
+        "depth_abs_rel": 0.7863016799092293,
+        "depth_rmse_anchor_scale": 0.5992018803954124,
+        "ate_anchor_scale": 0.031506981467828155,
+        "abs_rotation_deg": 1.1862706616520882,
+        "rpe_translation": 0.012852272833697498,
+        "rpe_rotation_deg": 0.5931905210018158
+      },
+      "samples": 8,
+      "seconds": 0.06183160000364296
+    },
+    "tum/normal": {
+      "metrics": {
+        "depth_abs_rel": 0.4080701358616352,
+        "depth_rmse_anchor_scale": 0.5361323853333791,
+        "ate_anchor_scale": 0.03842603066004813,
+        "abs_rotation_deg": 2.8281469171245894,
+        "rpe_translation": 0.009819274651817977,
+        "rpe_rotation_deg": 1.158408058186372
+      },
+      "samples": 24,
+      "seconds": 8.636633899994195
+    },
+    "tum/black": {
+      "metrics": {
+        "depth_abs_rel": 0.3292413068314393,
+        "depth_rmse_anchor_scale": 0.4786226612826188,
+        "ate_anchor_scale": 0.038585454768811665,
+        "abs_rotation_deg": 2.833769125243028,
+        "rpe_translation": 0.00995582415877531,
+        "rpe_rotation_deg": 1.1577567507823308
+      },
+      "samples": 24,
+      "seconds": 8.540664400003152
+    },
+    "tum/frozen_first": {
+      "metrics": {
+        "depth_abs_rel": 0.3993448068698247,
+        "depth_rmse_anchor_scale": 0.5226278565824032,
+        "ate_anchor_scale": 0.0379267648095265,
+        "abs_rotation_deg": 2.8266350279251733,
+        "rpe_translation": 0.009604247733174512,
+        "rpe_rotation_deg": 1.1580948904156685
+      },
+      "samples": 24,
+      "seconds": 8.655007100001967
+    },
+    "tum/reverse_time": {
+      "metrics": {
+        "depth_abs_rel": 0.39259405558307964,
+        "depth_rmse_anchor_scale": 0.5216811609764894,
+        "ate_anchor_scale": 0.03818630120561769,
+        "abs_rotation_deg": 2.8275098676482835,
+        "rpe_translation": 0.009768363845068961,
+        "rpe_rotation_deg": 1.1572951972484589
+      },
+      "samples": 24,
+      "seconds": 8.55049880000297
+    }
+  },
+  "vision_dependence": {
+    "wrong_scene_depth_ratio": 5.22342509894773,
+    "wrong_scene_ate_ratio": 1.0200879632497826,
+    "black_depth_ratio": 16.104509987079215,
+    "gate": "FAIL"
+  },
+  "tum_dataset_validation": {
+    "valid": true,
+    "hypotheses": {
+      "H_rgb_depth_pose_associated": true,
+      "H_real_depth_available": true,
+      "H_pose_is_SO3": true,
+      "H_camera_motion_present": true,
+      "H_pose_normalized_to_first_frame": true
+    },
+    "metrics": {
+      "windows": 34,
+      "depth_valid_fraction": 0.5494759678840637,
+      "pose_so3_max_error": 5.960464477539062e-07,
+      "translation_per_frame_mean_m": 0.019716255366802216,
+      "translation_per_frame_max_m": 0.054924171417951584
+    }
+  }
+}

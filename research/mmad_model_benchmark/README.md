@@ -35,6 +35,17 @@ Smoke test:
 python models/cosmos3/run_nvidia_build.py --limit 3 --delay 1
 ```
 
+Full 39,670-question NVIDIA Build run (download, inference and checkpoint are resumable):
+
+```powershell
+python models/cosmos3/run_nvidia_build.py --full --timeout 10 --delay 5
+```
+
+This command prepares the 8,366 unique images under `data_full`, writes an
+append-only checkpoint to `outputs/cosmos3_full/predictions.jsonl`, and stores
+separate reasoning/response artifacts under `outputs/cosmos3_full/records`.
+Re-running the same command skips successful samples and retries failures.
+
 ## 3. Qwen2-VL-2B on a free T4
 
 Upload and run `models/qwen2_vl/Qwen2VL_2B_MMAD_ZeroShot.ipynb` in Colab or Kaggle with a T4 GPU. The notebook clones the public repository, materializes the exact shared subset, runs FP16 deterministic inference, plots metrics and creates `qwen2_vl_mmad_results.zip`.

@@ -156,7 +156,14 @@ EYE_V322_CORRECTIVE_RESET_PREFIXES = (
 
 
 def warmstart_eye_v322(model, checkpoint: str | Path) -> dict:
-    """Retain v3.2.1 tracking but reset its collapsed geometry heads."""
+    """Reuse v3.2.1's valid tracker while resetting its collapsed heads.
+
+    A generic JWM-v4 checkpoint still follows the ordinary v3.2 expansion.
+    A blocked v3.2.1 checkpoint is admitted only selectively: visual features,
+    scene registers, tracker coordinates, confidence, visibility, and scale are
+    retained; depth, pose, temporal, dynamic, and ray-calibration heads restart.
+    Optimizer/controller state is never inherited.
+    """
     payload = torch.load(checkpoint, map_location="cpu", weights_only=False)
     if payload.get("version") != "jwm-eye-v3.2.1-robust-causal-geometry":
         return warmstart_eye_v32(model, checkpoint)

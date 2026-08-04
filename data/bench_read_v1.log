@@ -1,0 +1,40 @@
+C:\Users\ASUS\AppData\Local\Programs\Python\Python310\lib\site-packages\requests\__init__.py:113: RequestsDependencyWarning: urllib3 (2.2.1) or chardet (7.4.3)/charset_normalizer (3.3.2) doesn't match a supported version!
+  warnings.warn(
+device=cuda
+== Tier A: synthetic ladder ==
+  T0_char_200px: 8/96 (12.1s/sample)
+  T0_char_200px: 16/96 (11.9s/sample)
+  T1_word_120px: 24/96 (11.9s/sample)
+  T1_word_80px: 32/96 (11.8s/sample)
+  T1_word_80px: 40/96 (11.9s/sample)
+  T1_word_48px: 48/96 (11.9s/sample)
+  T1_word_28px: 56/96 (11.8s/sample)
+  T1_word_28px: 64/96 (11.7s/sample)
+  T2_line_L2: 72/96 (11.8s/sample)
+  T3_para_L4: 80/96 (11.8s/sample)
+  T3_para_L4: 88/96 (11.7s/sample)
+  T4_word80_degraded: 96/96 (11.7s/sample)
+== Tier B: real doc pages (held-out) ==
+  B_doc_real: 8/40 (30.6s/sample)
+  B_doc_real: 16/40 (29.3s/sample)
+  B_doc_real: 24/40 (29.7s/sample)
+  B_doc_real: 32/40 (31.8s/sample)
+  B_doc_real: 40/40 (31.8s/sample)
+== Tier C: MTVQA-VI ==
+Generating train split:   0%|          | 0/6678 [00:00<?, ? examples/s]Generating train split:   1%|▏         | 100/6678 [00:00<00:47, 138.47 examples/s]Generating train split:   6%|▌         | 400/6678 [00:00<00:11, 565.71 examples/s]Generating train split:   9%|▉         | 600/6678 [00:01<00:15, 398.68 examples/s]Generating train split:  10%|█         | 700/6678 [00:01<00:14, 420.64 examples/s]Generating train split:  12%|█▏        | 800/6678 [00:02<00:14, 418.44 examples/s]Generating train split:  13%|█▎        | 900/6678 [00:02<00:12, 479.57 examples/s]Generating train split:  16%|█▌        | 1054/6678 [00:02<00:19, 294.61 examples/s]Generating train split:  17%|█▋        | 1154/6678 [00:03<00:18, 294.46 examples/s]Generating train split:  19%|█▉        | 1254/6678 [00:03<00:17, 317.81 examples/s]Generating train split:  20%|██        | 1354/6678 [00:03<00:17, 306.58 examples/s]Generating train split:  22%|██▏       | 1454/6678 [00:04<00:15, 346.11 examples/s]Generating train split:  23%|██▎       | 1554/6678 [00:04<00:13, 378.25 examples/s]Generating train split:  29%|██▊       | 1908/6678 [00:04<00:06, 764.51 examples/s]Generating train split:  32%|███▏      | 2108/6678 [00:04<00:06, 662.45 examples/s]Generating train split:  33%|███▎      | 2208/6678 [00:05<00:08, 539.87 examples/s]Generating train split:  35%|███▍      | 2308/6678 [00:05<00:10, 421.65 examples/s]Generating train split:  36%|███▌      | 2408/6678 [00:06<00:11, 368.55 examples/s]Generating train split:  38%|███▊      | 2508/6678 [00:06<00:11, 378.09 examples/s]Generating train split:  39%|███▉      | 2608/6678 [00:06<00:10, 386.31 examples/s]Generating train split:  41%|████      | 2708/6678 [00:06<00:10, 362.92 examples/s]Generating train split:  42%|████▏     | 2808/6678 [00:07<00:10, 361.54 examples/s]Generating train split:  44%|████▍     | 2962/6678 [00:08<00:20, 183.70 examples/s]Generating train split:  46%|████▌     | 3062/6678 [00:08<00:17, 210.88 examples/s]Generating train split:  49%|████▉     | 3262/6678 [00:09<00:10, 330.46 examples/s]Generating train split:  52%|█████▏    | 3462/6678 [00:09<00:06, 468.11 examples/s]Generating train split:  55%|█████▍    | 3662/6678 [00:09<00:04, 623.94 examples/s]Generating train split:  59%|█████▊    | 3916/6678 [00:10<00:08, 343.00 examples/s]Generating train split:  60%|██████    | 4016/6678 [00:10<00:07, 364.56 examples/s]Generating train split:  63%|██████▎   | 4216/6678 [00:10<00:05, 478.46 examples/s]Generating train split:  66%|██████▌   | 4416/6678 [00:11<00:03, 619.61 examples/s]Generating train split:  69%|██████▉   | 4616/6678 [00:11<00:02, 760.63 examples/s]Generating train split:  71%|███████▏  | 4770/6678 [00:11<00:02, 800.83 examples/s]Generating train split:  74%|███████▍  | 4970/6678 [00:12<00:03, 477.14 examples/s]Generating train split:  76%|███████▌  | 5070/6678 [00:12<00:03, 487.98 examples/s]Generating train split:  77%|███████▋  | 5170/6678 [00:12<00:02, 528.72 examples/s]Generating train split:  80%|████████  | 5370/6678 [00:12<00:02, 617.95 examples/s]Generating train split:  82%|████████▏ | 5470/6678 [00:12<00:01, 659.33 examples/s]Generating train split:  83%|████████▎ | 5570/6678 [00:12<00:01, 621.57 examples/s]Generating train split:  87%|████████▋ | 5824/6678 [00:13<00:01, 456.77 examples/s]Generating train split:  89%|████████▊ | 5924/6678 [00:13<00:01, 503.35 examples/s]Generating train split:  90%|█████████ | 6024/6678 [00:14<00:01, 469.87 examples/s]Generating train split:  92%|█████████▏| 6124/6678 [00:14<00:01, 533.63 examples/s]Generating train split:  95%|█████████▍| 6324/6678 [00:14<00:00, 702.48 examples/s]Generating train split:  96%|█████████▌| 6424/6678 [00:14<00:00, 613.65 examples/s]Generating train split:  98%|█████████▊| 6524/6678 [00:14<00:00, 592.33 examples/s]Generating train split: 100%|██████████| 6678/6678 [00:14<00:00, 705.97 examples/s]Generating train split: 100%|██████████| 6678/6678 [00:14<00:00, 448.28 examples/s]
+Generating test split:   0%|          | 0/2116 [00:00<?, ? examples/s]Generating test split:   5%|▍         | 100/2116 [00:00<00:03, 642.41 examples/s]Generating test split:   9%|▉         | 200/2116 [00:00<00:03, 574.47 examples/s]Generating test split:  14%|█▍        | 300/2116 [00:00<00:05, 306.19 examples/s]Generating test split:  19%|█▉        | 400/2116 [00:01<00:05, 317.81 examples/s]Generating test split:  24%|██▎       | 500/2116 [00:01<00:03, 408.07 examples/s]Generating test split:  33%|███▎      | 700/2116 [00:01<00:02, 683.91 examples/s]Generating test split:  38%|███▊      | 806/2116 [00:01<00:02, 449.18 examples/s]Generating test split:  43%|████▎     | 906/2116 [00:01<00:02, 488.69 examples/s]Generating test split:  48%|████▊     | 1006/2116 [00:02<00:02, 537.45 examples/s]Generating test split:  57%|█████▋    | 1206/2116 [00:02<00:01, 716.91 examples/s]Generating test split:  71%|███████▏  | 1511/2116 [00:02<00:01, 571.30 examples/s]Generating test split:  76%|███████▌  | 1611/2116 [00:03<00:01, 479.07 examples/s]Generating test split:  81%|████████  | 1711/2116 [00:03<00:00, 493.18 examples/s]Generating test split:  86%|████████▌ | 1811/2116 [00:03<00:00, 540.67 examples/s]Generating test split:  95%|█████████▌| 2011/2116 [00:03<00:00, 722.95 examples/s]Generating test split: 100%|██████████| 2116/2116 [00:03<00:00, 759.85 examples/s]Generating test split: 100%|██████████| 2116/2116 [00:03<00:00, 552.13 examples/s]
+MTVQA tier failed: Expecting property name enclosed in double quotes: line 1 column 3 (char 2)
+
+=== SUMMARY ===
+tier                     n   CERm  CERmd  exact  cont  stop  s/smp
+B_doc_real              40   1.26   0.70   0.00  0.00  0.80   30.6
+T0_char_200px           12  52.00  52.00   0.00  0.17  0.00   12.0
+T1_word_120px           12  11.80  12.00   0.00  0.00  0.00   11.9
+T1_word_28px            12  13.81  14.88   0.00  0.00  0.00   11.8
+T1_word_48px            12  13.65  12.62   0.00  0.00  0.00   11.9
+T1_word_80px            12  17.40  17.00   0.00  0.00  0.00   11.9
+T2_line_L2              12   2.52   2.29   0.00  0.00  0.00   11.8
+T3_para_L4              12   0.82   0.82   0.00  0.00  0.00   11.8
+T4_word80_degraded      12  15.17  14.83   0.00  0.00  0.00   11.7
+
+wrote C:\Users\ASUS\OneDrive\Desktop\Jarvis-Vision\data\bench_read_v1.json

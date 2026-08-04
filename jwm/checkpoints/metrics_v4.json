@@ -1,0 +1,48 @@
+{
+ "test": {
+  "qa_acc": 0.656,
+  "qa_per_kind": {
+   "what_held": 0.6881720430107527,
+   "where": 0.723404255319149,
+   "what": 0.25,
+   "count": 0.8064516129032258,
+   "exist": 0.7948717948717948
+  },
+  "iou_at_05_4step": 0.36000001430511475,
+  "miou_4step": 0.3548715114593506,
+  "iou_at_05_50step": 0.3479999899864197,
+  "miou_50step": 0.36301761865615845,
+  "ece_calibrated_4step": 0.08412474393844604,
+  "fd_psnr_min_over_k": 20.766643524169922,
+  "fd_copy_baseline": 21.385658264160156,
+  "fd_beats_copy": 0.4583333432674408,
+  "t2i_self_consistency_pos": 0.4583333333333333,
+  "t2i_self_consistency_neg": 0.7083333333333334
+ },
+ "val": {
+  "ece_calibrated": 0.046810396015644073,
+  "miou_4step": 0.3618789613246918
+ },
+ "calibration": {
+  "a": 0.5816,
+  "b": -2.6209,
+  "steps": 4
+ },
+ "latency_ms": {
+  "qa_answer": 1788.9329600002384,
+  "ground_50step": 1192.2772799996892,
+  "ground_4step": 251.7707299994072,
+  "fd_50step": 1227.177190000657,
+  "fd_4step": 234.2989700002363
+ },
+ "params_M": 73.94,
+ "pipeline": "7-stage (r1,r2,g1..g5)",
+ "reference": {
+  "v1_10.7M": {
+   "qa": 0.564,
+   "miou": 0.201,
+   "ece": 0.0396
+  },
+  "v2_28M": "superseded mid-training"
+ }
+}

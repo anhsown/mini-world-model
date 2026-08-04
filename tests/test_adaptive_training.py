@@ -6,7 +6,9 @@ from jwm.adaptive_training import (
     BudgetConfig,
     MetricSpec,
 )
-from scripts.train_eye_v3_ddp import apply_distributed_lr_decision
+from scripts.train_eye_v3_ddp import (
+    apply_distributed_lr_decision, should_rollback_and_advance,
+)
 
 
 def _controller(*, final=False, max_lr_decays=1):
@@ -93,3 +95,10 @@ def test_ddp_lr_decay_mutates_only_owner_but_scales_every_rank():
     assert owner_factor == worker_factor == 0.5
     assert owner.lr_decays == 1
     assert worker.lr_decays == 0
+
+
+def test_intermediate_overfit_rolls_back_but_final_overfit_blocks():
+    assert should_rollback_and_advance(BudgetAction.STOP_OVERFIT, 0)
+    assert should_rollback_and_advance(BudgetAction.STOP_BLOCKED, 2)
+    assert not should_rollback_and_advance(BudgetAction.STOP_UNSTABLE, 0)
+    assert not should_rollback_and_advance(BudgetAction.STOP_OVERFIT, 3)

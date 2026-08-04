@@ -1,0 +1,63 @@
+Inkling-mini reasoner: 73.94M total
+  [    0/3000] mode=qa     loss=17.1638 qa_ce=17.1638 qa_tok_acc=0.0000 moe_aux=0.0842 | 0.3 it/s
+  [  200/3000] mode=qa     loss=0.9736 qa_ce=0.9736 qa_tok_acc=0.8891 moe_aux=0.0719 | 0.3 it/s
+  [  400/3000] mode=qa     loss=0.7385 qa_ce=0.7385 qa_tok_acc=0.9097 moe_aux=0.0709 | 0.3 it/s
+  [  600/3000] mode=qa     loss=0.8486 qa_ce=0.8486 qa_tok_acc=0.9014 moe_aux=0.0703 | 0.3 it/s
+  [  800/3000] mode=qa     loss=0.6781 qa_ce=0.6781 qa_tok_acc=0.9074 moe_aux=0.0704 | 0.3 it/s
+  [ 1000/3000] mode=qa     loss=0.6268 qa_ce=0.6268 qa_tok_acc=0.9177 moe_aux=0.0698 | 0.3 it/s
+  [ 1200/3000] mode=qa     loss=0.5314 qa_ce=0.5314 qa_tok_acc=0.9297 moe_aux=0.0708 | 0.3 it/s
+  [ 1400/3000] mode=qa     loss=0.4870 qa_ce=0.4870 qa_tok_acc=0.9420 moe_aux=0.0694 | 0.3 it/s
+  [ 1600/3000] mode=qa     loss=0.4350 qa_ce=0.4350 qa_tok_acc=0.9439 moe_aux=0.0692 | 0.3 it/s
+  [ 1800/3000] mode=qa     loss=0.4035 qa_ce=0.4035 qa_tok_acc=0.9492 moe_aux=0.0696 | 0.3 it/s
+  [ 2000/3000] mode=qa     loss=0.4055 qa_ce=0.4055 qa_tok_acc=0.9534 moe_aux=0.0703 | 0.3 it/s
+  [ 2200/3000] mode=qa     loss=0.4046 qa_ce=0.4046 qa_tok_acc=0.9546 moe_aux=0.0694 | 0.3 it/s
+  [ 2400/3000] mode=qa     loss=0.3453 qa_ce=0.3453 qa_tok_acc=0.9628 moe_aux=0.0694 | 0.3 it/s
+  [ 2600/3000] mode=qa     loss=0.3434 qa_ce=0.3434 qa_tok_acc=0.9638 moe_aux=0.0699 | 0.3 it/s
+  [ 2800/3000] mode=qa     loss=0.3321 qa_ce=0.3321 qa_tok_acc=0.9684 moe_aux=0.0692 | 0.3 it/s
+  [ 2999/3000] mode=qa     loss=0.2800 qa_ce=0.2800 qa_tok_acc=0.9786 moe_aux=0.0698 | 0.3 it/s
+  QA exact-match: 0.580 on 250 | per-kind: what_held=0.58 what=0.12 where=0.86 exist=0.86 count=0.65
+== r1-MoE: 0.580 (dense baseline 0.545) ==
+  [    0/800] mode=qa     loss=0.3662 qa_ce=0.3662 qa_tok_acc=0.9681 moe_aux=0.0700 | 0.3 it/s
+  [  200/800] mode=qa     loss=0.4158 qa_ce=0.4158 qa_tok_acc=0.9571 moe_aux=0.0692 | 0.3 it/s
+  [  400/800] mode=qa     loss=0.3602 qa_ce=0.3602 qa_tok_acc=0.9540 moe_aux=0.0702 | 0.3 it/s
+  [  600/800] mode=qa     loss=0.4628 qa_ce=0.4628 qa_tok_acc=0.9616 moe_aux=0.0695 | 0.3 it/s
+  [  799/800] mode=qa     loss=0.3957 qa_ce=0.3957 qa_tok_acc=0.9583 moe_aux=0.0698 | 0.3 it/s
+  QA exact-match: 0.608 on 250 | per-kind: what_held=0.59 what=0.15 where=0.89 exist=0.90 count=0.68
+== r2-MoE: 0.608 (dense baseline 0.572) -> WIN ==
+{
+ "layer1": {
+  "entropy": 3.28,
+  "max_entropy": 3.466,
+  "dead": 0
+ },
+ "layer2": {
+  "entropy": 3.378,
+  "max_entropy": 3.466,
+  "dead": 0
+ },
+ "layer3": {
+  "entropy": 3.37,
+  "max_entropy": 3.466,
+  "dead": 0
+ },
+ "layer4": {
+  "entropy": 3.397,
+  "max_entropy": 3.466,
+  "dead": 0
+ },
+ "layer5": {
+  "entropy": 3.389,
+  "max_entropy": 3.466,
+  "dead": 0
+ },
+ "layer6": {
+  "entropy": 3.345,
+  "max_entropy": 3.466,
+  "dead": 0
+ },
+ "layer7": {
+  "entropy": 3.318,
+  "max_entropy": 3.466,
+  "dead": 0
+ }
+}

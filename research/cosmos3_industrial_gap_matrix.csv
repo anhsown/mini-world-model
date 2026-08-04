@@ -1,0 +1,23 @@
+gap_id,gap,cosmos_coverage,factory_requirement,severity,priority,closure_evidence
+G01,PLC/SCADA and machine telemetry,weak,"setpoints; states; electrical; thermal; pressure; flow; vibration; alarms",5,P0,real synchronized historian export
+G02,Explicit control actions and interventions,partial,"commands; setpoint changes; reject; reroute; maintenance",5,P0,command log aligned to pre-state and post-state
+G03,Outcome and business labels,partial,"quality; scrap; rework; downtime; throughput; energy; safety consequence",5,P0,traceable verified operational outcomes
+G04,Long-horizon degradation,weak,"machine life; wear; maintenance; failure; remaining useful life",5,P0,leakage-safe lifecycle histories
+G05,Real factory domain anchor,partial,"real machines; products; operators; lighting; noise; dust; occlusion",5,P0,held-out real target-factory episodes
+G06,Factory fault taxonomy,partial,"mechanical; electrical; process; sensor; quality; safety faults",5,P0,SME-approved taxonomy with confirmed cases
+G07,Sensor/video/audio synchronization,architecturally_supported,"shared clock; sampling rates; clock error; missing-data flags",5,P0,synchronization audit
+G08,Product and process diversity,unknown,"variants; recipes; tooling; line speeds; shifts; sites",4,P1,coverage matrix by operating condition
+G09,Counterfactual and causal supervision,partial,"intervention response and no-action future",4,P1,controlled or matched intervention pairs
+G10,Fine-grained inspection labels,partial,"small defect masks; tolerance; severity; disposition",4,P1,metrology-linked labels
+G11,Industrial audio and vibration,partial,"raw waveform; microphone geometry; vibration axes; RPM/load",4,P1,normal/fault recordings under varied load
+G12,Manual procedures and assembly state,partial,"SOP step; observed action; omission; correction; tool and part state",4,P1,SOP-linked multiview episodes
+G13,OT data quality and sensor failure,weak,"dropout; stale value; drift; saturation; calibration revision",4,P1,data-quality flags and failure examples
+G14,Normal-operation coverage,unknown,"representative stable cycles across machines and conditions",4,P1,normal baseline distribution audit
+G15,Site and machine leakage control,weak,"grouped split by site; machine; batch; operation",5,P0,immutable split manifest
+G16,Calibration and metric geometry,strong_in_simulation,"real intrinsics; extrinsics; depth accuracy; revisions",3,P1,calibration and reprojection audit
+G17,Human privacy and labor sensitivity,partial,"redaction; consent; retention; access; worker-impact review",5,P0,approved governance protocol
+G18,OT security and proprietary process protection,out_of_scope,"classification; isolation; export approval; access control",5,P0,security-approved data plan
+G19,Sim-to-real admission,partial,"synthetic A/B admission against real held-out data",5,P0,real-only versus mixed ablation
+G20,Deployment-rate data,unknown,"FPS; latency; packet loss; compute limit; action deadline",4,P1,production-timing replay benchmark
+G21,Uncertainty and abstention labels,partial,"unknown; unclear; OOD; escalation decision",4,P1,human-adjudicated calibration set
+G22,Rare catastrophic events,partial,"fire; collision; entanglement; spill; unsafe restart; compound faults",4,P2,hazard analysis and controlled simulation

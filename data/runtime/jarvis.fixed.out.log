@@ -1,0 +1,57 @@
+
+     ██╗ █████╗ ██████╗ ██╗   ██╗██╗███████╗
+     ██║██╔══██╗██╔══██╗██║   ██║██║██╔════╝
+     ██║███████║██████╔╝██║   ██║██║███████╗
+██   ██║██╔══██║██╔══██╗╚██╗ ██╔╝██║╚════██║
+╚█████╔╝██║  ██║██║  ██║ ╚████╔╝ ██║███████║
+ ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝  ╚═══╝  ╚═╝╚══════╝
+      "Hey Jarvis" — At your service, sir.
+
+🎧 ASR ready — base on cpu; mic: Microphone Array (Realtek(R) Au
+
+🤖 Jarvis: Good evening, sir. JARVIS at your service.
+
+💤 Chế độ chờ — nói 'Hey Jarvis' để gọi tôi dậy (engine chuyên dụng offline, Ctrl+C để thoát)
+
+🤖 Jarvis: Yes, sir?
+
+🎚️  Calibrating near-field microphone: Microphone Array (Realtek(R) Au
+🎙️  Đang nghe... (nói gần microphone)
+🎙️  Đang nghe... (nói gần microphone)
+🛡️  ASR rejected audio: signal_too_quiet
+
+🤖 Jarvis: I did not catch that clearly, sir. Please repeat the command.
+
+🎙️  Đang nghe... (nói gần microphone)
+🛡️  ASR rejected transcript (low_language_probability): 'Can you assist the camera?'
+🎙️  Đang nghe... (nói gần microphone)
+🛡️  ASR rejected transcript (low_language_probability): 'Assess the camera.'
+☁️  ASR fallback accepted [en-US]: access camera
+🗣️  Bạn: access camera
+
+🤖 Jarvis: Vision systems are online, sir. You may ask me about what I can see.
+
+🎙️  Đang nghe... (nói gần microphone)
+✅ ASR accepted [en 0.75; logp -0.77; 1503 ms]: So...
+🗣️  Bạn: So...
+
+🤖 Jarvis: so...
+
+🎙️  Đang nghe... (nói gần microphone)
+✅ ASR accepted [en 0.93; logp -0.25; 2499 ms]: What am I holding right now? you
+🗣️  Bạn: What am I holding right now? you
+
+🤖 Jarvis: a black object
+
+🎙️  Đang nghe... (nói gần microphone)
+✅ ASR accepted [en 0.95; logp -0.52; 1605 ms]: Good job. Thank you.
+🗣️  Bạn: Good job. Thank you.
+
+🤖 Jarvis: thank you
+
+🎙️  Đang nghe... (nói gần microphone)
+✅ ASR accepted [en 0.76; logp -0.47; 1503 ms]: Goodbye.
+🗣️  Bạn: Goodbye.
+
+🤖 Jarvis: Goodbye, sir.
+

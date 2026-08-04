@@ -1,0 +1,55 @@
+{
+  "cycle_holdout_full64": {
+    "C": 0.01,
+    "accuracy": 1.0,
+    "macro_f1": 1.0,
+    "ece": 0.018456198629878816,
+    "multiclass_brier": 0.000860909500086476
+  },
+  "cycle_holdout_visible14": {
+    "C": 0.01,
+    "accuracy": 1.0,
+    "macro_f1": 1.0
+  },
+  "random_clip_full64": {
+    "C": 0.01,
+    "accuracy": 1.0,
+    "macro_f1": 1.0
+  },
+  "capability_mapping": {
+    "B1": "task-phase/state classification; primary=macro_f1",
+    "B2": "not claimed: clips are pre-segmented",
+    "B10": "not claimed: held-out cycles are a generalization control, not a true OOD abstention set"
+  },
+  "chance_accuracy": 0.14285714285714285,
+  "split": {
+    "videos": 546,
+    "physical_filename_neutralization": true,
+    "exact_duplicates": 0,
+    "train_cycles": 54,
+    "val_cycles": 12,
+    "test_cycles": 12,
+    "rows": {
+      "train": 378,
+      "test": 84,
+      "val": 84
+    }
+  },
+  "blind_majority": {
+    "accuracy": 0.14285714285714285,
+    "macro_f1": 0.03571428571428571
+  },
+  "shuffled_label_control": {
+    "accuracy": 0.09523809523809523,
+    "macro_f1": 0.09945195469492145
+  },
+  "test_to_train_cosine": {
+    "mean_max": 0.9921740293502808,
+    "p95_max": 0.9959413409233093,
+    "above_0_999": 0
+  },
+  "cycle_bootstrap_macro_f1_95ci": [
+    1.0,
+    1.0
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "valid": true,
+  "hypotheses": {
+    "H_rgb_depth_pose_associated": true,
+    "H_real_depth_available": true,
+    "H_pose_is_SO3": true,
+    "H_camera_motion_present": true,
+    "H_pose_normalized_to_first_frame": true
+  },
+  "metrics": {
+    "windows": 417,
+    "depth_valid_fraction": 0.5259520411491394,
+    "pose_so3_max_error": 8.344650268554688e-07,
+    "translation_per_frame_mean_m": 0.013942783698439598,
+    "translation_per_frame_max_m": 0.03978270664811134
+  }
+}

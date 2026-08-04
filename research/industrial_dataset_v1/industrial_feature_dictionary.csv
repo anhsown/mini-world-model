@@ -1,0 +1,60 @@
+group,feature_name,json_path,data_type,required,unit_or_format,source,cadence_or_scope,constraint,missing_policy,privacy,training_role,description
+schema,schema_version,$.schema_version,string,yes,semantic version,dataset,episode,must equal 1.0.0,reject,public,routing,Schema version used to validate the record
+identity,episode_id,$.episode_id,string,yes,globally unique ID,ingestion,episode,unique and immutable,reject,internal,routing,Primary episode identifier
+identity,source_id,$.source_id,string,yes,source record ID,source system,episode,traceable to raw source,reject,restricted,provenance,Immutable source-system identifier
+identity,site_id,$.site_id,string,yes,controlled ID,asset registry,episode,nonempty,reject,restricted,split,Factory or facility identifier
+identity,line_id,$.line_id,string,no,controlled ID,asset registry,episode,nonempty if present,null,restricted,context,Production line or process-area identifier
+identity,asset_id,$.asset_id,string,yes,controlled ID,asset registry,episode,nonempty,reject,restricted,split,Machine or monitored asset identifier
+identity,asset_type,$.asset_type,string,yes,taxonomy value,asset registry,episode,controlled vocabulary,reject,public,conditioning,Machine family such as pump motor conveyor or robot
+identity,product_id,$.product_id,string,no,controlled ID,MES/traceability,episode,nonempty if present,null,restricted,split,Product or workpiece identifier
+identity,batch_id,$.batch_id,string,no,controlled ID,MES/traceability,episode,nonempty if present,null,restricted,split,Production batch identifier
+time,start_time,$.time.start_time,string,yes,ISO-8601 UTC,ingestion,episode,must precede end_time,reject,public,temporal,Episode start time
+time,end_time,$.time.end_time,string,yes,ISO-8601 UTC,ingestion,episode,must follow start_time,reject,public,temporal,Episode end time
+time,duration_s,$.time.duration_s,number,yes,seconds,derived,episode,greater than zero,recompute,public,temporal,Episode duration
+time,original_timezone,$.time.original_timezone,string,yes,IANA timezone,source system,episode,valid timezone,reject,public,context,Timezone used at acquisition
+time,clock_source,$.time.clock_source,string,yes,PTP/NTP/device/estimated,ingestion,episode,controlled vocabulary,reject,public,synchronization,Reference clock
+time,max_clock_error_ms,$.time.max_clock_error_ms,number,yes,milliseconds,synchronization audit,episode,zero or positive,reject,public,synchronization,Worst estimated inter-stream alignment error
+observation,video_streams,$.observations.video,array,yes,stream descriptors,camera,episode,at least one stream,reject,restricted,vision,RGB/depth/thermal/event video references
+observation,video_uri,$.observations.video[*].uri,string,yes,URI,camera,stream,must resolve or be intentionally redacted,reject,restricted,vision,Immutable media object reference
+observation,video_fps,$.observations.video[*].fps,number,yes,frames/s,camera,stream,greater than zero,reject,public,temporal,Nominal frame rate
+observation,video_view,$.observations.video[*].view,string,yes,controlled name,camera,stream,nonempty,reject,public,spatial,Camera viewpoint
+observation,audio_streams,$.observations.audio,array,no,stream descriptors,microphone,episode,sample rate greater than zero,empty array,restricted,audio,Machine and environmental audio
+observation,telemetry_streams,$.observations.telemetry,array,yes,stream descriptors,PLC/historian/sensor,episode,at least one stream,reject,restricted,state,Machine/process telemetry references
+observation,sensor_id,$.observations.telemetry[*].sensor_id,string,yes,controlled ID,sensor registry,stream,unique in episode,reject,restricted,state,Sensor channel identifier
+observation,sensor_type,$.observations.telemetry[*].sensor_type,string,yes,taxonomy value,sensor registry,stream,controlled vocabulary,reject,public,state,Physical quantity measured
+observation,sensor_unit,$.observations.telemetry[*].unit,string,yes,UCUM-like unit,sensor registry,stream,unit-compatible with type,reject,public,state,Engineering unit
+observation,sampling_rate_hz,$.observations.telemetry[*].sampling_rate_hz,number,yes,Hz,sensor,stream,greater than zero,reject,public,temporal,Raw sampling frequency
+observation,validity_uri,$.observations.telemetry[*].validity_uri,string,no,URI,ingestion,stream,aligned with samples,null,restricted,data_quality,Missing/dropout validity mask
+state,operating_mode,$.machine_state.operating_mode,string,yes,controlled vocabulary,PLC/MES,episode,nonempty,reject,public,conditioning,Machine mode during episode
+state,load_pct,$.machine_state.load_pct,number,no,percent,PLC/derived,episode,0 to 100,null,public,conditioning,Normalized operating load
+state,setpoints,$.machine_state.setpoints,object,no,name-value map,PLC/recipe,episode,finite values,empty object,restricted,conditioning,Active commands or recipe targets
+state,alarms,$.machine_state.alarms,array,yes,alarm records,PLC/SCADA,episode,explicit empty array,empty array,restricted,reasoning,Active alarm codes and intervals
+action,actions,$.actions,array,yes,action records,PLC/operator/maintenance,episode,explicit no_action allowed,reject,restricted,causal,Executed or observed interventions
+action,action_type,$.actions[*].type,string,yes,taxonomy ID,source system,action,controlled vocabulary,reject,public,inverse_dynamics,Start stop setpoint reset maintenance or no_action
+action,actor,$.actions[*].actor,string,yes,PLC/operator/maintenance/safety/source,source system,action,controlled vocabulary,reject,restricted,causal,Who or what issued the action
+action,start_offset_s,$.actions[*].start_offset_s,number,yes,seconds,source system,action,within episode,reject,public,temporal,Action start relative to episode
+action,safety_authorized,$.actions[*].safety_authorized,boolean,yes,boolean,safety system,action,must be true for executed control,reject,restricted,safety,Existing control-system authorization
+event,events,$.events,array,yes,event records,annotation,episode,explicit normal event allowed,reject,restricted,supervision,Annotated normal anomaly quality safety or recovery events
+event,taxonomy_id,$.events[*].taxonomy_id,string,yes,taxonomy ID,annotation,event,must exist in taxonomy,reject,public,classification,Hierarchical event label
+event,severity,$.events[*].severity,integer,yes,0–4,SME/annotation,event,0 normal to 4 critical,reject,public,risk,Operational severity
+event,label_confidence,$.events[*].confidence,number,yes,probability,annotation,event,0 to 1,reject,public,calibration,Confidence of canonical label
+event,root_cause_status,$.events[*].root_cause_status,string,yes,confirmed/probable/unknown,SME/maintenance,event,controlled vocabulary,reject,public,reasoning,Evidence strength for root cause
+outcome,status,$.outcome.status,string,yes,controlled vocabulary,MES/PLC/annotation,episode,allowed outcome,reject,public,prediction,Final episode outcome
+outcome,quality_disposition,$.outcome.quality_disposition,string,no,pass/rework/scrap/hold/na,quality system,episode,controlled vocabulary,null,restricted,prediction,Product disposition
+outcome,downtime_s,$.outcome.downtime_s,number,no,seconds,MES/SCADA,episode,zero or positive,null,restricted,business,Associated production downtime
+outcome,recovery_time_s,$.outcome.recovery_time_s,number,no,seconds,derived,episode,zero or positive,null,restricted,prediction,Time from fault/intervention to stable state
+outcome,future_state,$.outcome.future_state,object,yes,name-value map,derived/observed,episode,observed or unknown,reject,restricted,forward_dynamics,Post-action or terminal machine state
+quality,missing_fraction,$.data_quality.missing_fraction,number,yes,ratio,validator,episode,0 to 1,reject,public,data_quality,Fraction of expected samples missing
+quality,drift_flags,$.data_quality.drift_flags,array,yes,flag IDs,validator,episode,explicit empty array,empty array,public,data_quality,Detected sensor/calibration drift
+quality,quality_status,$.data_quality.status,string,yes,pass/warn/fail,validator,episode,controlled vocabulary,reject,public,admission,Overall data-quality result
+governance,data_owner,$.governance.data_owner,string,yes,organization,data governance,episode,nonempty,reject,restricted,provenance,Legal data owner
+governance,license,$.governance.license,string,yes,SPDX or named terms,data governance,episode,approved value,reject,public,governance,Release license
+governance,redistribution_allowed,$.governance.redistribution_allowed,boolean,yes,boolean,data governance,episode,must be true for public release,reject,public,admission,Permission to redistribute
+governance,privacy_review,$.governance.privacy_review,string,yes,pass/fail/pending,privacy reviewer,episode,must pass for public release,reject,public,admission,Privacy review state
+governance,redactions,$.governance.redactions,array,yes,redaction records,privacy pipeline,episode,explicit empty array,empty array,restricted,governance,Applied privacy/process redactions
+split,split,$.split.split,string,yes,train/validation/test_public/test_private,curation,episode,controlled vocabulary,reject,public,evaluation,Dataset split assignment
+split,split_group,$.split.split_group,string,yes,group key,curation,episode,unique to one split,reject,restricted,evaluation,Leakage-control grouping key
+target,reasoner_tasks,$.world_model_targets.reasoner,array,yes,task IDs,curation,episode,at least one task,reject,public,reasoner,Understanding and explanation targets
+target,generator_tasks,$.world_model_targets.generator,array,yes,task IDs,curation,episode,may be empty,empty array,public,generator,Future or reconstruction targets
+target,action_tasks,$.world_model_targets.action,array,yes,task IDs,curation,episode,may be empty,empty array,public,action,Forward/inverse/policy targets
+

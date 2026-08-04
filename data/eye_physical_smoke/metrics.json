@@ -1,0 +1,16 @@
+[
+  {
+    "stage": "g0_exact_geometry",
+    "steps": 1,
+    "evaluation": {
+      "depth_abs_rel": 0.6136390119791031,
+      "depth_rmse_anchor_scale": 0.6474200387795767,
+      "ate_anchor_scale": 0.6671372056007385,
+      "abs_rotation_deg": 35.98682498931885,
+      "rpe_translation": 0.1522920293112596,
+      "rpe_rotation_deg": 7.710202574729919
+    },
+    "gate_passed": true,
+    "seconds": 7.466344594955444
+  }
+]

@@ -1,0 +1,34 @@
+{
+  "valid": true,
+  "device": "cuda",
+  "probes": {
+    "camera": {
+      "normal_epe_px": 0.0,
+      "wrong_k_epe_px": 6.302900314331055,
+      "passed": true
+    },
+    "tracks": {
+      "steps": 120,
+      "initial_epe_px": 1.0,
+      "final_epe_px": 0.003028264967724681,
+      "passed": true
+    },
+    "bundle_adjustment": {
+      "reprojection_reduction": 1.0,
+      "translation_error_before_m": 0.07818824797868729,
+      "translation_error_after_m": 2.17451358253129e-07,
+      "passed": true
+    },
+    "dynamic_mask": {
+      "all_tracks_translation_error_m": 0.02334030345082283,
+      "static_tracks_translation_error_m": 2.3507917035203718e-07,
+      "passed": true
+    },
+    "bounded_memory": {
+      "frames_inserted": 19,
+      "frames_retained": 4,
+      "oldest_retained": 15.0,
+      "passed": true
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "valid": true,
+  "hypotheses": {
+    "H_no_real_metric_regression": true,
+    "H_causal_gate_non_regression": true,
+    "H_capability_score_non_regression": true,
+    "H_worst_source_within_tolerance": true,
+    "H_majority_real_metrics_improve": true
+  },
+  "comparisons": {
+    "depth_abs_rel": {
+      "real_only": 0.42729898914694786,
+      "mixed": 0.3509291522204876,
+      "ratio": 0.8212730690542385,
+      "pass": true
+    },
+    "ate_metric": {
+      "real_only": 0.045075540081597865,
+      "mixed": 0.035396194958593696,
+      "ratio": 0.7852639124127595,
+      "pass": true
+    },
+    "rpe_translation": {
+      "real_only": 0.016922754235565662,
+      "mixed": 0.01241159057826735,
+      "ratio": 0.73342615542939,
+      "pass": true
+    },
+    "track_epe_p90": {
+      "real_only": 579955.3156483211,
+      "mixed": 550718.4153014347,
+      "ratio": 0.9495876672598422,
+      "pass": true
+    },
+    "track_ece": {
+      "real_only": 0.758222477724824,
+      "mixed": 0.7163010181511614,
+      "ratio": 0.9447108720656039,
+      "pass": true
+    }
+  },
+  "decision": "admit"
+}

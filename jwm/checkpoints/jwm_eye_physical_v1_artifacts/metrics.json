@@ -1,0 +1,30 @@
+[
+  {
+    "stage": "g0_exact_geometry",
+    "steps": 1800,
+    "evaluation": {
+      "depth_abs_rel": 0.05400758391867081,
+      "depth_rmse_anchor_scale": 0.1042258491118749,
+      "ate_anchor_scale": 0.016868725496654708,
+      "abs_rotation_deg": 1.139134409526984,
+      "rpe_translation": 0.005089065545083334,
+      "rpe_rotation_deg": 0.5568352856983741
+    },
+    "gate_passed": true,
+    "seconds": 985.7981419563293
+  },
+  {
+    "stage": "g1_real_rgbd_adapt",
+    "steps": 3000,
+    "evaluation": {
+      "depth_abs_rel": 0.3332688491791487,
+      "depth_rmse_anchor_scale": 0.513501139357686,
+      "ate_anchor_scale": 0.07016300200484693,
+      "abs_rotation_deg": 2.632576858624816,
+      "rpe_translation": 0.02012870236649178,
+      "rpe_rotation_deg": 0.9588715825229883
+    },
+    "gate_passed": true,
+    "seconds": 1517.6057693958282
+  }
+]

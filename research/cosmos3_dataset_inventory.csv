@@ -1,0 +1,33 @@
+branch,stage,domain,source,reported_scale,modalities,supervision,availability,license,industrial_priority,evidence
+reasoner,pretrain,general,Nemotron Nano 2 subset,19.7M samples,image-text;video-text;text,OCR;QA;grounding;reasoning,exact subset unavailable,not disclosed,medium,used
+reasoner,pretrain,general,additional curated mixture,2.3M samples,image-text;video-text;text,math;video;spatial;instruction,composition unavailable,not disclosed,medium,used
+reasoner,sft,grounding,LocateAnything-derived subset,not stated,image-text,boxes;points;referring;OCR layout,exact subset unclear,source-specific,high,used
+reasoner,sft,temporal,dense temporal caption stream,55K videos / 2.6K hours / 743K events,video-text,event timestamps;atomic captions,not identified,unknown,high,used
+reasoner,sft,physics,Cosmos human-evaluation annotations,13.5K tuples / 1K videos,video-text,physical plausibility judgments,related HUE release public,OpenMDW-1.1 for HUE,high,used
+reasoner,sft,physics,VideoPhy-2,3.4K videos / 200 actions,video-text,physics score 1-5,public,source license,high,used
+reasoner,sft,av,internal driving logs,10K human + 1.1M auto videos,video-text,action CoT;decisions;critical objects,internal,proprietary,medium,used
+reasoner,sft,av,Nexar stream,over 24K videos,video-text,temporal events;dense captions,public equivalent smaller,source-specific,medium,used
+reasoner,sft,av,MADS,1.1M underlying seven-view samples,multiview video;camera;map,3D boxes;ego pose;scenario map,availability unclear,unknown,medium-high,used
+reasoner,sft,robotics,Robot Action-CoT,not stated,image-text,affordance;points;waypoints;planning,not released,unknown,very-high,used
+reasoner,sft,robotics,MimicGen rerenders,3.6K videos / 6 tasks,video;state,subtask timestamps,public base / Cosmos transform unclear,source-specific,very-high,used
+reasoner,sft,robotics,BEHAVIOR-1K,83K samples,image-text-action,next-action labels,public,source-specific,very-high,used
+reasoner,sft,robotics,ERQA from EO-Data-1.5M,Cosmos subset not stated,image;video;text;action,planning;affordance;failure;grounding,public,Apache-2.0,very-high,used
+reasoner,sft,healthcare,robotic surgery VQA,398K conversations / 2.2M images,multiview image-text;robot metadata,VQA;tools;steps;tracking,internal,proprietary,low,used
+reasoner,sft,industry,PhysicalAI Spatial Intelligence Warehouse,80K Cosmos samples,image;depth;text;masks,distance;count;relations;grounding,public gated,CC-BY-4.0,very-high,used
+reasoner,sft,industry,dense pedestrian localization,208K images / 5.6M boxes,image;boxes,pedestrian detection,internal,proprietary,very-high,used
+reasoner,sft,industry,CARLA collision + Transfer,3.4K pair queries,video-text,binary collision,derived set unavailable,unknown,high,used
+reasoner,sft,industry,TAR,3.6K videos / 26h / 44K annotations,video-text,QA;temporal;causal;summary,public,source-specific,very-high,used
+reasoner,sft,industry,tailgating surveillance,1K clips,video-text,binary anomaly,internal,proprietary,very-high,used
+generator,pretrain,general,web/licensed image corpus,7.8B raw -> 767M retained,image-text,captions;metadata,exact corpus unavailable,mixed/undisclosed,medium,used
+generator,pretrain,general,web/licensed video corpus,3B raw -> 347.7M retained,video-text,captions;metadata,exact corpus unavailable,mixed/undisclosed,high,used
+generator,pretrain,audio,video-audio corpus,139M samples,video;audio;sometimes text,synchronous reconstruction,exact corpus unavailable,mixed/undisclosed,medium,used
+generator,midtrain,transfer,pretrain video controls,3M selected videos,video;depth;segmentation;edges;blur,control-to-RGB,derived corpus unavailable,derived,very-high,used
+generator,midtrain,physics,SDG-PhyxSim,76489 runs,RGB;depth;segmentation;physics;camera;caption,dense simulator ground truth,public,OpenMDW-1.1,very-high,used-and-released
+generator,midtrain,robotics,SDG-RobotSim,208022 training-table clips,video;partial sim state;caption,collision;manipulation;motion,public,OpenMDW-1.1,very-high,used-and-released
+generator,midtrain,av,SDG-DriveSim,264K clips / 1467h,multiview video;caption,long-tail driving scenarios,public,OpenMDW-1.1,medium,used-and-released
+generator,midtrain,human,SDG-SynHuman,236937 clips / 5841h,RGB;depth;camera,human motion;camera trajectory,public,OpenMDW-1.1,high,used-and-released
+generator,midtrain,industry,SDG-Warehouse,about 122952 clips / 412h,RGB;depth;segmentation;edges;2D-3D boxes;camera,safety events;dense geometry,public,OpenMDW-1.1,very-high,used-and-released
+generator,midtrain,action,mixed video-action corpus,8M samples,video;action;state,FD;ID;policy,exact mixture unavailable,mixed/undisclosed,very-high,used
+generator,posttrain,robotics,DROID,58K policy samples,3-view video;state;action;text,robot policy;FD;ID,public,CC-BY-4.0 source / OpenMDW conversion,very-high,used-and-released
+generator,posttrain,image,high-quality T2I set,8M samples,image-text,prompt-to-image,unavailable,undisclosed,medium,used
+generator,posttrain,video,high-quality I2V set,20K samples,image;video;text,image-to-video,unavailable,undisclosed,high,used

@@ -488,8 +488,9 @@ class CTPGPhysicalEye(nn.Module):
         depth_nll = (depth_terms.masked_select(valid).mean() if bool(valid.any()) else
                      torch.nan_to_num(depth_terms).sum() * 0)
         # Aleatoric NLL alone can improve by inflating sigma while metric depth
-        # remains worse than a constant prior. Keep uncertainty-independent
-        # metric and edge terms.
+        # remains worse than a constant prior.  Keep an uncertainty-independent
+        # metric term and an edge/normal proxy, following the factored losses
+        # used by universal metric-geometry models.
         relative_error = ((output["depth"] - depth_gt).abs() /
                           depth_gt.clamp_min(0.10)).clamp_max(5.0)
         depth_absrel = (relative_error.masked_select(valid).mean()
@@ -500,8 +501,10 @@ class CTPGPhysicalEye(nn.Module):
         for axis in (-1, -2):
             pred_delta = torch.diff(pred_log, dim=axis)
             truth_delta = torch.diff(truth_log, dim=axis)
-            pair_valid = (valid[..., 1:] & valid[..., :-1] if axis == -1 else
-                          valid[..., 1:, :] & valid[..., :-1, :])
+            if axis == -1:
+                pair_valid = valid[..., 1:] & valid[..., :-1]
+            else:
+                pair_valid = valid[..., 1:, :] & valid[..., :-1, :]
             delta = (pred_delta - truth_delta).abs()
             if bool(pair_valid.any()):
                 grad_terms.append(delta.masked_select(pair_valid).mean())
@@ -639,6 +642,8 @@ class CTPGPhysicalEye(nn.Module):
                                   gt_relative[..., :3, :3]) +
                 ((initial_relative[..., :3, 3] - gt_relative[..., :3, 3])
                  .norm(dim=-1) / gt_motion).clamp(max=10))
+            # Normal supervision prevents satisfying this rank loss by making
+            # both predictions bad; the wrong-K path must be measurably worse.
             pose_counterfactual = F.relu(
                 .10 + normal_error - (wrong_rotation + wrong_translation)).mean()
         if temporal_negative_output is not None:

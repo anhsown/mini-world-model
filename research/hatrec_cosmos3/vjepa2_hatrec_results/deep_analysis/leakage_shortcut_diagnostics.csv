@@ -1,0 +1,8 @@
+check,value,status,interpretation
+Exact byte duplicate across all videos,0,PASS,No exact duplicates
+Label-bearing filenames visible to encoder,False,PASS,Files were physically neutralized
+Max cosine > 0.999,0,PASS,Embedding near-duplicate threshold
+Mean max test→train cosine,0.9921740293502808,REVIEW,High semantic/visual similarity
+64-frame versus 14-frame performance gap,0.0,INCONCLUSIVE,No degradation with 14 visible frames
+Single-frame repeated control,,MISSING,Required to separate static cues from motion
+Temporal-shuffle control,,MISSING,Required to test order sensitivity

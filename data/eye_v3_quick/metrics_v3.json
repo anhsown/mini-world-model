@@ -1,0 +1,224 @@
+[
+  {
+    "stage": "g0_calibrated_tracks",
+    "stage_step": 2,
+    "global_step": 2,
+    "report": {
+      "valid": false,
+      "windows": 1,
+      "controls": {
+        "normal": {
+          "depth_abs_rel": 0.7365971803665161,
+          "depth_rmse": 5.176532745361328,
+          "depth_delta1": 0.0031687419395893812,
+          "ate_metric": 0.23110072314739227,
+          "rpe_translation": 0.07632872462272644,
+          "rpe_rotation_deg": 0.41261398792266846,
+          "track_epe": 0.660834789276123,
+          "track_confidence": 0.4801790416240692,
+          "ba_residual_reduction": 0.9872414469718933
+        },
+        "black": {
+          "depth_abs_rel": 0.7779325246810913,
+          "depth_rmse": 5.32493782043457,
+          "depth_delta1": 0.0003000895376317203,
+          "ate_metric": 0.23431789875030518,
+          "rpe_translation": 0.07753827422857285,
+          "rpe_rotation_deg": 0.43263140320777893,
+          "track_epe": 1.760053038597107,
+          "track_confidence": 0.4998477101325989,
+          "ba_residual_reduction": 0.9997624158859253
+        },
+        "frozen": {
+          "depth_abs_rel": 0.737464427947998,
+          "depth_rmse": 5.174434185028076,
+          "depth_delta1": 0.0031407675705850124,
+          "ate_metric": 0.23410074412822723,
+          "rpe_translation": 0.07743657380342484,
+          "rpe_rotation_deg": 0.43551579117774963,
+          "track_epe": 0.7533747553825378,
+          "track_confidence": 0.4745195508003235,
+          "ba_residual_reduction": 0.9932896494865417
+        },
+        "reverse": {
+          "depth_abs_rel": 0.7366921901702881,
+          "depth_rmse": 5.169160842895508,
+          "depth_delta1": 0.0028966269455850124,
+          "ate_metric": 0.22774547338485718,
+          "rpe_translation": 0.07560086250305176,
+          "rpe_rotation_deg": 0.6219470500946045,
+          "track_epe": 0.5399684906005859,
+          "track_confidence": 0.4844426214694977,
+          "ba_residual_reduction": 0.9936118721961975
+        },
+        "wrong_window": {
+          "depth_abs_rel": 0.7366431951522827,
+          "depth_rmse": 5.173689365386963,
+          "depth_delta1": 0.0030237834434956312,
+          "ate_metric": 0.23287704586982727,
+          "rpe_translation": 0.07700832933187485,
+          "rpe_rotation_deg": 0.5806955099105835,
+          "track_epe": 0.6688358783721924,
+          "track_confidence": 0.48511263728141785,
+          "ba_residual_reduction": 0.9852461218833923
+        },
+        "wrong_intrinsics": {
+          "depth_abs_rel": 0.7379287481307983,
+          "depth_rmse": 5.179727554321289,
+          "depth_delta1": 0.0032170615158975124,
+          "ate_metric": 0.2267763763666153,
+          "rpe_translation": 0.07464965432882309,
+          "rpe_rotation_deg": 0.3712818920612335,
+          "track_epe": 0.6673819422721863,
+          "track_confidence": 0.48015791177749634,
+          "ba_residual_reduction": 0.9879304766654968
+        }
+      },
+      "baselines": {
+        "fixed_depth_abs_rel": 0.6359102725982666,
+        "identity_ate": 0.23274217545986176
+      },
+      "ratios": {
+        "depth_prior_gain": 0.863308046172333,
+        "pose_identity_gain": 1.0071027571446525,
+        "ba_residual_reduction": 0.9872414469718933,
+        "wrong_window_depth_ratio": 1.0000624694025353,
+        "wrong_window_pose_ratio": 1.007686357265538,
+        "reverse_time_rpe_ratio": 0.9904641126486481,
+        "wrong_intrinsics_pose_ratio": 0.9812880430580956,
+        "black_depth_ratio": 1.0561166203405876,
+        "frozen_pose_ratio": 1.0129814435021114
+      },
+      "gates": {
+        "G_depth_beats_prior_20pct": false,
+        "G_pose_beats_identity_20pct": false,
+        "G_ba_reduces_residual_15pct": true,
+        "G_wrong_window_hurts_depth_25pct": false,
+        "G_wrong_window_hurts_pose_25pct": false,
+        "G_reverse_time_detected": false,
+        "G_wrong_intrinsics_detected": false
+      }
+    },
+    "controller": {
+      "action": "continue",
+      "reason": "held-out progress remains material or evidence is insufficient",
+      "step": 2,
+      "score": 3.5692876965827978,
+      "best_step": 2,
+      "best_score": 3.5692876965827978,
+      "slope_per_eval": null,
+      "projected_total_steps": 2
+    }
+  },
+  {
+    "stage": "g0_calibrated_tracks",
+    "stage_step": 4,
+    "global_step": 4,
+    "report": {
+      "valid": false,
+      "windows": 1,
+      "controls": {
+        "normal": {
+          "depth_abs_rel": 0.7016028165817261,
+          "depth_rmse": 5.093705654144287,
+          "depth_delta1": 0.013910929672420025,
+          "ate_metric": 0.23233391344547272,
+          "rpe_translation": 0.07674591988325119,
+          "rpe_rotation_deg": 0.5071919560432434,
+          "track_epe": 0.6055127382278442,
+          "track_confidence": 0.4797258675098419,
+          "ba_residual_reduction": 0.9919331073760986
+        },
+        "black": {
+          "depth_abs_rel": 0.7779170274734497,
+          "depth_rmse": 5.318380355834961,
+          "depth_delta1": 0.01102447509765625,
+          "ate_metric": 0.2366582155227661,
+          "rpe_translation": 0.07829629629850388,
+          "rpe_rotation_deg": 0.40588170289993286,
+          "track_epe": 1.7640306949615479,
+          "track_confidence": 0.49753206968307495,
+          "ba_residual_reduction": 0.9998252987861633
+        },
+        "frozen": {
+          "depth_abs_rel": 0.7023131847381592,
+          "depth_rmse": 5.088697910308838,
+          "depth_delta1": 0.012896220199763775,
+          "ate_metric": 0.23519404232501984,
+          "rpe_translation": 0.07780814915895462,
+          "rpe_rotation_deg": 0.5071336030960083,
+          "track_epe": 0.682148277759552,
+          "track_confidence": 0.4687351584434509,
+          "ba_residual_reduction": 0.9948946237564087
+        },
+        "reverse": {
+          "depth_abs_rel": 0.701048731803894,
+          "depth_rmse": 5.080324649810791,
+          "depth_delta1": 0.01341756246984005,
+          "ate_metric": 0.22857365012168884,
+          "rpe_translation": 0.07587190717458725,
+          "rpe_rotation_deg": 0.6259056925773621,
+          "track_epe": 0.5281816720962524,
+          "track_confidence": 0.4789309501647949,
+          "ba_residual_reduction": 0.9946891665458679
+        },
+        "wrong_window": {
+          "depth_abs_rel": 0.7013219594955444,
+          "depth_rmse": 5.0877366065979,
+          "depth_delta1": 0.013788859359920025,
+          "ate_metric": 0.2348395735025406,
+          "rpe_translation": 0.07780907303094864,
+          "rpe_rotation_deg": 0.6498688459396362,
+          "track_epe": 0.6136411428451538,
+          "track_confidence": 0.48181411623954773,
+          "ba_residual_reduction": 0.9907619953155518
+        },
+        "wrong_intrinsics": {
+          "depth_abs_rel": 0.7030012607574463,
+          "depth_rmse": 5.097104549407959,
+          "depth_delta1": 0.013895670883357525,
+          "ate_metric": 0.22874103486537933,
+          "rpe_translation": 0.07535981386899948,
+          "rpe_rotation_deg": 0.4789336025714874,
+          "track_epe": 0.6037286520004272,
+          "track_confidence": 0.47911444306373596,
+          "ba_residual_reduction": 0.9909952282905579
+        }
+      },
+      "baselines": {
+        "fixed_depth_abs_rel": 0.6359102725982666,
+        "identity_ate": 0.23274217545986176
+      },
+      "ratios": {
+        "depth_prior_gain": 0.9063679015664167,
+        "pose_identity_gain": 1.001757220925411,
+        "ba_residual_reduction": 0.9919331073760986,
+        "wrong_window_depth_ratio": 0.9995996921911602,
+        "wrong_window_pose_ratio": 1.0107847365884273,
+        "reverse_time_rpe_ratio": 0.9886116068451127,
+        "wrong_intrinsics_pose_ratio": 0.98453571186913,
+        "black_depth_ratio": 1.1087712436268906,
+        "frozen_pose_ratio": 1.0123104235500187
+      },
+      "gates": {
+        "G_depth_beats_prior_20pct": false,
+        "G_pose_beats_identity_20pct": false,
+        "G_ba_reduces_residual_15pct": true,
+        "G_wrong_window_hurts_depth_25pct": false,
+        "G_wrong_window_hurts_pose_25pct": false,
+        "G_reverse_time_detected": false,
+        "G_wrong_intrinsics_detected": false
+      }
+    },
+    "controller": {
+      "action": "stop_blocked",
+      "reason": "hard cap reached while mandatory OOD/causal gates failed",
+      "step": 4,
+      "score": 4.0233445525446605,
+      "best_step": 4,
+      "best_score": 4.0233445525446605,
+      "slope_per_eval": null,
+      "projected_total_steps": 4
+    }
+  }
+]

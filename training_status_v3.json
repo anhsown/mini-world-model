@@ -1,0 +1,6 @@
+{
+  "status": "blocked_by_metric_gate",
+  "stage": "s0_glyph_bootstrap",
+  "step": 3200,
+  "message": "Stage was not promoted; inspect metrics."
+}

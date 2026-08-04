@@ -1,0 +1,482 @@
+[
+ {
+  "i": 46,
+  "q": "vật tôi đang cầm là gì?",
+  "gt": "hình tròn màu vàng",
+  "pred": "hình tròn màu vàng",
+  "ok": true,
+  "kind": "what_held"
+ },
+ {
+  "i": 196,
+  "q": "tôi đang cầm vật gì?",
+  "gt": "tam giác màu cam",
+  "pred": "hình vuông màu cam",
+  "ok": false,
+  "kind": "what_held"
+ },
+ {
+  "i": 145,
+  "q": "vật ở giữa khung hình là gì?",
+  "gt": "điện thoại màu tím",
+  "pred": "hình tròn màu tím",
+  "ok": false,
+  "kind": "what"
+ },
+ {
+  "i": 18,
+  "q": "what is in the middle?",
+  "gt": "square red",
+  "pred": "circle red",
+  "ok": false,
+  "kind": "what"
+ },
+ {
+  "i": 253,
+  "q": "how many circles are there?",
+  "gt": "1",
+  "pred": "0",
+  "ok": false,
+  "kind": "count"
+ },
+ {
+  "i": 175,
+  "q": "vật ở giữa khung hình là gì?",
+  "gt": "ngôi sao màu vàng",
+  "pred": "hình tròn màu tím",
+  "ok": false,
+  "kind": "what"
+ },
+ {
+  "i": 54,
+  "q": "có bao nhiêu tam giác trong hình?",
+  "gt": "0",
+  "pred": "0",
+  "ok": true,
+  "kind": "count"
+ },
+ {
+  "i": 136,
+  "q": "how many cups are there?",
+  "gt": "1",
+  "pred": "0",
+  "ok": false,
+  "kind": "count"
+ },
+ {
+  "i": 157,
+  "q": "có bao nhiêu điện thoại trong hình?",
+  "gt": "1",
+  "pred": "0",
+  "ok": false,
+  "kind": "count"
+ },
+ {
+  "i": 171,
+  "q": "tôi đang cầm vật gì?",
+  "gt": "hình tròn màu cam",
+  "pred": "hình tròn màu cam",
+  "ok": true,
+  "kind": "what_held"
+ },
+ {
+  "i": 213,
+  "q": "vật tôi đang cầm là gì?",
+  "gt": "điện thoại màu xanh lá",
+  "pred": "hình vuông màu xanh lá",
+  "ok": false,
+  "kind": "what_held"
+ },
+ {
+  "i": 111,
+  "q": "có vật màu tím nào không?",
+  "gt": "không",
+  "pred": "không",
+  "ok": true,
+  "kind": "exist"
+ },
+ {
+  "i": 236,
+  "q": "what is in the middle?",
+  "gt": "triangle orange",
+  "pred": "circle yellow",
+  "ok": false,
+  "kind": "what"
+ },
+ {
+  "i": 296,
+  "q": "is there a green object?",
+  "gt": "yes",
+  "pred": "no",
+  "ok": false,
+  "kind": "exist"
+ },
+ {
+  "i": 293,
+  "q": "tôi đang cầm vật gì?",
+  "gt": "hình vuông màu xanh lá",
+  "pred": "hình vuông màu xanh lá",
+  "ok": true,
+  "kind": "what_held"
+ },
+ {
+  "i": 34,
+  "q": "có bao nhiêu ngôi sao trong hình?",
+  "gt": "1",
+  "pred": "0",
+  "ok": false,
+  "kind": "count"
+ },
+ {
+  "i": 108,
+  "q": "is there a orange object?",
+  "gt": "no",
+  "pred": "no",
+  "ok": true,
+  "kind": "exist"
+ },
+ {
+  "i": 238,
+  "q": "what is in the middle?",
+  "gt": "star purple",
+  "pred": "circle purple",
+  "ok": false,
+  "kind": "what"
+ },
+ {
+  "i": 235,
+  "q": "tôi đang cầm vật gì?",
+  "gt": "hình tròn màu đỏ",
+  "pred": "hình vuông màu đỏ",
+  "ok": false,
+  "kind": "what_held"
+ },
+ {
+  "i": 72,
+  "q": "tôi đang cầm vật gì?",
+  "gt": "tam giác màu xanh dương",
+  "pred": "hình vuông màu xanh dương",
+  "ok": false,
+  "kind": "what_held"
+ },
+ {
+  "i": 247,
+  "q": "how many cups are there?",
+  "gt": "0",
+  "pred": "0",
+  "ok": true,
+  "kind": "count"
+ },
+ {
+  "i": 52,
+  "q": "có bao nhiêu tam giác trong hình?",
+  "gt": "2",
+  "pred": "0",
+  "ok": false,
+  "kind": "count"
+ },
+ {
+  "i": 6,
+  "q": "where is the red object?",
+  "gt": "bên phải",
+  "pred": "bên trái",
+  "ok": false,
+  "kind": "where"
+ },
+ {
+  "i": 150,
+  "q": "vật tôi đang cầm là gì?",
+  "gt": "ngôi sao màu xanh lá",
+  "pred": "hình vuông màu xanh lá",
+  "ok": false,
+  "kind": "what_held"
+ },
+ {
+  "i": 58,
+  "q": "tôi đang cầm vật gì?",
+  "gt": "ngôi sao màu đỏ",
+  "pred": "hình tròn màu đỏ",
+  "ok": false,
+  "kind": "what_held"
+ },
+ {
+  "i": 274,
+  "q": "what is in the middle?",
+  "gt": "circle red",
+  "pred": "circle red",
+  "ok": true,
+  "kind": "what"
+ },
+ {
+  "i": 269,
+  "q": "tôi đang cầm vật gì?",
+  "gt": "điện thoại màu cam",
+  "pred": "hình tròn màu cam",
+  "ok": false,
+  "kind": "what_held"
+ },
+ {
+  "i": 232,
+  "q": "có bao nhiêu điện thoại trong hình?",
+  "gt": "0",
+  "pred": "0",
+  "ok": true,
+  "kind": "count"
+ },
+ {
+  "i": 219,
+  "q": "tôi đang cầm vật gì?",
+  "gt": "cái cốc màu xanh lá",
+  "pred": "hình vuông màu xanh lá",
+  "ok": false,
+  "kind": "what_held"
+ },
+ {
+  "i": 39,
+  "q": "có bao nhiêu ngôi sao trong hình?",
+  "gt": "1",
+  "pred": "0",
+  "ok": false,
+  "kind": "count"
+ },
+ {
+  "i": 288,
+  "q": "có bao nhiêu ngôi sao trong hình?",
+  "gt": "1",
+  "pred": "0",
+  "ok": false,
+  "kind": "count"
+ },
+ {
+  "i": 214,
+  "q": "có bao nhiêu điện thoại trong hình?",
+  "gt": "0",
+  "pred": "0",
+  "ok": true,
+  "kind": "count"
+ },
+ {
+  "i": 62,
+  "q": "vật màu đỏ nằm ở đâu?",
+  "gt": "bên trái",
+  "pred": "bên trái",
+  "ok": true,
+  "kind": "where"
+ },
+ {
+  "i": 44,
+  "q": "tôi đang cầm vật gì?",
+  "gt": "hình tròn màu đỏ",
+  "pred": "hình tròn màu đỏ",
+  "ok": true,
+  "kind": "what_held"
+ },
+ {
+  "i": 284,
+  "q": "tôi đang cầm vật gì?",
+  "gt": "điện thoại màu tím",
+  "pred": "hình tròn màu tím",
+  "ok": false,
+  "kind": "what_held"
+ },
+ {
+  "i": 82,
+  "q": "where is the yellow object?",
+  "gt": "bên trái",
+  "pred": "bên trái",
+  "ok": true,
+  "kind": "where"
+ },
+ {
+  "i": 94,
+  "q": "có vật màu xanh dương nào không?",
+  "gt": "có",
+  "pred": "không",
+  "ok": false,
+  "kind": "exist"
+ },
+ {
+  "i": 7,
+  "q": "vật màu vàng nằm ở đâu?",
+  "gt": "ở giữa",
+  "pred": "bên trái",
+  "ok": false,
+  "kind": "where"
+ },
+ {
+  "i": 191,
+  "q": "vật ở giữa khung hình là gì?",
+  "gt": "hình vuông màu xanh lá",
+  "pred": "hình tròn màu xanh lá",
+  "ok": false,
+  "kind": "what"
+ },
+ {
+  "i": 218,
+  "q": "có bao nhiêu hình tròn trong hình?",
+  "gt": "1",
+  "pred": "0",
+  "ok": false,
+  "kind": "count"
+ },
+ {
+  "i": 272,
+  "q": "how many phones are there?",
+  "gt": "1",
+  "pred": "0",
+  "ok": false,
+  "kind": "count"
+ },
+ {
+  "i": 287,
+  "q": "vật tôi đang cầm là gì?",
+  "gt": "cái cốc màu cam",
+  "pred": "hình vuông màu cam",
+  "ok": false,
+  "kind": "what_held"
+ },
+ {
+  "i": 15,
+  "q": "what am I holding?",
+  "gt": "square orange",
+  "pred": "circle orange",
+  "ok": false,
+  "kind": "what_held"
+ },
+ {
+  "i": 76,
+  "q": "vật ở giữa khung hình là gì?",
+  "gt": "hình vuông màu cam",
+  "pred": "hình vuông màu xanh lá",
+  "ok": false,
+  "kind": "what"
+ },
+ {
+  "i": 47,
+  "q": "how many circles are there?",
+  "gt": "0",
+  "pred": "0",
+  "ok": true,
+  "kind": "count"
+ },
+ {
+  "i": 142,
+  "q": "có vật màu xanh dương nào không?",
+  "gt": "không",
+  "pred": "không",
+  "ok": true,
+  "kind": "exist"
+ },
+ {
+  "i": 186,
+  "q": "có vật màu đỏ nào không?",
+  "gt": "không",
+  "pred": "không",
+  "ok": true,
+  "kind": "exist"
+ },
+ {
+  "i": 17,
+  "q": "vật màu tím nằm ở đâu?",
+  "gt": "bên phải",
+  "pred": "bên trái",
+  "ok": false,
+  "kind": "where"
+ },
+ {
+  "i": 81,
+  "q": "vật tôi đang cầm là gì?",
+  "gt": "hình tròn màu xanh lá",
+  "pred": "hình vuông màu xanh lá",
+  "ok": false,
+  "kind": "what_held"
+ },
+ {
+  "i": 102,
+  "q": "vật tôi đang cầm là gì?",
+  "gt": "ngôi sao màu xanh lá",
+  "pred": "hình vuông màu xanh dương",
+  "ok": false,
+  "kind": "what_held"
+ },
+ {
+  "i": 173,
+  "q": "có vật màu tím nào không?",
+  "gt": "có",
+  "pred": "không",
+  "ok": false,
+  "kind": "exist"
+ },
+ {
+  "i": 248,
+  "q": "what is in the middle?",
+  "gt": "triangle red",
+  "pred": "circle blue",
+  "ok": false,
+  "kind": "what"
+ },
+ {
+  "i": 42,
+  "q": "có bao nhiêu hình vuông trong hình?",
+  "gt": "1",
+  "pred": "0",
+  "ok": false,
+  "kind": "count"
+ },
+ {
+  "i": 222,
+  "q": "is there a green object?",
+  "gt": "no",
+  "pred": "no",
+  "ok": true,
+  "kind": "exist"
+ },
+ {
+  "i": 164,
+  "q": "what am I holding?",
+  "gt": "square green",
+  "pred": "circle green",
+  "ok": false,
+  "kind": "what_held"
+ },
+ {
+  "i": 132,
+  "q": "where is the red object?",
+  "gt": "bên phải",
+  "pred": "bên trái",
+  "ok": false,
+  "kind": "where"
+ },
+ {
+  "i": 277,
+  "q": "vật màu cam nằm ở đâu?",
+  "gt": "bên trái",
+  "pred": "bên trái",
+  "ok": true,
+  "kind": "where"
+ },
+ {
+  "i": 56,
+  "q": "có vật màu xanh lá nào không?",
+  "gt": "không",
+  "pred": "có",
+  "ok": false,
+  "kind": "exist"
+ },
+ {
+  "i": 135,
+  "q": "có bao nhiêu tam giác trong hình?",
+  "gt": "0",
+  "pred": "0",
+  "ok": true,
+  "kind": "count"
+ },
+ {
+  "i": 45,
+  "q": "vật ở giữa khung hình là gì?",
+  "gt": "hình tròn màu cam",
+  "pred": "hình tròn màu cam",
+  "ok": true,
+  "kind": "what"
+ }
+]

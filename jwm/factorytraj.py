@@ -36,19 +36,79 @@ def _source_episodes(canonical: Mapping[str, Any]) -> list[dict[str, str]]:
     ]
 
 
-def _signal_block(block: Mapping[str, Any]) -> dict[str, Any]:
+def _value_type(values: list[list[Any]], column: int) -> str:
+    observed = [
+        row[column]
+        for row in values
+        if column < len(row) and row[column] is not None
+    ]
+    if not observed:
+        return "unknown"
+    if all(isinstance(value, bool) for value in observed):
+        return "boolean"
+    if all(isinstance(value, int) and not isinstance(value, bool) for value in observed):
+        return "integer"
+    if all(
+        isinstance(value, (int, float)) and not isinstance(value, bool)
+        for value in observed
+    ):
+        return "float"
+    if all(isinstance(value, str) for value in observed):
+        return "string"
+    return "unknown"
+
+
+def _observed_range(values: list[list[Any]], column: int) -> dict[str, Any] | None:
+    observed = [
+        float(row[column])
+        for row in values
+        if column < len(row)
+        and isinstance(row[column], (int, float))
+        and not isinstance(row[column], bool)
+    ]
+    if not observed:
+        return None
+    return {
+        "low": min(observed),
+        "high": max(observed),
+        "kind": "observed_compact_sample",
+    }
+
+
+def _channel_role_contract(name: str, block_role: str) -> str:
+    value = name.lower()
+    if block_role == "sensor":
+        return "sensor_feedback"
+    if block_role == "context":
+        return "machine_context"
+    if "setpoint" in value or value.startswith("target_"):
+        return "control_setpoint"
+    if "command" in value or value.startswith("digital_output"):
+        return "control_command"
+    return "actuator_command"
+
+
+def _signal_block(block: Mapping[str, Any], block_role: str) -> dict[str, Any]:
+    values = deepcopy(list(block.get("values", [])))
     channels = [
         {
             "channel_id": str(name),
-            "unit": None,
+            "data_type": _value_type(values, index),
+            "engineering_unit": None,
+            "instrument_range": None,
+            "eu_range": None,
+            "observed_range": _observed_range(values, index),
+            "role": _channel_role_contract(str(name), block_role),
+            "relationships": [],
             "sampling_rate_hz": None,
             "description": None,
+            "documentation_ref": None,
         }
-        for name in block.get("channels", [])
+        for index, name in enumerate(block.get("channels", []))
     ]
     return {
         "channels": channels,
-        "values": deepcopy(list(block.get("values", []))),
+        "values": values,
         "validity_mask": deepcopy(list(block.get("validity_mask", []))),
     }
 
@@ -74,9 +134,15 @@ def factorybench_to_factorytraj(sample: Mapping[str, Any]) -> dict[str, Any]:
                 ),
                 "timestamps": timestamps,
                 "timestamp_unit": "source_native",
-                "sensor_history": _signal_block(stream["sensor_history"]),
-                "control_signals": _signal_block(stream["control_signals"]),
-                "machine_context": _signal_block(stream["machine_context"]),
+                "sensor_history": _signal_block(
+                    stream["sensor_history"], "sensor"
+                ),
+                "control_signals": _signal_block(
+                    stream["control_signals"], "control"
+                ),
+                "machine_context": _signal_block(
+                    stream["machine_context"], "context"
+                ),
                 "media": [],
                 "data_quality": {
                     "source_validity_mask_preserved": True,

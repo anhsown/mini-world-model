@@ -1,0 +1,30 @@
+{
+  "valid": true,
+  "hypotheses": {
+    "H_random_labels_unique": true,
+    "H_boxes_exact_and_valid": true,
+    "H_no_token_truncation": true,
+    "H_text_visible": true,
+    "H_document_split_no_leak": true,
+    "H_real_pages_available": true
+  },
+  "counts": {
+    "train": 18534,
+    "val": 755,
+    "test": 691
+  },
+  "synthetic_stats": [
+    0.900879979133606,
+    0.07812000066041946,
+    0.009800000116229057,
+    0.010929999873042107
+  ],
+  "real_stats": [
+    0.9021000266075134,
+    0.1746699959039688,
+    0.041110001504421234,
+    0.04909000173211098
+  ],
+  "mean_abs_domain_gap": 0.04181,
+  "leaked_images": 0
+}

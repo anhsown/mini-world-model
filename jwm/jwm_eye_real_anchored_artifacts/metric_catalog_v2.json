@@ -1,0 +1,396 @@
+{
+  "eye": [
+    {
+      "name": "loss_total",
+      "direction": "down",
+      "scope": "train",
+      "unit": "loss",
+      "purpose": "Optimization health only",
+      "promotion": false
+    },
+    {
+      "name": "grad_norm",
+      "direction": "bounded",
+      "scope": "train",
+      "unit": "L2",
+      "purpose": "Detect exploding or dead gradients",
+      "promotion": false
+    },
+    {
+      "name": "nonfinite_skip_rate",
+      "direction": "down",
+      "scope": "train",
+      "unit": "fraction",
+      "purpose": "Numerical stability",
+      "promotion": true
+    },
+    {
+      "name": "depth_abs_rel",
+      "direction": "down",
+      "scope": "real_heldout",
+      "unit": "ratio",
+      "purpose": "Metric depth relative error",
+      "promotion": true
+    },
+    {
+      "name": "depth_silog",
+      "direction": "down",
+      "scope": "real_heldout",
+      "unit": "log-RMSE",
+      "purpose": "Scale-aware depth structure",
+      "promotion": true
+    },
+    {
+      "name": "depth_delta1",
+      "direction": "up",
+      "scope": "real_heldout",
+      "unit": "fraction",
+      "purpose": "Depth within x1.25",
+      "promotion": true
+    },
+    {
+      "name": "ate_metric",
+      "direction": "down",
+      "scope": "real_heldout",
+      "unit": "metres",
+      "purpose": "Absolute camera trajectory error",
+      "promotion": true
+    },
+    {
+      "name": "rpe_translation",
+      "direction": "down",
+      "scope": "real_heldout",
+      "unit": "metres/frame",
+      "purpose": "Local translation drift",
+      "promotion": true
+    },
+    {
+      "name": "rpe_rotation_deg",
+      "direction": "down",
+      "scope": "real_heldout",
+      "unit": "degrees/frame",
+      "purpose": "Local rotation drift",
+      "promotion": true
+    },
+    {
+      "name": "track_epe",
+      "direction": "down",
+      "scope": "real_heldout",
+      "unit": "feature-pixels",
+      "purpose": "Unbounded mean tracking diagnostic",
+      "promotion": false
+    },
+    {
+      "name": "track_epe_p90",
+      "direction": "down",
+      "scope": "real_heldout",
+      "unit": "feature-pixels",
+      "purpose": "Robust tail tracking error",
+      "promotion": true
+    },
+    {
+      "name": "track_outlier_rate",
+      "direction": "down",
+      "scope": "real_heldout",
+      "unit": "fraction",
+      "purpose": "Catastrophic track failures",
+      "promotion": true
+    },
+    {
+      "name": "track_pck3",
+      "direction": "up",
+      "scope": "real_heldout",
+      "unit": "fraction",
+      "purpose": "Tracks within 3 feature pixels",
+      "promotion": true
+    },
+    {
+      "name": "track_ece",
+      "direction": "down",
+      "scope": "real_heldout",
+      "unit": "fraction",
+      "purpose": "Track confidence calibration",
+      "promotion": true
+    },
+    {
+      "name": "dynamic_f1",
+      "direction": "up",
+      "scope": "real_heldout",
+      "unit": "fraction",
+      "purpose": "Dynamic/static separation",
+      "promotion": true
+    },
+    {
+      "name": "ba_residual_reduction",
+      "direction": "up",
+      "scope": "real_heldout",
+      "unit": "fraction",
+      "purpose": "Bundle-adjustment usefulness",
+      "promotion": true
+    },
+    {
+      "name": "causal_gate_pass_rate",
+      "direction": "up",
+      "scope": "causal",
+      "unit": "fraction",
+      "purpose": "Dependence on image/time/K",
+      "promotion": true
+    },
+    {
+      "name": "worst_source_score",
+      "direction": "up",
+      "scope": "ood",
+      "unit": "normalized",
+      "purpose": "No source hidden by an average",
+      "promotion": true
+    },
+    {
+      "name": "sim_to_real_gap",
+      "direction": "down",
+      "scope": "ood",
+      "unit": "normalized",
+      "purpose": "Synthetic/real generalization gap",
+      "promotion": true
+    },
+    {
+      "name": "probe_capability_score",
+      "direction": "up",
+      "scope": "real_heldout",
+      "unit": "harmonic",
+      "purpose": "A/B depth-pose-track-calibration score",
+      "promotion": true
+    }
+  ],
+  "reader": [
+    {
+      "name": "qa_token_accuracy",
+      "direction": "up",
+      "scope": "train",
+      "unit": "fraction",
+      "purpose": "Teacher-forced optimization diagnostic",
+      "promotion": false
+    },
+    {
+      "name": "cer",
+      "direction": "down",
+      "scope": "real_heldout",
+      "unit": "edits/character",
+      "purpose": "Free-running OCR error",
+      "promotion": true
+    },
+    {
+      "name": "anls",
+      "direction": "up",
+      "scope": "real_heldout",
+      "unit": "fraction",
+      "purpose": "Answer similarity robust to small OCR errors",
+      "promotion": true
+    },
+    {
+      "name": "exact_match",
+      "direction": "up",
+      "scope": "real_heldout",
+      "unit": "fraction",
+      "purpose": "Whole-answer correctness",
+      "promotion": true
+    },
+    {
+      "name": "box_iou",
+      "direction": "up",
+      "scope": "real_heldout",
+      "unit": "fraction",
+      "purpose": "Text-region grounding",
+      "promotion": true
+    },
+    {
+      "name": "vision_gain",
+      "direction": "up",
+      "scope": "causal",
+      "unit": "delta",
+      "purpose": "Real image versus blind-image control",
+      "promotion": true
+    },
+    {
+      "name": "worst_kind_cer",
+      "direction": "down",
+      "scope": "ood",
+      "unit": "edits/character",
+      "purpose": "Prevent easy OCR kinds hiding failures",
+      "promotion": true
+    }
+  ],
+  "reasoner": [
+    {
+      "name": "free_run_exact",
+      "direction": "up",
+      "scope": "real_heldout",
+      "unit": "fraction",
+      "purpose": "End-to-end answer correctness",
+      "promotion": true
+    },
+    {
+      "name": "token_accuracy",
+      "direction": "up",
+      "scope": "train",
+      "unit": "fraction",
+      "purpose": "Teacher-forced diagnostic only",
+      "promotion": false
+    },
+    {
+      "name": "grounding_miou",
+      "direction": "up",
+      "scope": "real_heldout",
+      "unit": "IoU",
+      "purpose": "Spatial grounding quality",
+      "promotion": true
+    },
+    {
+      "name": "grounding_iou50",
+      "direction": "up",
+      "scope": "real_heldout",
+      "unit": "fraction",
+      "purpose": "Usable localized answers",
+      "promotion": true
+    },
+    {
+      "name": "answer_ece",
+      "direction": "down",
+      "scope": "real_heldout",
+      "unit": "fraction",
+      "purpose": "Confidence calibration",
+      "promotion": true
+    },
+    {
+      "name": "vision_gain",
+      "direction": "up",
+      "scope": "causal",
+      "unit": "delta",
+      "purpose": "Image dependence over blind control",
+      "promotion": true
+    },
+    {
+      "name": "worst_capability_score",
+      "direction": "up",
+      "scope": "ood",
+      "unit": "normalized",
+      "purpose": "No QA kind hidden by average",
+      "promotion": true
+    }
+  ],
+  "generator": [
+    {
+      "name": "flow_matching_loss",
+      "direction": "down",
+      "scope": "train",
+      "unit": "loss",
+      "purpose": "Optimization diagnostic only",
+      "promotion": false
+    },
+    {
+      "name": "t2i_prompt_accuracy",
+      "direction": "up",
+      "scope": "real_heldout",
+      "unit": "fraction",
+      "purpose": "Prompt content coverage",
+      "promotion": true
+    },
+    {
+      "name": "t2i_negative_rejection",
+      "direction": "up",
+      "scope": "real_heldout",
+      "unit": "fraction",
+      "purpose": "Avoid forbidden alternatives",
+      "promotion": true
+    },
+    {
+      "name": "fd_psnr",
+      "direction": "up",
+      "scope": "real_heldout",
+      "unit": "dB",
+      "purpose": "Forward video reconstruction",
+      "promotion": true
+    },
+    {
+      "name": "fd_copy_margin",
+      "direction": "up",
+      "scope": "real_heldout",
+      "unit": "dB",
+      "purpose": "Must beat last-frame copy",
+      "promotion": true
+    },
+    {
+      "name": "temporal_warp_error",
+      "direction": "down",
+      "scope": "real_heldout",
+      "unit": "pixels",
+      "purpose": "Motion consistency",
+      "promotion": true
+    },
+    {
+      "name": "action_mse",
+      "direction": "down",
+      "scope": "real_heldout",
+      "unit": "normalized",
+      "purpose": "Inverse/action prediction",
+      "promotion": true
+    },
+    {
+      "name": "policy_success",
+      "direction": "up",
+      "scope": "closed_loop",
+      "unit": "fraction",
+      "purpose": "Task completion",
+      "promotion": true
+    },
+    {
+      "name": "video_action_consistency",
+      "direction": "up",
+      "scope": "closed_loop",
+      "unit": "PSNR",
+      "purpose": "Predicted action agrees with future video",
+      "promotion": true
+    }
+  ],
+  "data_health": [
+    {
+      "name": "scene_leak_count",
+      "direction": "down",
+      "scope": "data",
+      "unit": "count",
+      "purpose": "Train/eval independence",
+      "promotion": true
+    },
+    {
+      "name": "duplicate_rate",
+      "direction": "down",
+      "scope": "data",
+      "unit": "fraction",
+      "purpose": "Effective sample diversity",
+      "promotion": true
+    },
+    {
+      "name": "label_valid_fraction",
+      "direction": "up",
+      "scope": "data",
+      "unit": "fraction",
+      "purpose": "Usable exact supervision",
+      "promotion": true
+    },
+    {
+      "name": "source_balance_entropy",
+      "direction": "up",
+      "scope": "data",
+      "unit": "normalized",
+      "purpose": "Mixture coverage",
+      "promotion": false
+    },
+    {
+      "name": "real_synthetic_domain_gap",
+      "direction": "down",
+      "scope": "data",
+      "unit": "normalized",
+      "purpose": "Sim-to-real admission",
+      "promotion": true
+    }
+  ]
+}

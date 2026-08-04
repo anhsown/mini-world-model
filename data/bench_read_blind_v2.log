@@ -1,0 +1,13 @@
+C:\Users\ASUS\AppData\Local\Programs\Python\Python310\lib\site-packages\requests\__init__.py:113: RequestsDependencyWarning: urllib3 (2.2.1) or chardet (7.4.3)/charset_normalizer (3.3.2) doesn't match a supported version!
+  warnings.warn(
+synth: correct=0.6902 shuffled=0.5543 gain=+0.1360
+doc: correct=0.7484 shuffled=0.7486 gain=-0.0002
+== MTVQA-VI retry ==
+  C_mtvqa_vi: 8/50 (1.4s/sample)
+  C_mtvqa_vi: 16/50 (1.5s/sample)
+  C_mtvqa_vi: 24/50 (1.4s/sample)
+  C_mtvqa_vi: 32/50 (1.5s/sample)
+  C_mtvqa_vi: 40/50 (1.4s/sample)
+  C_mtvqa_vi: 48/50 (1.5s/sample)
+  C_mtvqa_vi: 50/50 (0.8s/sample)
+wrote C:\Users\ASUS\OneDrive\Desktop\Jarvis-Vision\data\bench_read_blind_v2.json

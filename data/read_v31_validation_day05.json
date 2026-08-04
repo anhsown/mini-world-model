@@ -1,0 +1,25 @@
+{
+  "valid": true,
+  "hypotheses": {
+    "H_line_labels_unique": true,
+    "H_exact_line_boxes": true,
+    "H_visible_ink_inside_box": true,
+    "H_tokenizer_roundtrip": true,
+    "H_ctc_time_axis_sufficient": true,
+    "H_font_size_diverse": true
+  },
+  "counts": {
+    "samples": 128,
+    "unique": 127
+  },
+  "font_px": {
+    "min": 31,
+    "max": 180
+  },
+  "failures": {
+    "box": 0,
+    "visibility": 0,
+    "roundtrip": 0,
+    "ctc_fit": 0
+  }
+}

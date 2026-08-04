@@ -1,0 +1,17 @@
+{
+  "valid": true,
+  "devices": 1,
+  "tiny": true,
+  "steps": 2,
+  "architecture": "v322",
+  "source_mode": "actual_g0_mixture",
+  "per_gpu_batch": 1,
+  "active_parameter_tensors": 94,
+  "optimizer_steps_per_second": 0.44265687164957623,
+  "seconds_per_step": 2.2590861320495605,
+  "peak_memory_gib_per_rank": 0.27507543563842773,
+  "memory_utilization": 0.06877410595748577,
+  "estimated_hours_7000_steps": 4.392667478985256,
+  "loss_first": 3.1270737648010254,
+  "loss_last": 3.468900680541992
+}

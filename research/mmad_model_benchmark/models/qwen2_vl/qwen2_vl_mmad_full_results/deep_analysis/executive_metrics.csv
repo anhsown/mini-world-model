@@ -1,0 +1,9 @@
+metric,value,ci_low,ci_high
+Completion rate,1.0,,
+Parse-valid rate,0.9999747920342829,,
+Micro accuracy,0.6473316695656558,0.6426157558499674,0.6520190514938136
+Macro task accuracy,0.6503086728686917,,
+Anomaly precision,0.7428046540110227,,
+Anomaly recall,0.48068159302555974,,
+Anomaly F1,0.5836641405028269,,
+Anomaly miss rate,0.5193184069744403,,

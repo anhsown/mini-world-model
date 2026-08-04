@@ -1,0 +1,6 @@
+setting,kind,accuracy,macro_f1
+Cycle holdout — 64 frames,primary,1.0,1.0
+Cycle holdout — 14 visible frames,ablation,1.0,1.0
+Random clip — 64 frames,leakage-risk comparator,1.0,1.0
+Majority blind,negative control,0.14285714285714285,0.03571428571428571
+Shuffled labels,negative control,0.09523809523809523,0.09945195469492145

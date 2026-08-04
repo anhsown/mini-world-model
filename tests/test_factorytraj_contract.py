@@ -57,6 +57,35 @@ def test_ten_examples_validate_and_cover_levels_and_stream_shapes():
         for error in validator.iter_errors(item)
     ]
     assert semantic_errors(items) == []
+    channels = [
+        channel
+        for item in items
+        for stream in item["model_input"]["observation_window"]["streams"]
+        for block_name in ("sensor_history", "control_signals", "machine_context")
+        for channel in stream[block_name]["channels"]
+    ]
+    assert channels
+    for channel in channels:
+        assert channel["data_type"] in {
+            "boolean",
+            "integer",
+            "float",
+            "string",
+            "unknown",
+        }
+        if channel["engineering_unit"] is not None:
+            assert set(channel["engineering_unit"]) == {
+                "namespace_uri",
+                "unit_id",
+                "display_name",
+                "description",
+            }
+        assert channel["role"]
+        assert isinstance(channel["relationships"], list)
+        if channel["data_type"] in {"integer", "float", "boolean"}:
+            assert channel["observed_range"]["kind"] == "observed_compact_sample"
+        else:
+            assert channel["observed_range"] is None
 
 
 def test_model_view_excludes_ground_truth_and_rejects_injected_target():

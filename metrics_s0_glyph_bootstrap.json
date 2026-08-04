@@ -1,0 +1,229 @@
+{
+  "read": {
+    "overall": {
+      "n": 38,
+      "cer": 0.9595098117216886,
+      "exact": 0.0,
+      "ctc_cer": 1.0,
+      "box_iou": 0.09576238971203566
+    },
+    "synthetic": {
+      "n": 20,
+      "cer": 0.9646770780495675,
+      "exact": 0.0,
+      "ctc_cer": 1.0,
+      "box_iou": 0.09576238971203566
+    },
+    "documents": {
+      "n": 18,
+      "cer": 0.9537684046907119,
+      "exact": 0.0
+    },
+    "by_kind": {
+      "doc": {
+        "n": 18,
+        "cer": 0.9537684046907119,
+        "exact": 0.0
+      },
+      "randL1": {
+        "n": 5,
+        "cer": 1.0,
+        "exact": 0.0,
+        "ctc_cer": 1.0,
+        "box_iou": 0.047828647494316104
+      },
+      "randL2": {
+        "n": 5,
+        "cer": 0.9110429181396924,
+        "exact": 0.0,
+        "ctc_cer": 1.0,
+        "box_iou": 0.03952912613749504
+      },
+      "randL3": {
+        "n": 5,
+        "cer": 0.96141714942303,
+        "exact": 0.0,
+        "ctc_cer": 1.0,
+        "box_iou": 0.15830995738506318
+      },
+      "randL4": {
+        "n": 5,
+        "cer": 0.9862482446355478,
+        "exact": 0.0,
+        "ctc_cer": 1.0,
+        "box_iou": 0.13738182783126832
+      }
+    },
+    "failures": [],
+    "examples": [
+      {
+        "kind": "randL1",
+        "question": "đọc chữ trong ảnh",
+        "reference": "ứỳừđửè ùẫ",
+        "prediction": "ý",
+        "cer": 1.0,
+        "exact": 0.0,
+        "teacher_tok_acc": 0.2142857164144516,
+        "ctc_prediction": "",
+        "ctc_cer": 1.0,
+        "box_iou": 0.0
+      },
+      {
+        "kind": "randL1",
+        "question": "đọc chữ trong ảnh",
+        "reference": "c0ã",
+        "prediction": "i",
+        "cer": 1.0,
+        "exact": 0.0,
+        "teacher_tok_acc": 0.2142857164144516,
+        "ctc_prediction": "",
+        "ctc_cer": 1.0,
+        "box_iou": 0.0
+      },
+      {
+        "kind": "randL1",
+        "question": "đọc chữ trong ảnh",
+        "reference": "ém",
+        "prediction": "i",
+        "cer": 1.0,
+        "exact": 0.0,
+        "teacher_tok_acc": 0.3333333432674408,
+        "ctc_prediction": "",
+        "ctc_cer": 1.0,
+        "box_iou": 0.11769024282693863
+      },
+      {
+        "kind": "randL1",
+        "question": "đọc chữ trong ảnh",
+        "reference": "m6",
+        "prediction": "à",
+        "cer": 1.0,
+        "exact": 0.0,
+        "teacher_tok_acc": 0.3333333432674408,
+        "ctc_prediction": "",
+        "ctc_cer": 1.0,
+        "box_iou": 0.12145299464464188
+      },
+      {
+        "kind": "randL1",
+        "question": "đọc chữ trong ảnh",
+        "reference": "rắầ cấ",
+        "prediction": "à",
+        "cer": 1.0,
+        "exact": 0.0,
+        "teacher_tok_acc": 0.21276596188545227,
+        "ctc_prediction": "",
+        "ctc_cer": 1.0,
+        "box_iou": 0.0
+      },
+      {
+        "kind": "randL2",
+        "question": "đọc chữ trong ảnh",
+        "reference": "đẽẽl rxýd 6ểứpừ ỵ3ẹb39 6ãử áấ ăờ7kmo ầỵ",
+        "prediction": "ỏ àm àỡ ỏỡ",
+        "cer": 0.9230769230769231,
+        "exact": 0.0,
+        "teacher_tok_acc": 0.21276596188545227,
+        "ctc_prediction": "      ",
+        "ctc_cer": 1.0,
+        "box_iou": 0.05613599345088005
+      },
+      {
+        "kind": "randL2",
+        "question": "đọc chữ trong ảnh",
+        "reference": "èỗg ỵẵỹp cừ ấụ â5ỵỡàạ",
+        "prediction": "ỏ ài",
+        "cer": 0.9047619047619048,
+        "exact": 0.0,
+        "teacher_tok_acc": 0.21666666865348816,
+        "ctc_prediction": "    ",
+        "ctc_cer": 1.0,
+        "box_iou": 0.0
+      },
+      {
+        "kind": "randL2",
+        "question": "đọc chữ trong ảnh",
+        "reference": "ềt ẩ0 xỳqừhộ ờb ảỏ07ì bù qờđeã1 5ỳbủc",
+        "prediction": "ỏ àm àỡ ỏỡ",
+        "cer": 0.8918918918918919,
+        "exact": 0.0,
+        "teacher_tok_acc": 0.21666666865348816,
+        "ctc_prediction": "",
+        "ctc_cer": 1.0,
+        "box_iou": 0.0
+      },
+      {
+        "kind": "randL2",
+        "question": "đọc chữ trong ảnh",
+        "reference": "ỹở 1ờớẫả ẹ3 ìxtỳ 3e ửỳặẳ9q ỳủó6",
+        "prediction": "ỏ àỏ àỡ",
+        "cer": 0.9354838709677419,
+        "exact": 0.0,
+        "teacher_tok_acc": 0.1746031790971756,
+        "ctc_prediction": " ",
+        "ctc_cer": 1.0,
+        "box_iou": 0.14150963723659515
+      },
+      {
+        "kind": "randL2",
+        "question": "đọc chữ trong ảnh",
+        "reference": "ộyhấợể vă à9 ẳâủlìè ắpõoa ộảợề",
+        "prediction": "ỏ àỏ àỡ",
+        "cer": 0.9,
+        "exact": 0.0,
+        "teacher_tok_acc": 0.1746031790971756,
+        "ctc_prediction": "",
+        "ctc_cer": 1.0,
+        "box_iou": 0.0
+      },
+      {
+        "kind": "randL3",
+        "question": "đọc chữ trong ảnh",
+        "reference": "ỳăắẽờồ éớ ẳdằ ờảố õệỹòễẩ ỳừăởeớ eí ăóậx àầ2\nọủ4e ỏễ4 ằễẽờẵ ộỉứkí 2qe0 ẫy1àto\nèũọị4 đò9d ỉặ àẻc óy5m 9íị ảxũẫ lr6ệẳ",
+        "prediction": "ỏ àỏ àỡ",
+        "cer": 0.956140350877193,
+        "exact": 0.0,
+        "teacher_tok_acc": 0.09090909361839294,
+        "ctc_prediction": " ",
+        "ctc_cer": 1.0,
+        "box_iou": 0.42544320225715637
+      },
+      {
+        "kind": "randL3",
+        "question": "đọc chữ trong ảnh",
+        "reference": "ỷy2 uủẵữả ày\neị ĩầ ữvỹ ớ0èềị òễầ ốáẻ đẻ\nàấbậòõ ụmõpéắ ộ9á1m ooỡn árụậoẵ",
+        "prediction": "ỏ àỏ",
+        "cer": 0.971830985915493,
+        "exact": 0.0,
+        "teacher_tok_acc": 0.09090909361839294,
+        "ctc_prediction": "   ",
+        "ctc_cer": 1.0,
+        "box_iou": 0.0
+      }
+    ]
+  },
+  "vision_control": {
+    "loss_gap_shuffled_minus_correct": 2.02005855853741,
+    "correct_image_win_rate": 0.7692307692307693,
+    "n_batches": 13
+  },
+  "gate": {
+    "passed": false,
+    "checks": {
+      "ctc_cer": false,
+      "vision_gap": true
+    },
+    "measured": {
+      "cer": 0.9555214590698462,
+      "synthetic_cer": 0.9555214590698462,
+      "ctc_cer": 1.0,
+      "box_iou": 0.04367888681590557,
+      "vision_gap": 2.02005855853741,
+      "vision_win": 0.7692307692307693
+    },
+    "rules": {
+      "ctc_cer_max": 0.72,
+      "vision_gap_min": 0.015
+    }
+  }
+}

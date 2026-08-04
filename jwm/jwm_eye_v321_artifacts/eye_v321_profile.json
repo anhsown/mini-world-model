@@ -1,0 +1,17 @@
+{
+  "valid": true,
+  "devices": 2,
+  "tiny": false,
+  "steps": 100,
+  "architecture": "v321",
+  "source_mode": "procedural_fallback",
+  "per_gpu_batch": 1,
+  "active_parameter_tensors": 154,
+  "optimizer_steps_per_second": 1.0351512476868983,
+  "seconds_per_step": 0.9660424041748048,
+  "peak_memory_gib_per_rank": 2.969722270965576,
+  "memory_utilization": 0.20393370002347153,
+  "estimated_hours_7000_steps": 1.8784157858954538,
+  "loss_first": 3.7327699661254883,
+  "loss_last": 0.9626173377037048
+}

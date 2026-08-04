@@ -1,0 +1,19 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "jupyter",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m", "jupyter", "lab",
+        "--no-browser",
+        "--port", "8899",
+        "--ServerApp.token=jarvis",
+        "--ServerApp.disable_check_xsrf=True",
+        "--LabApp.expose_app_in_browser=True",
+        "--notebook-dir", "C:/Users/ASUS/OneDrive/Desktop/Jarvis-Vision"
+      ],
+      "port": 8899
+    }
+  ]
+}

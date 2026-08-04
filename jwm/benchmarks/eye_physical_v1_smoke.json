@@ -1,0 +1,111 @@
+{
+  "benchmark": "JWM-Eye-Physical Independent Geometry + Blind Controls",
+  "checkpoint": "C:\\Users\\ASUS\\OneDrive\\Desktop\\Jarvis-Vision\\jwm\\checkpoints\\jwm_eye_physical_v1_artifacts\\jwm_eye_physical_v1.pt",
+  "checkpoint_status": "final",
+  "device": "cuda",
+  "evaluations": {
+    "procedural/normal": {
+      "metrics": {
+        "depth_abs_rel": 0.026702082715928555,
+        "depth_rmse_anchor_scale": 0.05721745453774929,
+        "ate_anchor_scale": 0.018900081515312195,
+        "abs_rotation_deg": 0.5079720318317413,
+        "rpe_translation": 0.006793213542550802,
+        "rpe_rotation_deg": 0.25076429545879364
+      },
+      "samples": 2,
+      "seconds": 2.1135591999991448,
+      "sequence_per_second": 0.9462711051579767,
+      "frame_per_second": 7.570168841263814
+    },
+    "procedural/black": {
+      "metrics": {
+        "depth_abs_rel": 0.4748849868774414,
+        "depth_rmse_anchor_scale": 0.6114066541194916,
+        "ate_anchor_scale": 0.030256562866270542,
+        "abs_rotation_deg": 0.5395921170711517,
+        "rpe_translation": 0.012090633157640696,
+        "rpe_rotation_deg": 0.25435690954327583
+      },
+      "samples": 2,
+      "seconds": 0.7260585999974865,
+      "sequence_per_second": 2.754598595770264,
+      "frame_per_second": 22.03678876616211
+    },
+    "procedural/mean_only": {
+      "metrics": {
+        "depth_abs_rel": 0.18982692062854767,
+        "depth_rmse_anchor_scale": 0.3577122390270233,
+        "ate_anchor_scale": 0.014795762952417135,
+        "abs_rotation_deg": 0.5110500603914261,
+        "rpe_translation": 0.005476994905620813,
+        "rpe_rotation_deg": 0.2510085925459862
+      },
+      "samples": 2,
+      "seconds": 0.7431183000007877,
+      "sequence_per_second": 2.6913615234584856,
+      "frame_per_second": 21.530892187667884
+    },
+    "procedural/frozen_first": {
+      "metrics": {
+        "depth_abs_rel": 0.03579991590231657,
+        "depth_rmse_anchor_scale": 0.0953984223306179,
+        "ate_anchor_scale": 0.018974819220602512,
+        "abs_rotation_deg": 0.5078546553850174,
+        "rpe_translation": 0.006806854158639908,
+        "rpe_rotation_deg": 0.2507193833589554
+      },
+      "samples": 2,
+      "seconds": 0.7283846999998786,
+      "sequence_per_second": 2.745801772058547,
+      "frame_per_second": 21.966414176468376
+    },
+    "procedural/reverse_time": {
+      "metrics": {
+        "depth_abs_rel": 0.04301717132329941,
+        "depth_rmse_anchor_scale": 0.10438492894172668,
+        "ate_anchor_scale": 0.01916060457006097,
+        "abs_rotation_deg": 0.5077474489808083,
+        "rpe_translation": 0.0068454493302851915,
+        "rpe_rotation_deg": 0.25072647258639336
+      },
+      "samples": 2,
+      "seconds": 0.7446530999950483,
+      "sequence_per_second": 2.6858143745232503,
+      "frame_per_second": 21.486514996186003
+    },
+    "procedural/wrong_scene": {
+      "metrics": {
+        "depth_abs_rel": 0.17001495510339737,
+        "depth_rmse_anchor_scale": 0.3618612140417099,
+        "ate_anchor_scale": 0.014387942850589752,
+        "abs_rotation_deg": 0.5110207423567772,
+        "rpe_translation": 0.005741820205003023,
+        "rpe_rotation_deg": 0.2512327581644058
+      },
+      "samples": 2,
+      "seconds": 0.7316505000053439,
+      "sequence_per_second": 2.733545593128676,
+      "frame_per_second": 21.868364745029407
+    },
+    "procedural/constant_identity_prior": {
+      "metrics": {
+        "depth_abs_rel": 0.7692866325378418,
+        "depth_rmse_anchor_scale": 0.5893656611442566,
+        "ate_anchor_scale": 0.02589417714625597,
+        "abs_rotation_deg": 0.5473955273628235,
+        "rpe_translation": 0.009734501596540213,
+        "rpe_rotation_deg": 0.2737268954515457
+      },
+      "samples": 2,
+      "seconds": 0.024972399995021988
+    }
+  },
+  "vision_dependence": {
+    "wrong_scene_depth_ratio": 6.367104652925766,
+    "wrong_scene_ate_ratio": 0.7612635341775186,
+    "black_depth_ratio": 17.78456729123077,
+    "gate": "FAIL"
+  },
+  "tum_dataset_validation": null
+}

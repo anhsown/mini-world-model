@@ -1,14 +1,9 @@
-__pycache__/
-*.pyc
-.pytest_cache/
-*.pt
-*.pth
-*.safetensors
-checkpoints/
-!research/mmad_model_benchmark/checkpoints/
-!research/mmad_model_benchmark/checkpoints/cosmos3_mmad/
-!research/mmad_model_benchmark/checkpoints/cosmos3_mmad/**
-data/
-*.ipynb
-!research/mmad_model_benchmark/models/cosmos3/Cosmos3_Nano_MMAD_T4x2_UI_Parity.ipynb
-.venv/
+# Local credentials and secret material
+secrets.local.txt
+.env
+.env.*
+!.env.example
+secrets/
+credentials/
+*.pem
+*.key

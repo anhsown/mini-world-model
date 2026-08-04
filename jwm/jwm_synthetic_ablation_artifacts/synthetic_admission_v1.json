@@ -1,0 +1,63 @@
+{
+  "valid": true,
+  "hypotheses": {
+    "H_samples_available": true,
+    "H_exact_labels_finite": true,
+    "H_exact_geometry_contract": true,
+    "H_deterministic_unique_scene_ids": true,
+    "H_real_appearance_mean_gap": true,
+    "H_real_appearance_std_ratio": true,
+    "H_real_gradient_ratio": true,
+    "H_real_depth_median_ratio": true
+  },
+  "metrics": {
+    "windows_checked": 12,
+    "image_mean": 0.5342226698994637,
+    "real_image_mean": 0.5404160022735596,
+    "mean_abs_gap": 0.006193332374095917,
+    "image_std": 0.2009074588616689,
+    "real_image_std": 0.2560102641582489,
+    "image_std_ratio": 1.2742695846574814,
+    "gradient_mean": 0.04210160921017329,
+    "real_gradient_mean": 0.036517491564154625,
+    "gradient_ratio": 1.1529162438829725,
+    "depth_median_m": 1.8824004928270976,
+    "real_depth_median_m": 1.8730000257492065,
+    "depth_median_ratio": 1.0050189359042485
+  },
+  "geometry_contract": {
+    "valid": true,
+    "source": "synthetic_real_anchored",
+    "hypotheses": {
+      "H_camera_contract_parseable": true,
+      "H_intrinsics_per_frame_finite": true,
+      "H_intrinsics_pinhole_plausible": true,
+      "H_camera_rays_finite": true,
+      "H_timestamp_strictly_increasing": true,
+      "H_rgb_finite_nonconstant": true,
+      "H_metric_depth_available": true,
+      "H_pose_is_SE3": true,
+      "H_static_flow_coverage": true,
+      "H_rgbd_pose_k_reprojection_consistent": true,
+      "H_intrinsics_counterfactual_effective": true
+    },
+    "errors": [],
+    "metrics": {
+      "windows_total": 250000,
+      "windows_checked": 8,
+      "depth_valid_fraction": 1.0,
+      "static_flow_coverage": 0.9409546256065369,
+      "measured_depth_reprojection_inlier": 0.9908976927399635,
+      "camera_ray_counterfactual_delta": 0.08387647196650505,
+      "pose_so3_max_error": 2.384185791015625e-07,
+      "pose_det_max_error": 1.7881393432617188e-07
+    }
+  },
+  "logical_samples": 250000,
+  "storage_model": "deterministic_on_the_fly",
+  "real_roots_train_only": {
+    "tum": 4,
+    "bonn": 3
+  },
+  "profile_split_policy": "train_only_no_validation_test_statistics"
+}

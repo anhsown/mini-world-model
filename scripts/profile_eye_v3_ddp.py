@@ -17,7 +17,9 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path: sys.path.insert(0, str(ROOT))
 
 from jwm import JWM
-from jwm.checkpoint_utils import warmstart_eye_physical, warmstart_eye_v32, warmstart_eye_v322
+from jwm.checkpoint_utils import (
+    warmstart_eye_physical, warmstart_eye_v32, warmstart_eye_v322,
+)
 from jwm.configs import (eye_physical_v3_scale, eye_physical_v32_scale,
                          eye_physical_v32_smoke_scale)
 from jwm.geometry_v3_data import make_counterfactuals, procedural_v3_row, stack_geometry_v3_rows
@@ -25,15 +27,18 @@ from jwm.geometry_v3_trainer import (
     missing_trainable_gradients, move_geometry_batch,
     set_eye_v3_physical_trainable,
 )
-from scripts.train_eye_v3_ddp import (STAGES, V32_ARCHITECTURES, V3Sampler,
-                                      apply_stage_weight_profile, make_datasets)
+from scripts.train_eye_v3_ddp import (
+    STAGES, V32_ARCHITECTURES, V3Sampler, apply_stage_weight_profile,
+    make_datasets,
+)
 
 
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--warmstart", required=True)
     p.add_argument("--output", required=True)
-    p.add_argument("--architecture", choices=("v31", "v32", "v321", "v322"), default="v31")
+    p.add_argument("--architecture", choices=("v31", "v32", "v321", "v322"),
+                   default="v31")
     p.add_argument("--steps", type=int, default=250)
     p.add_argument("--per-gpu-batch", type=int, default=1)
     p.add_argument("--tiny", action="store_true")
@@ -65,8 +70,10 @@ def main():
         cfg.geometry_track_points = 12; cfg.geometry_track_iterations = 1
         cfg.geometry_ba_iterations = 1
     model = JWM(cfg)
-    (warmstart_eye_v322(model, args.warmstart) if args.architecture == "v322" else
-     warmstart_eye_v32(model, args.warmstart) if args.architecture in V32_ARCHITECTURES else
+    (warmstart_eye_v322(model, args.warmstart)
+     if args.architecture == "v322" else
+     warmstart_eye_v32(model, args.warmstart)
+     if args.architecture in V32_ARCHITECTURES else
      warmstart_eye_physical(model, args.warmstart))
     apply_stage_weight_profile(cfg, 0)
     active_names = set_eye_v3_physical_trainable(model)

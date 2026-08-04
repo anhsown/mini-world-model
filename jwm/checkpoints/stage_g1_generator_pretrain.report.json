@@ -1,0 +1,11 @@
+{
+ "stage": "g1_generator_pretrain",
+ "finished_at": "2026-07-17T16:40:33",
+ "params_M": 73.94,
+ "steps": 2200,
+ "lr": 0.0003,
+ "val_t2i_pos": 0.59375,
+ "val_t2i_mse": 1.872074007987976,
+ "val_fd_psnr": 21.01093101501465,
+ "val_fd_copy": 22.198793411254883
+}

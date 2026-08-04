@@ -1,0 +1,203 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://huggingface.co/datasets/ASown/IWM-Episodes-v1/raw/main/schema/episode.schema.json",
+  "title": "IWM-Episodes v1 Episode",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "episode_id", "source_id", "site_id", "asset_id", "asset_type", "time", "observations", "machine_state", "actions", "events", "outcome", "data_quality", "governance", "split", "world_model_targets"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "episode_id": {"type": "string", "minLength": 1},
+    "source_id": {"type": "string", "minLength": 1},
+    "site_id": {"type": "string", "minLength": 1},
+    "line_id": {"type": ["string", "null"]},
+    "asset_id": {"type": "string", "minLength": 1},
+    "asset_type": {"type": "string", "minLength": 1},
+    "product_id": {"type": ["string", "null"]},
+    "batch_id": {"type": ["string", "null"]},
+    "time": {"$ref": "#/$defs/time"},
+    "observations": {"$ref": "#/$defs/observations"},
+    "machine_state": {"$ref": "#/$defs/machine_state"},
+    "actions": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/action"}},
+    "events": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/event"}},
+    "outcome": {"$ref": "#/$defs/outcome"},
+    "data_quality": {"$ref": "#/$defs/data_quality"},
+    "governance": {"$ref": "#/$defs/governance"},
+    "split": {"$ref": "#/$defs/split"},
+    "world_model_targets": {"$ref": "#/$defs/targets"}
+  },
+  "$defs": {
+    "time": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start_time", "end_time", "duration_s", "original_timezone", "clock_source", "max_clock_error_ms"],
+      "properties": {
+        "start_time": {"type": "string", "format": "date-time"},
+        "end_time": {"type": "string", "format": "date-time"},
+        "duration_s": {"type": "number", "exclusiveMinimum": 0},
+        "original_timezone": {"type": "string", "minLength": 1},
+        "clock_source": {"enum": ["ptp", "ntp", "device", "estimated"]},
+        "max_clock_error_ms": {"type": "number", "minimum": 0}
+      }
+    },
+    "stream": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stream_id", "uri", "modality", "sampling_rate_hz", "clock_error_ms"],
+      "properties": {
+        "stream_id": {"type": "string", "minLength": 1},
+        "uri": {"type": "string", "minLength": 1},
+        "modality": {"enum": ["rgb", "depth", "thermal", "event", "audio", "vibration", "telemetry", "force_torque", "network"]},
+        "sampling_rate_hz": {"type": "number", "exclusiveMinimum": 0},
+        "clock_error_ms": {"type": "number", "minimum": 0},
+        "validity_uri": {"type": ["string", "null"]},
+        "unit": {"type": ["string", "null"]},
+        "sensor_type": {"type": ["string", "null"]},
+        "view": {"type": ["string", "null"]},
+        "fps": {"type": ["number", "null"], "exclusiveMinimum": 0},
+        "channels": {"type": ["integer", "null"], "minimum": 1}
+      }
+    },
+    "observations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["video", "audio", "telemetry", "other"],
+      "properties": {
+        "video": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/stream"}},
+        "audio": {"type": "array", "items": {"$ref": "#/$defs/stream"}},
+        "telemetry": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/stream"}},
+        "other": {"type": "array", "items": {"$ref": "#/$defs/stream"}}
+      }
+    },
+    "alarm": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "start_offset_s", "end_offset_s"],
+      "properties": {
+        "code": {"type": "string", "minLength": 1},
+        "start_offset_s": {"type": "number", "minimum": 0},
+        "end_offset_s": {"type": "number", "minimum": 0}
+      }
+    },
+    "machine_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operating_mode", "load_pct", "setpoints", "alarms"],
+      "properties": {
+        "operating_mode": {"type": "string", "minLength": 1},
+        "load_pct": {"type": ["number", "null"], "minimum": 0, "maximum": 100},
+        "setpoints": {"type": "object", "additionalProperties": {"type": ["number", "string", "boolean", "null"]}},
+        "alarms": {"type": "array", "items": {"$ref": "#/$defs/alarm"}}
+      }
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action_id", "type", "actor", "start_offset_s", "end_offset_s", "parameters", "safety_authorized", "executed"],
+      "properties": {
+        "action_id": {"type": "string", "minLength": 1},
+        "type": {"type": "string", "pattern": "^ACTION\\."},
+        "actor": {"enum": ["plc", "operator", "maintenance", "safety", "source"]},
+        "start_offset_s": {"type": "number", "minimum": 0},
+        "end_offset_s": {"type": "number", "minimum": 0},
+        "parameters": {"type": "object"},
+        "safety_authorized": {"type": "boolean"},
+        "executed": {"type": "boolean"}
+      }
+    },
+    "spatial": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "camera_id": {"type": "string"},
+        "boxes_xyxy": {"type": "array", "items": {"type": "array", "prefixItems": [{"type": "number"}, {"type": "number"}, {"type": "number"}, {"type": "number"}], "minItems": 4, "maxItems": 4}},
+        "mask_uri": {"type": ["string", "null"]}
+      }
+    },
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["event_id", "taxonomy_id", "start_offset_s", "end_offset_s", "severity", "confidence", "label_source", "reviewed", "root_cause_status", "spatial"],
+      "properties": {
+        "event_id": {"type": "string", "minLength": 1},
+        "taxonomy_id": {"type": "string", "minLength": 1},
+        "start_offset_s": {"type": "number", "minimum": 0},
+        "end_offset_s": {"type": "number", "minimum": 0},
+        "severity": {"type": "integer", "minimum": 0, "maximum": 4},
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+        "label_source": {"enum": ["sensor_rule", "human", "sme", "maintenance_record", "quality_system", "simulation", "multi_source"]},
+        "reviewed": {"type": "boolean"},
+        "root_cause_status": {"enum": ["confirmed", "probable", "unknown"]},
+        "spatial": {"oneOf": [{"$ref": "#/$defs/spatial"}, {"type": "null"}]}
+      }
+    },
+    "outcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "quality_disposition", "downtime_s", "recovery_time_s", "future_state"],
+      "properties": {
+        "status": {"enum": ["normal_completion", "quality_pass", "quality_fail", "recovered", "degraded_continuing", "stopped", "unknown"]},
+        "quality_disposition": {"enum": ["pass", "rework", "scrap", "hold", "na", null]},
+        "downtime_s": {"type": ["number", "null"], "minimum": 0},
+        "recovery_time_s": {"type": ["number", "null"], "minimum": 0},
+        "future_state": {"type": "object"}
+      }
+    },
+    "data_quality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["missing_fraction", "drift_flags", "status", "validator_version"],
+      "properties": {
+        "missing_fraction": {"type": "number", "minimum": 0, "maximum": 1},
+        "drift_flags": {"type": "array", "items": {"type": "string"}},
+        "status": {"enum": ["pass", "warn", "fail"]},
+        "validator_version": {"type": "string", "minLength": 1}
+      }
+    },
+    "redaction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "stream_id", "method"],
+      "properties": {
+        "type": {"enum": ["face", "badge", "screen", "document", "process_secret", "other"]},
+        "stream_id": {"type": "string"},
+        "method": {"type": "string"}
+      }
+    },
+    "governance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["data_owner", "source_type", "license", "permitted_use", "redistribution_allowed", "privacy_review", "redactions", "provenance"],
+      "properties": {
+        "data_owner": {"type": "string", "minLength": 1},
+        "source_type": {"enum": ["real", "synthetic", "hil", "derived"]},
+        "license": {"type": "string", "minLength": 1},
+        "permitted_use": {"enum": ["public", "research_only", "internal_only"]},
+        "redistribution_allowed": {"type": "boolean"},
+        "privacy_review": {"enum": ["pass", "fail", "pending"]},
+        "redactions": {"type": "array", "items": {"$ref": "#/$defs/redaction"}},
+        "provenance": {"type": "array", "minItems": 1, "items": {"type": "string"}}
+      }
+    },
+    "split": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["split", "split_group", "ood_tags"],
+      "properties": {
+        "split": {"enum": ["train", "validation", "test_public", "test_private"]},
+        "split_group": {"type": "string", "minLength": 1},
+        "ood_tags": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "targets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reasoner", "generator", "action"],
+      "properties": {
+        "reasoner": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+        "generator": {"type": "array", "items": {"type": "string"}},
+        "action": {"type": "array", "items": {"type": "string"}}
+      }
+    }
+  }
+}

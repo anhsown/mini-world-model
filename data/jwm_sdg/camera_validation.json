@@ -1,0 +1,48 @@
+{
+  "camera": {
+    "noise_std": 7.199999999999999,
+    "blur_sigma": 0.54,
+    "jpeg_q": 55,
+    "brightness": 0.0,
+    "contrast": 1.25,
+    "wb_shift": 6.0,
+    "vignette": 0.12
+  },
+  "validation": {
+    "lum_mean": {
+      "W1": 7.722,
+      "threshold": 16.0,
+      "pass": true,
+      "synth_mean": 93.06,
+      "real_mean": 96.07
+    },
+    "lum_std": {
+      "W1": 10.109,
+      "threshold": 12.0,
+      "pass": true,
+      "synth_mean": 36.66,
+      "real_mean": 44.33
+    },
+    "grad_energy": {
+      "W1": 4.422,
+      "threshold": 4.5,
+      "pass": true,
+      "synth_mean": 12.41,
+      "real_mean": 15.84
+    },
+    "log_sharpness": {
+      "W1": 0.514,
+      "threshold": 0.55,
+      "pass": true,
+      "synth_mean": 2.41,
+      "real_mean": 2.67
+    },
+    "color_entropy": {
+      "W1": 0.02,
+      "threshold": 0.45,
+      "pass": true,
+      "synth_mean": 0.27,
+      "real_mean": 0.29
+    }
+  }
+}

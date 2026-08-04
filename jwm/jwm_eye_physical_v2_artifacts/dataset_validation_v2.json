@@ -1,0 +1,345 @@
+{
+  "sources": {
+    "train/tum": {
+      "valid": true,
+      "source": "train/tum",
+      "hypotheses": {
+        "H_images_finite_nonconstant": true,
+        "H_real_depth_available": true,
+        "H_metric_depth_scale_plausible": true,
+        "H_pose_is_SO3": true,
+        "H_pose_normalized_to_first_frame": true,
+        "H_motion_not_identity_dominated": true
+      },
+      "required_hypotheses": [
+        "H_images_finite_nonconstant",
+        "H_real_depth_available",
+        "H_metric_depth_scale_plausible",
+        "H_pose_is_SO3",
+        "H_pose_normalized_to_first_frame",
+        "H_motion_not_identity_dominated"
+      ],
+      "metrics": {
+        "windows_total": 417,
+        "windows_checked": 12,
+        "depth_valid_fraction": 0.5299165844917297,
+        "depth_median_m": 1.1931999921798706,
+        "depth_p99_m": 4.802000045776367,
+        "rgb_mean": 0.5293296575546265,
+        "rgb_std": 0.26181358098983765,
+        "pose_so3_max_error": 9.5367431640625e-07,
+        "pose_det_max_error": 1.1324882507324219e-06,
+        "translation_step_median": 0.007505342829972506,
+        "translation_step_p90": 0.041505273431539536,
+        "rotation_step_deg_median": 0.5060461163520813,
+        "rotation_step_deg_p90": 3.305823802947998,
+        "non_identity_step_fraction": 0.9642857313156128,
+        "dynamic_label_available": false,
+        "dynamic_pixel_fraction": null
+      }
+    },
+    "train/bonn": {
+      "valid": true,
+      "source": "train/bonn",
+      "hypotheses": {
+        "H_images_finite_nonconstant": true,
+        "H_real_depth_available": true,
+        "H_metric_depth_scale_plausible": true,
+        "H_pose_is_SO3": true,
+        "H_pose_normalized_to_first_frame": true,
+        "H_motion_not_identity_dominated": true
+      },
+      "required_hypotheses": [
+        "H_images_finite_nonconstant",
+        "H_real_depth_available",
+        "H_metric_depth_scale_plausible",
+        "H_pose_is_SO3",
+        "H_pose_normalized_to_first_frame"
+      ],
+      "metrics": {
+        "windows_total": 130,
+        "windows_checked": 12,
+        "depth_valid_fraction": 0.6482822299003601,
+        "depth_median_m": 2.5220000743865967,
+        "depth_p99_m": 3.7739999294281006,
+        "rgb_mean": 0.5632367730140686,
+        "rgb_std": 0.23009046912193298,
+        "pose_so3_max_error": 5.960464477539062e-07,
+        "pose_det_max_error": 3.5762786865234375e-07,
+        "translation_step_median": 0.01785288006067276,
+        "translation_step_p90": 0.032679639756679535,
+        "rotation_step_deg_median": 1.465425968170166,
+        "rotation_step_deg_p90": 2.631927967071533,
+        "non_identity_step_fraction": 1.0,
+        "dynamic_label_available": false,
+        "dynamic_pixel_fraction": null
+      }
+    },
+    "train/tartanair": {
+      "valid": true,
+      "source": "train/tartanair",
+      "hypotheses": {
+        "H_images_finite_nonconstant": true,
+        "H_real_depth_available": true,
+        "H_metric_depth_scale_plausible": true,
+        "H_pose_is_SO3": true,
+        "H_pose_normalized_to_first_frame": true,
+        "H_motion_not_identity_dominated": true
+      },
+      "required_hypotheses": [
+        "H_images_finite_nonconstant",
+        "H_real_depth_available",
+        "H_metric_depth_scale_plausible",
+        "H_pose_is_SO3",
+        "H_pose_normalized_to_first_frame",
+        "H_motion_not_identity_dominated"
+      ],
+      "metrics": {
+        "windows_total": 298,
+        "windows_checked": 12,
+        "depth_valid_fraction": 0.9038837552070618,
+        "depth_median_m": 2.0058956146240234,
+        "depth_p99_m": 32.09382629394531,
+        "rgb_mean": 0.41709062457084656,
+        "rgb_std": 0.34219875931739807,
+        "pose_so3_max_error": 8.344650268554688e-07,
+        "pose_det_max_error": 1.0728836059570312e-06,
+        "translation_step_median": 0.33070653676986694,
+        "translation_step_p90": 0.6877976059913635,
+        "rotation_step_deg_median": 4.501636028289795,
+        "rotation_step_deg_p90": 8.843107223510742,
+        "non_identity_step_fraction": 1.0,
+        "dynamic_label_available": true,
+        "dynamic_pixel_fraction": 0.0
+      }
+    },
+    "validation/tum": {
+      "valid": true,
+      "source": "validation/tum",
+      "hypotheses": {
+        "H_images_finite_nonconstant": true,
+        "H_real_depth_available": true,
+        "H_metric_depth_scale_plausible": true,
+        "H_pose_is_SO3": true,
+        "H_pose_normalized_to_first_frame": true,
+        "H_motion_not_identity_dominated": true
+      },
+      "required_hypotheses": [
+        "H_images_finite_nonconstant",
+        "H_real_depth_available",
+        "H_metric_depth_scale_plausible",
+        "H_pose_is_SO3",
+        "H_pose_normalized_to_first_frame",
+        "H_motion_not_identity_dominated"
+      ],
+      "metrics": {
+        "windows_total": 209,
+        "windows_checked": 12,
+        "depth_valid_fraction": 0.6259398460388184,
+        "depth_median_m": 1.6549999713897705,
+        "depth_p99_m": 7.331999778747559,
+        "rgb_mean": 0.4594114124774933,
+        "rgb_std": 0.21215607225894928,
+        "pose_so3_max_error": 9.5367431640625e-07,
+        "pose_det_max_error": 9.5367431640625e-07,
+        "translation_step_median": 0.026332881301641464,
+        "translation_step_p90": 0.031670570373535156,
+        "rotation_step_deg_median": 1.058768391609192,
+        "rotation_step_deg_p90": 1.997307538986206,
+        "non_identity_step_fraction": 1.0,
+        "dynamic_label_available": false,
+        "dynamic_pixel_fraction": null
+      }
+    },
+    "validation/bonn": {
+      "valid": true,
+      "source": "validation/bonn",
+      "hypotheses": {
+        "H_images_finite_nonconstant": true,
+        "H_real_depth_available": true,
+        "H_metric_depth_scale_plausible": true,
+        "H_pose_is_SO3": true,
+        "H_pose_normalized_to_first_frame": true,
+        "H_motion_not_identity_dominated": true
+      },
+      "required_hypotheses": [
+        "H_images_finite_nonconstant",
+        "H_real_depth_available",
+        "H_metric_depth_scale_plausible",
+        "H_pose_is_SO3",
+        "H_pose_normalized_to_first_frame"
+      ],
+      "metrics": {
+        "windows_total": 48,
+        "windows_checked": 12,
+        "depth_valid_fraction": 0.651013195514679,
+        "depth_median_m": 2.2119998931884766,
+        "depth_p99_m": 3.815999984741211,
+        "rgb_mean": 0.5325573086738586,
+        "rgb_std": 0.21209026873111725,
+        "pose_so3_max_error": 5.960464477539062e-07,
+        "pose_det_max_error": 3.5762786865234375e-07,
+        "translation_step_median": 0.02762114442884922,
+        "translation_step_p90": 0.04321058839559555,
+        "rotation_step_deg_median": 1.536961317062378,
+        "rotation_step_deg_p90": 2.5209953784942627,
+        "non_identity_step_fraction": 1.0,
+        "dynamic_label_available": false,
+        "dynamic_pixel_fraction": null
+      }
+    },
+    "validation/tartanair": {
+      "valid": true,
+      "source": "validation/tartanair",
+      "hypotheses": {
+        "H_images_finite_nonconstant": true,
+        "H_real_depth_available": true,
+        "H_metric_depth_scale_plausible": true,
+        "H_pose_is_SO3": true,
+        "H_pose_normalized_to_first_frame": true,
+        "H_motion_not_identity_dominated": true
+      },
+      "required_hypotheses": [
+        "H_images_finite_nonconstant",
+        "H_real_depth_available",
+        "H_metric_depth_scale_plausible",
+        "H_pose_is_SO3",
+        "H_pose_normalized_to_first_frame",
+        "H_motion_not_identity_dominated"
+      ],
+      "metrics": {
+        "windows_total": 82,
+        "windows_checked": 12,
+        "depth_valid_fraction": 0.8264846801757812,
+        "depth_median_m": 2.011744737625122,
+        "depth_p99_m": 32.1562614440918,
+        "rgb_mean": 0.3885538876056671,
+        "rgb_std": 0.3285192847251892,
+        "pose_so3_max_error": 1.1101365089416504e-06,
+        "pose_det_max_error": 5.960464477539062e-07,
+        "translation_step_median": 0.38640594482421875,
+        "translation_step_p90": 0.8371044993400574,
+        "rotation_step_deg_median": 4.657041549682617,
+        "rotation_step_deg_p90": 10.17979621887207,
+        "non_identity_step_fraction": 1.0,
+        "dynamic_label_available": true,
+        "dynamic_pixel_fraction": 0.0
+      }
+    },
+    "test/tum": {
+      "valid": true,
+      "source": "test/tum",
+      "hypotheses": {
+        "H_images_finite_nonconstant": true,
+        "H_real_depth_available": true,
+        "H_metric_depth_scale_plausible": true,
+        "H_pose_is_SO3": true,
+        "H_pose_normalized_to_first_frame": true,
+        "H_motion_not_identity_dominated": true
+      },
+      "required_hypotheses": [
+        "H_images_finite_nonconstant",
+        "H_real_depth_available",
+        "H_metric_depth_scale_plausible",
+        "H_pose_is_SO3",
+        "H_pose_normalized_to_first_frame",
+        "H_motion_not_identity_dominated"
+      ],
+      "metrics": {
+        "windows_total": 68,
+        "windows_checked": 12,
+        "depth_valid_fraction": 0.44791969656944275,
+        "depth_median_m": 2.618000030517578,
+        "depth_p99_m": 9.593000411987305,
+        "rgb_mean": 0.4601079523563385,
+        "rgb_std": 0.2328667938709259,
+        "pose_so3_max_error": 8.344650268554688e-07,
+        "pose_det_max_error": 7.152557373046875e-07,
+        "translation_step_median": 0.023652059957385063,
+        "translation_step_p90": 0.03183319792151451,
+        "rotation_step_deg_median": 0.9904236197471619,
+        "rotation_step_deg_p90": 1.9533183574676514,
+        "non_identity_step_fraction": 1.0,
+        "dynamic_label_available": false,
+        "dynamic_pixel_fraction": null
+      }
+    },
+    "test/bonn": {
+      "valid": true,
+      "source": "test/bonn",
+      "hypotheses": {
+        "H_images_finite_nonconstant": true,
+        "H_real_depth_available": true,
+        "H_metric_depth_scale_plausible": true,
+        "H_pose_is_SO3": true,
+        "H_pose_normalized_to_first_frame": true,
+        "H_motion_not_identity_dominated": true
+      },
+      "required_hypotheses": [
+        "H_images_finite_nonconstant",
+        "H_real_depth_available",
+        "H_metric_depth_scale_plausible",
+        "H_pose_is_SO3",
+        "H_pose_normalized_to_first_frame"
+      ],
+      "metrics": {
+        "windows_total": 69,
+        "windows_checked": 12,
+        "depth_valid_fraction": 0.6182103157043457,
+        "depth_median_m": 2.882999897003174,
+        "depth_p99_m": 3.99399995803833,
+        "rgb_mean": 0.4936024248600006,
+        "rgb_std": 0.23131270706653595,
+        "pose_so3_max_error": 2.980232238769531e-07,
+        "pose_det_max_error": 2.384185791015625e-07,
+        "translation_step_median": 0.005873699672520161,
+        "translation_step_p90": 0.011131861247122288,
+        "rotation_step_deg_median": 1.1436328887939453,
+        "rotation_step_deg_p90": 1.9250807762145996,
+        "non_identity_step_fraction": 1.0,
+        "dynamic_label_available": false,
+        "dynamic_pixel_fraction": null
+      }
+    }
+  },
+  "splits": {
+    "tum": {
+      "valid": true,
+      "hypotheses": {
+        "H_scene_split_no_leak": true
+      },
+      "scene_counts": {
+        "train": 3,
+        "validation": 1,
+        "test": 1
+      },
+      "leaked_scene_ids": []
+    },
+    "bonn": {
+      "valid": true,
+      "hypotheses": {
+        "H_scene_split_no_leak": true
+      },
+      "scene_counts": {
+        "train": 3,
+        "validation": 1,
+        "test": 1
+      },
+      "leaked_scene_ids": []
+    },
+    "tartanair": {
+      "valid": true,
+      "hypotheses": {
+        "H_scene_split_no_leak": true
+      },
+      "scene_counts": {
+        "train": 8,
+        "validation": 2
+      },
+      "leaked_scene_ids": []
+    }
+  },
+  "valid": true,
+  "failures": {},
+  "split_failures": {}
+}

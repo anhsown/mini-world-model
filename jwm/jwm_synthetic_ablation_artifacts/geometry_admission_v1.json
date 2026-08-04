@@ -1,0 +1,215 @@
+{
+  "sources": {
+    "train:tum": {
+      "valid": true,
+      "source": "train:tum",
+      "hypotheses": {
+        "H_camera_contract_parseable": true,
+        "H_intrinsics_per_frame_finite": true,
+        "H_intrinsics_pinhole_plausible": true,
+        "H_camera_rays_finite": true,
+        "H_timestamp_strictly_increasing": true,
+        "H_rgb_finite_nonconstant": true,
+        "H_metric_depth_available": true,
+        "H_pose_is_SE3": true,
+        "H_static_flow_coverage": true,
+        "H_rgbd_pose_k_reprojection_consistent": true,
+        "H_intrinsics_counterfactual_effective": true
+      },
+      "errors": [],
+      "metrics": {
+        "windows_total": 227,
+        "windows_checked": 8,
+        "depth_valid_fraction": 0.5787836909294128,
+        "static_flow_coverage": 0.5742766857147217,
+        "measured_depth_reprojection_inlier": 0.9518672898411751,
+        "camera_ray_counterfactual_delta": 0.0852227434515953,
+        "pose_so3_max_error": 1.0728836059570312e-06,
+        "pose_det_max_error": 1.0728836059570312e-06
+      }
+    },
+    "train:bonn": {
+      "valid": true,
+      "source": "train:bonn",
+      "hypotheses": {
+        "H_camera_contract_parseable": true,
+        "H_intrinsics_per_frame_finite": true,
+        "H_intrinsics_pinhole_plausible": true,
+        "H_camera_rays_finite": true,
+        "H_timestamp_strictly_increasing": true,
+        "H_rgb_finite_nonconstant": true,
+        "H_metric_depth_available": true,
+        "H_pose_is_SE3": true,
+        "H_static_flow_coverage": true,
+        "H_rgbd_pose_k_reprojection_consistent": true,
+        "H_intrinsics_counterfactual_effective": true
+      },
+      "errors": [],
+      "metrics": {
+        "windows_total": 148,
+        "windows_checked": 8,
+        "depth_valid_fraction": 0.6470884084701538,
+        "static_flow_coverage": 0.5954421758651733,
+        "measured_depth_reprojection_inlier": 0.9963435977697372,
+        "camera_ray_counterfactual_delta": 0.08042444288730621,
+        "pose_so3_max_error": 4.76837158203125e-07,
+        "pose_det_max_error": 4.76837158203125e-07
+      }
+    },
+    "validation:tum": {
+      "valid": true,
+      "source": "validation:tum",
+      "hypotheses": {
+        "H_camera_contract_parseable": true,
+        "H_intrinsics_per_frame_finite": true,
+        "H_intrinsics_pinhole_plausible": true,
+        "H_camera_rays_finite": true,
+        "H_timestamp_strictly_increasing": true,
+        "H_rgb_finite_nonconstant": true,
+        "H_metric_depth_available": true,
+        "H_pose_is_SE3": true,
+        "H_static_flow_coverage": true,
+        "H_rgbd_pose_k_reprojection_consistent": true,
+        "H_intrinsics_counterfactual_effective": true
+      },
+      "errors": [],
+      "metrics": {
+        "windows_total": 103,
+        "windows_checked": 8,
+        "depth_valid_fraction": 0.4735857844352722,
+        "static_flow_coverage": 0.474343866109848,
+        "measured_depth_reprojection_inlier": 0.9555051401257515,
+        "camera_ray_counterfactual_delta": 0.08274185657501221,
+        "pose_so3_max_error": 7.152557373046875e-07,
+        "pose_det_max_error": 7.152557373046875e-07
+      }
+    },
+    "validation:bonn": {
+      "valid": true,
+      "source": "validation:bonn",
+      "hypotheses": {
+        "H_camera_contract_parseable": true,
+        "H_intrinsics_per_frame_finite": true,
+        "H_intrinsics_pinhole_plausible": true,
+        "H_camera_rays_finite": true,
+        "H_timestamp_strictly_increasing": true,
+        "H_rgb_finite_nonconstant": true,
+        "H_metric_depth_available": true,
+        "H_pose_is_SE3": true,
+        "H_static_flow_coverage": true,
+        "H_rgbd_pose_k_reprojection_consistent": true,
+        "H_intrinsics_counterfactual_effective": true
+      },
+      "errors": [],
+      "metrics": {
+        "windows_total": 139,
+        "windows_checked": 8,
+        "depth_valid_fraction": 0.6468162536621094,
+        "static_flow_coverage": 0.5800796151161194,
+        "measured_depth_reprojection_inlier": 0.9944392517209053,
+        "camera_ray_counterfactual_delta": 0.08042444288730621,
+        "pose_so3_max_error": 3.5762786865234375e-07,
+        "pose_det_max_error": 3.5762786865234375e-07
+      }
+    },
+    "test:tum": {
+      "valid": true,
+      "source": "test:tum",
+      "hypotheses": {
+        "H_camera_contract_parseable": true,
+        "H_intrinsics_per_frame_finite": true,
+        "H_intrinsics_pinhole_plausible": true,
+        "H_camera_rays_finite": true,
+        "H_timestamp_strictly_increasing": true,
+        "H_rgb_finite_nonconstant": true,
+        "H_metric_depth_available": true,
+        "H_pose_is_SE3": true,
+        "H_static_flow_coverage": true,
+        "H_rgbd_pose_k_reprojection_consistent": true,
+        "H_intrinsics_counterfactual_effective": true
+      },
+      "errors": [],
+      "metrics": {
+        "windows_total": 146,
+        "windows_checked": 8,
+        "depth_valid_fraction": 0.47790783643722534,
+        "static_flow_coverage": 0.4760024845600128,
+        "measured_depth_reprojection_inlier": 0.8870273232460022,
+        "camera_ray_counterfactual_delta": 0.08274185657501221,
+        "pose_so3_max_error": 8.344650268554688e-07,
+        "pose_det_max_error": 8.344650268554688e-07
+      }
+    },
+    "test:bonn": {
+      "valid": true,
+      "source": "test:bonn",
+      "hypotheses": {
+        "H_camera_contract_parseable": true,
+        "H_intrinsics_per_frame_finite": true,
+        "H_intrinsics_pinhole_plausible": true,
+        "H_camera_rays_finite": true,
+        "H_timestamp_strictly_increasing": true,
+        "H_rgb_finite_nonconstant": true,
+        "H_metric_depth_available": true,
+        "H_pose_is_SE3": true,
+        "H_static_flow_coverage": true,
+        "H_rgbd_pose_k_reprojection_consistent": true,
+        "H_intrinsics_counterfactual_effective": true
+      },
+      "errors": [],
+      "metrics": {
+        "windows_total": 104,
+        "windows_checked": 8,
+        "depth_valid_fraction": 0.6297137141227722,
+        "static_flow_coverage": 0.5656173825263977,
+        "measured_depth_reprojection_inlier": 0.9949289187788963,
+        "camera_ray_counterfactual_delta": 0.08042444288730621,
+        "pose_so3_max_error": 3.5762786865234375e-07,
+        "pose_det_max_error": 3.5762786865234375e-07
+      }
+    }
+  },
+  "scene_leaks": {
+    "bonn": [],
+    "tum": []
+  },
+  "valid": true,
+  "failures": {},
+  "discovered_roots": {
+    "train": {
+      "tum": [
+        "/kaggle/working/mini-world-model/data/real_anchor_v1/raw/TUM_RGBD/tum_fr1_desk/rgbd_dataset_freiburg1_desk",
+        "/kaggle/working/mini-world-model/data/real_anchor_v1/raw/TUM_RGBD/tum_fr1_desk2/rgbd_dataset_freiburg1_desk2",
+        "/kaggle/working/mini-world-model/data/real_anchor_v1/raw/TUM_RGBD/tum_fr1_rpy/rgbd_dataset_freiburg1_rpy",
+        "/kaggle/working/mini-world-model/data/real_anchor_v1/raw/TUM_RGBD/tum_fr1_xyz/rgbd_dataset_freiburg1_xyz"
+      ],
+      "bonn": [
+        "/kaggle/working/mini-world-model/data/real_anchor_v1/raw/Bonn_Dynamic_RGBD/bonn_balloon/rgbd_bonn_balloon",
+        "/kaggle/working/mini-world-model/data/real_anchor_v1/raw/Bonn_Dynamic_RGBD/bonn_moving_nonobstructing_box/rgbd_bonn_moving_nonobstructing_box",
+        "/kaggle/working/mini-world-model/data/real_anchor_v1/raw/Bonn_Dynamic_RGBD/bonn_person_tracking/rgbd_bonn_person_tracking"
+      ],
+      "tartan": []
+    },
+    "validation": {
+      "tum": [
+        "/kaggle/working/mini-world-model/data/real_anchor_v1/raw/TUM_RGBD/tum_fr3_sitting_xyz/rgbd_dataset_freiburg3_sitting_xyz"
+      ],
+      "bonn": [
+        "/kaggle/working/mini-world-model/data/real_anchor_v1/raw/Bonn_Dynamic_RGBD/bonn_kidnapping_box/rgbd_bonn_kidnapping_box",
+        "/kaggle/working/mini-world-model/data/real_anchor_v1/raw/Bonn_Dynamic_RGBD/bonn_moving_obstructing_box/rgbd_bonn_moving_obstructing_box"
+      ],
+      "tartan": []
+    },
+    "test": {
+      "tum": [
+        "/kaggle/working/mini-world-model/data/real_anchor_v1/raw/TUM_RGBD/tum_fr3_walking_halfsphere/rgbd_dataset_freiburg3_walking_halfsphere",
+        "/kaggle/working/mini-world-model/data/real_anchor_v1/raw/TUM_RGBD/tum_fr3_walking_static/rgbd_dataset_freiburg3_walking_static"
+      ],
+      "bonn": [
+        "/kaggle/working/mini-world-model/data/real_anchor_v1/raw/Bonn_Dynamic_RGBD/bonn_crowd/rgbd_bonn_crowd",
+        "/kaggle/working/mini-world-model/data/real_anchor_v1/raw/Bonn_Dynamic_RGBD/bonn_synchronous/rgbd_bonn_synchronous"
+      ],
+      "tartan": []
+    }
+  }
+}

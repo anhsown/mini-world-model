@@ -1,0 +1,125 @@
+{
+ "synth": {
+  "tf_acc_correct_img": 0.6902,
+  "tf_acc_shuffled_img": 0.5543,
+  "vision_gain": 0.136
+ },
+ "doc": {
+  "tf_acc_correct_img": 0.7484,
+  "tf_acc_shuffled_img": 0.7486,
+  "vision_gain": -0.0002
+ },
+ "mtvqa": {
+  "C_mtvqa_vi": {
+   "n": 50,
+   "cer_mean": 1.319,
+   "cer_median": 1.0,
+   "exact": 0.0,
+   "contains": 0.0,
+   "stop_rate": 0.68,
+   "sec_per_sample": 1.4
+  }
+ },
+ "mtvqa_rows": [
+  {
+   "tier": "C_mtvqa_vi",
+   "ref": "Cholimex",
+   "pred": "T",
+   "cer": 1.0,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 1.3636125375014672
+  },
+  {
+   "tier": "C_mtvqa_vi",
+   "ref": "gà ác ngũ trảo, yến chưng, gà ác bồ câu, 260 Trưng Nữ Vương - Đà Nẵng",
+   "pred": "T",
+   "cer": 0.9855072463768116,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 1.3636125375014672
+  },
+  {
+   "tier": "C_mtvqa_vi",
+   "ref": "ngày 1 tháng 7",
+   "pred": "Cteman",
+   "cer": 0.9285714285714286,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 1.3636125375014672
+  },
+  {
+   "tier": "C_mtvqa_vi",
+   "ref": "Màng chiết xuất Tea Tree",
+   "pred": "T gin",
+   "cer": 0.9166666666666666,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 1.3636125375014672
+  },
+  {
+   "tier": "C_mtvqa_vi",
+   "ref": "Sting là nước tăng lực",
+   "pred": "C",
+   "cer": 1.0,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 1.3636125375014672
+  },
+  {
+   "tier": "C_mtvqa_vi",
+   "ref": "Thịt bằm cà chua",
+   "pred": "S gợi giúp góc giả cần đạt được ghi chú ở góc",
+   "cer": 2.4375,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 1.3636125375014672
+  },
+  {
+   "tier": "C_mtvqa_vi",
+   "ref": "Thiết kế, Thi công sân vườn, làm hồ cá Koi, hòn non bộ, tiểu cảnh, thác nước",
+   "pred": "2",
+   "cer": 1.0,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 1.3636125375014672
+  },
+  {
+   "tier": "C_mtvqa_vi",
+   "ref": "La vache qui rit",
+   "pred": "TIÔNG dÁi việc",
+   "cer": 0.8125,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 1.3636125375014672
+  },
+  {
+   "tier": "C_mtvqa_vi",
+   "ref": "Shopee Express",
+   "pred": "TC trong vở câu chuẩn bị chuẩn bị cho các chủ đ�",
+   "cer": 3.2857142857142856,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 1.5336701624983107
+  },
+  {
+   "tier": "C_mtvqa_vi",
+   "ref": "18 tháng kể từ ngày sản xuất",
+   "pred": "HC và các em cần đạt là Bài 12 của sách giáo khoa (",
+   "cer": 1.5,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 1.5336701624983107
+  }
+ ]
+}

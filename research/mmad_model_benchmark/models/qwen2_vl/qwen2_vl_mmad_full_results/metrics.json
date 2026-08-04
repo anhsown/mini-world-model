@@ -1,0 +1,80 @@
+{
+  "benchmark": "MMAD",
+  "setting": "zero_shot_full",
+  "manifest_sha256": "ff6bf9547135bb9b58dcafcbfafb73e0cfbf804edea0b6dee57fa4dbbf5fb5d6",
+  "expected_records": 39670,
+  "attempted_records": 39670,
+  "parsed_records": 39669,
+  "completion_rate": 1.0,
+  "parse_failure_rate": 2.5207965717166626e-05,
+  "micro_accuracy": 0.6473316695656558,
+  "macro_task_accuracy": 0.6503086728686917,
+  "per_task": {
+    "Anomaly Detection": {
+      "n": 8297,
+      "accuracy": 0.583102326141979
+    },
+    "Defect Classification": {
+      "n": 4688,
+      "accuracy": 0.41424914675767915
+    },
+    "Defect Localization": {
+      "n": 4877,
+      "accuracy": 0.46729546852573306
+    },
+    "Defect Description": {
+      "n": 4710,
+      "accuracy": 0.6373673036093418
+    },
+    "Defect Analysis": {
+      "n": 4782,
+      "accuracy": 0.7289836888331243
+    },
+    "Object Classification": {
+      "n": 3155,
+      "accuracy": 0.9381933438985737
+    },
+    "Object Analysis": {
+      "n": 9160,
+      "accuracy": 0.7829694323144105
+    }
+  },
+  "per_source": {
+    "GoodsAD": {
+      "n": 13088,
+      "accuracy": 0.6422677261613692
+    },
+    "MVTec-AD": {
+      "n": 8336,
+      "accuracy": 0.7525191938579654
+    },
+    "MVTec-LOCO": {
+      "n": 7624,
+      "accuracy": 0.5522035676810073
+    },
+    "VisA": {
+      "n": 10621,
+      "accuracy": 0.6392995009886074
+    }
+  },
+  "anomaly_detection": {
+    "tp": 2426,
+    "fp": 840,
+    "tn": 2410,
+    "fn": 2621,
+    "precision": 0.7428046540110227,
+    "recall": 0.48068159302555974,
+    "f1": 0.5836641405028269,
+    "miss_rate": 0.5193184069744403,
+    "overkill_rate": 0.25846153846153846
+  },
+  "latency_seconds": {
+    "mean": 0.6909179531131837,
+    "median": 0.687,
+    "p95": 0.7734
+  },
+  "status_counts": {
+    "ok": 39669,
+    "parse_failure": 1
+  }
+}

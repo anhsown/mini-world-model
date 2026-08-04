@@ -1,0 +1,20 @@
+{
+ "session": "20260716T191659Z",
+ "n_trials": 74,
+ "categories": {
+  "correct_abstain": 29,
+  "ok": 8,
+  "wrong_abstain": 3,
+  "asr_fallback+no_ground_truth": 23,
+  "asr_fallback+correct_abstain_ood": 6,
+  "no_ground_truth": 2,
+  "correct_abstain_ood": 3
+ },
+ "synthetic": {
+  "n": 40,
+  "ok_rate": 0.2,
+  "mean_iou": 0.247,
+  "iou_at_05": 0.275
+ },
+ "mean_latency_ms": 1614.5
+}

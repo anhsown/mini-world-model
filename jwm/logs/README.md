@@ -11,6 +11,13 @@ Daily log series for the JARVIS world-model brain project.
 | **Day 4** | 2026-07-19 | [day04.md](day04.md) | [day04_en.md](day04_en.md) | V2 nhìn synthetic nhưng mù real-doc → **JWM-Read v3 119M** + validated DDP T4×2 → train dừng đúng gate s0; benchmark JWM-EyeRead-v3 186 mẫu: exact/containment 0%, CTC-CER 1.0, nhưng blind gap +0.554 xác nhận có tín hiệu ảnh yếu → chốt sửa ROI/line OCR trước Eye Physical |
 | **Day 5 plan** | Sau khi v3 train xong | [day05_plan.md](day05_plan.md) | [day05_plan_en.md](day05_plan_en.md) | Audit checkpoint → benchmark v1/v2/v3 + causal blind/crop controls → gate PASS/PARTIAL/FAIL → chỉ khi real vision-use pass mới dựng **JWM-Eye Physical**: dual-rate 30 FPS, object slots, spatial frames, future latent và latent action |
 | **Day 5** | 2026-07-20 | [day05.md](day05.md) | [day05_en.md](day05_en.md) | Eye v1/v2 bị block bởi dynamic/causal OOD; Eye v3 pilot dừng an toàn ở step 200 do NaN/Inf → **v3.1 Stability** sửa spatial tracks + FP32 damped BA + DDP finite governor; exact-seed canary 100 bước và `127/127` tests pass, chờ T4×2 actual-mixture canary |
+| **Day 6** | 2026-07-21 | [day06.md](day06.md) | [day06_en.md](day06_en.md) | Benchmark trước vượt 3/7 gates → sửa invalid-flow sentinel + uncertainty/visibility/temporal compatibility → **Eye v3.2.1 381.9M** dừng overfit ở step 1.000; tracking được cứu nhưng depth/pose/temporal/dynamic fail, final **2/7 gates — BLOCKED** |
+
+## Tổng kết / Summary
+
+📄 **[SUMMARY_6_DAYS.md](SUMMARY_6_DAYS.md)** — báo cáo tổng hợp chi tiết cả 6 ngày:
+dòng thời gian, kiến trúc đã xây, bảng số liệu v1/v3/v4, phân tích thất bại theo
+nguyên nhân gốc, 7 bài học phương pháp, tài sản để lại và việc còn dở.
 
 ## Quy ước / Conventions
 

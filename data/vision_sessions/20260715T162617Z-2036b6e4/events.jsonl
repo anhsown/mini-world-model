@@ -1,0 +1,2 @@
+{"schema_version": "jarvis-vision-v1", "session_id": "20260715T162617Z-2036b6e4", "created_at": "2026-07-15T16:26:17.143259+00:00", "event_type": "session_started", "model_id": "unsloth/Qwen3-VL-2B-Instruct-bnb-4bit"}
+{"schema_version": "jarvis-vision-v1", "session_id": "20260715T162617Z-2036b6e4", "created_at": "2026-07-15T16:26:17.151259+00:00", "event_type": "camera_started", "camera_index": 0, "startup_ms": 1846.77}

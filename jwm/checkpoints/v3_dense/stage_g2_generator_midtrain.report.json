@@ -1,0 +1,11 @@
+{
+ "stage": "g2_generator_midtrain",
+ "finished_at": "2026-07-17T01:53:22",
+ "params_M": 31.01,
+ "steps": 2200,
+ "lr": 0.0002,
+ "val_miou_4step": 0.2748246490955353,
+ "val_iou05_4step": 0.2800000011920929,
+ "val_t2i_pos": 0.5416666666666666,
+ "val_fd_psnr": 20.66937828063965
+}

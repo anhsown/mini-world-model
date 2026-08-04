@@ -1,0 +1,11 @@
+{
+ "stage": "g5_post_policy",
+ "finished_at": "2026-07-17T02:16:26",
+ "params_M": 31.01,
+ "steps": 700,
+ "lr": 8e-05,
+ "policy_steps": 4,
+ "val_ece_calibrated": 0.02478194795548916,
+ "test_qa_acc": 0.588,
+ "test_miou_4step": 0.2845156192779541
+}

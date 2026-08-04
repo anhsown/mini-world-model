@@ -1,0 +1,1447 @@
+{
+ "summary": {
+  "B_doc_real": {
+   "n": 40,
+   "cer_mean": 1.259,
+   "cer_median": 0.703,
+   "exact": 0.0,
+   "contains": 0.0,
+   "stop_rate": 0.8,
+   "sec_per_sample": 30.6
+  },
+  "T0_char_200px": {
+   "n": 12,
+   "cer_mean": 52.0,
+   "cer_median": 52.0,
+   "exact": 0.0,
+   "contains": 0.167,
+   "stop_rate": 0.0,
+   "sec_per_sample": 12.0
+  },
+  "T1_word_120px": {
+   "n": 12,
+   "cer_mean": 11.804,
+   "cer_median": 12.0,
+   "exact": 0.0,
+   "contains": 0.0,
+   "stop_rate": 0.0,
+   "sec_per_sample": 11.9
+  },
+  "T1_word_28px": {
+   "n": 12,
+   "cer_mean": 13.807,
+   "cer_median": 14.875,
+   "exact": 0.0,
+   "contains": 0.0,
+   "stop_rate": 0.0,
+   "sec_per_sample": 11.8
+  },
+  "T1_word_48px": {
+   "n": 12,
+   "cer_mean": 13.654,
+   "cer_median": 12.625,
+   "exact": 0.0,
+   "contains": 0.0,
+   "stop_rate": 0.0,
+   "sec_per_sample": 11.9
+  },
+  "T1_word_80px": {
+   "n": 12,
+   "cer_mean": 17.396,
+   "cer_median": 17.0,
+   "exact": 0.0,
+   "contains": 0.0,
+   "stop_rate": 0.0,
+   "sec_per_sample": 11.9
+  },
+  "T2_line_L2": {
+   "n": 12,
+   "cer_mean": 2.525,
+   "cer_median": 2.285,
+   "exact": 0.0,
+   "contains": 0.0,
+   "stop_rate": 0.0,
+   "sec_per_sample": 11.8
+  },
+  "T3_para_L4": {
+   "n": 12,
+   "cer_mean": 0.82,
+   "cer_median": 0.822,
+   "exact": 0.0,
+   "contains": 0.0,
+   "stop_rate": 0.0,
+   "sec_per_sample": 11.8
+  },
+  "T4_word80_degraded": {
+   "n": 12,
+   "cer_mean": 15.172,
+   "cer_median": 14.833,
+   "exact": 0.0,
+   "contains": 0.0,
+   "stop_rate": 0.0,
+   "sec_per_sample": 11.7
+  }
+ },
+ "rows": [
+  {
+   "tier": "T0_char_200px",
+   "ref": "E",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 52.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 12.078886425002565
+  },
+  {
+   "tier": "T0_char_200px",
+   "ref": "0",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 52.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 12.078886425002565
+  },
+  {
+   "tier": "T0_char_200px",
+   "ref": "8",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 52.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 12.078886425002565
+  },
+  {
+   "tier": "T0_char_200px",
+   "ref": "E",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 52.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 12.078886425002565
+  },
+  {
+   "tier": "T0_char_200px",
+   "ref": "8",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 52.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 12.078886425002565
+  },
+  {
+   "tier": "T0_char_200px",
+   "ref": "T",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 52.0,
+   "exact": false,
+   "contains": true,
+   "stopped": false,
+   "sec": 12.078886425002565
+  },
+  {
+   "tier": "T0_char_200px",
+   "ref": "E",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 52.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 12.078886425002565
+  },
+  {
+   "tier": "T0_char_200px",
+   "ref": "R",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 52.0,
+   "exact": false,
+   "contains": true,
+   "stopped": false,
+   "sec": 12.078886425002565
+  },
+  {
+   "tier": "T0_char_200px",
+   "ref": "0",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 52.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.914280324999709
+  },
+  {
+   "tier": "T0_char_200px",
+   "ref": "X",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 52.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.914280324999709
+  },
+  {
+   "tier": "T0_char_200px",
+   "ref": "Đ",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 52.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.914280324999709
+  },
+  {
+   "tier": "T0_char_200px",
+   "ref": "7",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 52.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.914280324999709
+  },
+  {
+   "tier": "T1_word_120px",
+   "ref": "hình",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 12.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.914280324999709
+  },
+  {
+   "tier": "T1_word_120px",
+   "ref": "bàn",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 17.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.914280324999709
+  },
+  {
+   "tier": "T1_word_120px",
+   "ref": "phím",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 12.75,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.914280324999709
+  },
+  {
+   "tier": "T1_word_120px",
+   "ref": "thoại",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 9.8,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.914280324999709
+  },
+  {
+   "tier": "T1_word_120px",
+   "ref": "quyển",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 10.2,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.873683450001408
+  },
+  {
+   "tier": "T1_word_120px",
+   "ref": "trang",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 9.4,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.873683450001408
+  },
+  {
+   "tier": "T1_word_120px",
+   "ref": "sách",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 12.75,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.873683450001408
+  },
+  {
+   "tier": "T1_word_120px",
+   "ref": "liệu",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 13.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.873683450001408
+  },
+  {
+   "tier": "T1_word_120px",
+   "ref": "quyển",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 10.2,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.873683450001408
+  },
+  {
+   "tier": "T1_word_120px",
+   "ref": "phím",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 12.75,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.873683450001408
+  },
+  {
+   "tier": "T1_word_120px",
+   "ref": "thoại",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 9.8,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.873683450001408
+  },
+  {
+   "tier": "T1_word_120px",
+   "ref": "hình",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 12.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.873683450001408
+  },
+  {
+   "tier": "T1_word_80px",
+   "ref": "bút",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 17.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.843998187501711
+  },
+  {
+   "tier": "T1_word_80px",
+   "ref": "bàn",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 17.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.843998187501711
+  },
+  {
+   "tier": "T1_word_80px",
+   "ref": "tài",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 17.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.843998187501711
+  },
+  {
+   "tier": "T1_word_80px",
+   "ref": "sổ",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 26.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.843998187501711
+  },
+  {
+   "tier": "T1_word_80px",
+   "ref": "giấy",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 12.75,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.843998187501711
+  },
+  {
+   "tier": "T1_word_80px",
+   "ref": "tài",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 17.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.843998187501711
+  },
+  {
+   "tier": "T1_word_80px",
+   "ref": "tài",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 17.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.843998187501711
+  },
+  {
+   "tier": "T1_word_80px",
+   "ref": "ghế",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 16.666666666666668,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.843998187501711
+  },
+  {
+   "tier": "T1_word_80px",
+   "ref": "bàn",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 17.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.890692762499384
+  },
+  {
+   "tier": "T1_word_80px",
+   "ref": "màn",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 17.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.890692762499384
+  },
+  {
+   "tier": "T1_word_80px",
+   "ref": "máy",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 17.333333333333332,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.890692762499384
+  },
+  {
+   "tier": "T1_word_80px",
+   "ref": "bàn",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 17.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.890692762499384
+  },
+  {
+   "tier": "T1_word_48px",
+   "ref": "tài",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 17.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.890692762499384
+  },
+  {
+   "tier": "T1_word_48px",
+   "ref": "hình",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 12.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.890692762499384
+  },
+  {
+   "tier": "T1_word_48px",
+   "ref": "dòng",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 12.5,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.890692762499384
+  },
+  {
+   "tier": "T1_word_48px",
+   "ref": "ghế",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 16.666666666666668,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.890692762499384
+  },
+  {
+   "tier": "T1_word_48px",
+   "ref": "trang",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 9.4,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.943619812500401
+  },
+  {
+   "tier": "T1_word_48px",
+   "ref": "máy",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 17.333333333333332,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.943619812500401
+  },
+  {
+   "tier": "T1_word_48px",
+   "ref": "bàn",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 17.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.943619812500401
+  },
+  {
+   "tier": "T1_word_48px",
+   "ref": "chuột",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 10.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.943619812500401
+  },
+  {
+   "tier": "T1_word_48px",
+   "ref": "bút",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 17.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.943619812500401
+  },
+  {
+   "tier": "T1_word_48px",
+   "ref": "hình",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 12.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.943619812500401
+  },
+  {
+   "tier": "T1_word_48px",
+   "ref": "phím",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 12.75,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.943619812500401
+  },
+  {
+   "tier": "T1_word_48px",
+   "ref": "quyển",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 10.2,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.943619812500401
+  },
+  {
+   "tier": "T1_word_28px",
+   "ref": "bàn",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 17.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.787958712502586
+  },
+  {
+   "tier": "T1_word_28px",
+   "ref": "giấy",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 12.75,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.787958712502586
+  },
+  {
+   "tier": "T1_word_28px",
+   "ref": "bút",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 17.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.787958712502586
+  },
+  {
+   "tier": "T1_word_28px",
+   "ref": "quyển",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 10.2,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.787958712502586
+  },
+  {
+   "tier": "T1_word_28px",
+   "ref": "quyển",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 10.2,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.787958712502586
+  },
+  {
+   "tier": "T1_word_28px",
+   "ref": "thoại",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 9.8,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.787958712502586
+  },
+  {
+   "tier": "T1_word_28px",
+   "ref": "bút",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 17.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.787958712502586
+  },
+  {
+   "tier": "T1_word_28px",
+   "ref": "tài",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 17.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.787958712502586
+  },
+  {
+   "tier": "T1_word_28px",
+   "ref": "quyển",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 10.2,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.700267924999935
+  },
+  {
+   "tier": "T1_word_28px",
+   "ref": "quyển",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 10.2,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.700267924999935
+  },
+  {
+   "tier": "T1_word_28px",
+   "ref": "máy",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 17.333333333333332,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.700267924999935
+  },
+  {
+   "tier": "T1_word_28px",
+   "ref": "tài",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 17.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.700267924999935
+  },
+  {
+   "tier": "T2_line_L2",
+   "ref": "quả văn nghĩa ngữ học xã",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 1.7916666666666667,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.700267924999935
+  },
+  {
+   "tier": "T2_line_L2",
+   "ref": "lượng tháng doanh",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 2.411764705882353,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.700267924999935
+  },
+  {
+   "tier": "T2_line_L2",
+   "ref": "dụ bản bản bài",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 3.2857142857142856,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.700267924999935
+  },
+  {
+   "tier": "T2_line_L2",
+   "ref": "tế ôn đoạn tác",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 3.2142857142857144,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.700267924999935
+  },
+  {
+   "tier": "T2_line_L2",
+   "ref": "nhiên tế thống quả giả chú việt",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 1.2903225806451613,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.787031449999631
+  },
+  {
+   "tier": "T2_line_L2",
+   "ref": "chú số tự",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 5.333333333333333,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.787031449999631
+  },
+  {
+   "tier": "T2_line_L2",
+   "ref": "nghiệp phố khoa ý",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 2.588235294117647,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.787031449999631
+  },
+  {
+   "tier": "T2_line_L2",
+   "ref": "toán kinh bài ý trả",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 2.1578947368421053,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.787031449999631
+  },
+  {
+   "tier": "T2_line_L2",
+   "ref": "tập phát công vật toán ghi ôn",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 1.3448275862068966,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.787031449999631
+  },
+  {
+   "tier": "T2_line_L2",
+   "ref": "doanh doanh lý lượng",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 2.1,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.787031449999631
+  },
+  {
+   "tier": "T2_line_L2",
+   "ref": "viên trả quả lý tác câu viên",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 1.4285714285714286,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.787031449999631
+  },
+  {
+   "tier": "T2_line_L2",
+   "ref": "vở năm lịch vở",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 3.357142857142857,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.787031449999631
+  },
+  {
+   "tier": "T3_para_L4",
+   "ref": "khoa tiếng thành trường điểm lớp kết thống ôn đoạn hỏi năm hội học tháng năm ôn sử triển quả trả học đoạn thành thành kinh công nghĩa phẩm chương sinh ôn tác hội",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 0.7701863354037267,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.784179412501544
+  },
+  {
+   "tier": "T3_para_L4",
+   "ref": "giáo hóa tháng kinh ngày sách sử ý tập lý toán ý xã phố ghi tháng triển trả sinh kê liệu tác tháng tiếng ghi ví tế tự ngày sinh bài đoạn ý bản ôn năm giáo ý khoa lý sản chú nghiệp trường học nội vật sinh sách",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 0.8221153846153846,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.784179412501544
+  },
+  {
+   "tier": "T3_para_L4",
+   "ref": "ôn ngày ngày thành quả văn nhiên liệu lịch liệu bài ghi lịch giả giáo nông liệu học dung nghiệp sản lý triển thu nghĩa tiếng kiểm kinh điểm ghi ôn vật thu nhiên ví lớp lý toán ngữ lịch quả ôn ngày nông lời học trả liệu học",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 0.8513513513513513,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.784179412501544
+  },
+  {
+   "tier": "T3_para_L4",
+   "ref": "ví lý nội phẩm văn hóa phẩm tác ôn học tra tập bài thu trả giả kê lý phố khoa hỏi lời kiểm lời phẩm kinh ghi dụ lịch lý viên thu đoạn nông lý lớp học kinh phẩm năm tác lý tập tự học tra sách phố việt liệu",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 0.8480392156862745,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.784179412501544
+  },
+  {
+   "tier": "T3_para_L4",
+   "ref": "ý kết chú chương học văn nhiên lớp nghĩa dung văn trường phố dụ câu văn trả ý hội nội xã viên hóa tác ghi ý kê nông phát sinh nhiên toán khoa phố lịch giả vở tác học phố khoa công văn ý",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 0.8216216216216217,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.784179412501544
+  },
+  {
+   "tier": "T3_para_L4",
+   "ref": "vở nghiệp ghi học khoa ví nhiên lý phẩm quả giả viên phát lớp hỏi vật giáo tập số văn toán bản tháng phẩm kết tự bảng năm học số triển lý quả tế tập lịch ngữ lời chương nội văn",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 0.8238636363636364,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.784179412501544
+  },
+  {
+   "tier": "T3_para_L4",
+   "ref": "học bản sinh nghiệp nghĩa số hóa hỏi khoa triển văn vở tế học số dung kiểm thống hỏi học nghiệp trường liệu hỏi bài nghĩa chú học văn trình hóa tập bài phố học chú bài nội nhớ nhớ nhiên kiểm doanh hỏi nhớ điểm sản học lượng dụ ghi tập",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 0.8376068376068376,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.784179412501544
+  },
+  {
+   "tier": "T3_para_L4",
+   "ref": "sản ghi nhớ hỏi học lớp giáo số tác sinh toán số tự phẩm năm trả sử hóa văn giả học công sử chú tế tập ngày lý phố trường việt giáo nhớ liệu văn công số thu ngữ",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 0.7875,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.784179412501544
+  },
+  {
+   "tier": "T3_para_L4",
+   "ref": "ví học kết tác liệu giáo chương văn doanh phẩm công chú học chương việt bản sách văn năm chương nghiệp sản chương chương thu liệu trình dụ kinh tự doanh quả hỏi",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 0.8125,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.69362962499872
+  },
+  {
+   "tier": "T3_para_L4",
+   "ref": "ghi vật phát ý ví hóa lý vật công thống thành trình trả lý thu bài dụ thu hỏi hội tập tiếng chương công ý sử tra kết bài ngữ lý ngày học thu kinh chú vật lý lượng tập địa thành thành nghiệp học đoạn sinh tế",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 0.8203883495145631,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.69362962499872
+  },
+  {
+   "tier": "T3_para_L4",
+   "ref": "khoa ngữ thành ý chú sách tế bảng năm kết học sách ngày ôn phẩm khoa kinh sách ghi vở nội hóa lịch ngày ngữ bản lớp thành bảng phẩm học sách hóa xã tác lớp giáo học xã điểm chương sử tra trình tự thành",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 0.8407960199004975,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.69362962499872
+  },
+  {
+   "tier": "T3_para_L4",
+   "ref": "số kinh ý trường học dụ quả xã ví tiếng kết văn văn học lời học tế liệu bài học ví học khoa doanh kinh thống ý việt chương câu phố toán kết thống kết văn",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 0.803921568627451,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.69362962499872
+  },
+  {
+   "tier": "T4_word80_degraded",
+   "ref": "hình",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 12.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.69362962499872
+  },
+  {
+   "tier": "T4_word80_degraded",
+   "ref": "liệu",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 13.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.69362962499872
+  },
+  {
+   "tier": "T4_word80_degraded",
+   "ref": "cửa",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 17.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.69362962499872
+  },
+  {
+   "tier": "T4_word80_degraded",
+   "ref": "tính",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 12.25,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.69362962499872
+  },
+  {
+   "tier": "T4_word80_degraded",
+   "ref": "màn",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 17.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.72408710000309
+  },
+  {
+   "tier": "T4_word80_degraded",
+   "ref": "tính",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 12.25,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.72408710000309
+  },
+  {
+   "tier": "T4_word80_degraded",
+   "ref": "bàn",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 17.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.72408710000309
+  },
+  {
+   "tier": "T4_word80_degraded",
+   "ref": "dòng",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 12.5,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.72408710000309
+  },
+  {
+   "tier": "T4_word80_degraded",
+   "ref": "sổ",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 26.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.72408710000309
+  },
+  {
+   "tier": "T4_word80_degraded",
+   "ref": "ghế",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 16.666666666666668,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.72408710000309
+  },
+  {
+   "tier": "T4_word80_degraded",
+   "ref": "trang",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 9.4,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.72408710000309
+  },
+  {
+   "tier": "T4_word80_degraded",
+   "ref": "màn",
+   "pred": "thống trường trình tra trả trình trình trong ảnh, nh",
+   "cer": 17.0,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 11.72408710000309
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "1 tiết/tuần.",
+   "pred": "Trong \"SINH HOẠT LỚP\", mục tiêu chính của bài học được đề xuất bao gồm: 1.",
+   "cer": 5.75,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 30.58828165000159
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "64 kg",
+   "pred": "Kết quả của phép chia 60 : 2 là 6.",
+   "cer": 6.4,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 30.58828165000159
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "- Học sinh (HS): 2 thẻ trăm, 5 thẻ chục và 10 khối lập phương. - Giáo viên (GV): 3 thẻ trăm, 11 thẻ chục và 14 khối lập phương.",
+   "pred": "Trong phần Thiết bị dạy học, HS và GV cần chuẩn bị: - Tranh ảnh cho thấy hai tay (theo hướng dẫn trong ảnh).",
+   "cer": 0.7716535433070866,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 30.58828165000159
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "Chương 1 của cuốn sách này tập trung vào chủ đề Số tự nhiên trong toán học.",
+   "pred": "Chương 1 của cuốn sách tập trung vào chủ đề \"Trang 12 trong toàn bộ tài liệu\".",
+   "cer": 0.36,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 30.58828165000159
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "Bài học về Nam châm hướng đến phát triển các năng lực chung sau: 1.",
+   "pred": "Nguyễn Huy Thu hoạch và người nói chuyện với nhau là \"Những nhiệm vụ chính trong các nhóm chỉ có nhiều người thân trong các nh�",
+   "cer": 1.3880597014925373,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 30.58828165000159
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "Bài 4 có tiêu đề: \"SỬ DỤNG MÁY THU THANH\" Mục tiêu chính của bài học: 1.",
+   "pred": "Bài 4 có tiêu đề là \"CHIA HẾ VÀ CÁC CHẤT CỦA CÁC HOẠT ĐỘNG DẠY HỌC CHẤT NHẬT CHÂU ÂU\".",
+   "cer": 0.7361111111111112,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 30.58828165000159
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "Bài tập số 10 yêu cầu người đọc tóm tắt ngắn gọn nội dung đoạn văn bằng lời của chính mình (Коротко перескажи текст своими словами).",
+   "pred": "Bài tập số 10 yêu cầu người đọc đọc thực hiện các bước sau: 1.",
+   "cer": 0.6666666666666666,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 30.58828165000159
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "Dòng chữ trên bảng đen trong hình minh họa là: \"Thứ ..",
+   "pred": "Dòng chữ được viết trên bản đồ trong hình là \"Thời gian\".",
+   "cer": 0.5370370370370371,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 30.58828165000159
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "Trong phần 2, các từ chứa vần ôn là: - đôn (hình 2) - chồn (hình 4) - trốn (trong cụm \"trốn tìm\" - hình 6) Các từ này đều có cấu trúc vần ôn (ô + n).",
+   "pred": "Trong phần 2 (phần 2), các từ cột thứ hai là \"có nhớ\" và \"ô\" là các cạnh để tạo thành câu hỏi\".",
+   "cer": 0.6912751677852349,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 29.30960658749973
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "Bài hát được đề cập trong phần 1 có các câu hát sau: - Tu hú kêu, tu hú kêu, hoa gạo nở hoa phượng đỏ, đầy ước mơ hi vọng.",
+   "pred": "Bài hát được đề cập trong phần 1 có các câu hỏi sau: - Câu hỏi: \"Câu hỏi số 1 trong câu hỏi 1.",
+   "cer": 0.4262295081967213,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 29.30960658749973
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "Đoạn 2 của bản nhạc Czardas có chỉ định tốc độ là Allegro vivace (nhanh, rộn ràng), kèm theo hướng dẫn biểu diễn saltellato (chơi với cách nhấn nhá nhẹ nhàng, bật nhảy).",
+   "pred": "Đoạn 2 của bản nhạc ca của Chủ đề 4 (Caristant tối đa dạng của chúng ta).",
+   "cer": 0.7041420118343196,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 29.30960658749973
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "Trong bài tập 2, hàng ngang số 5 (Across 5) có câu hỏi: \"My father ..",
+   "pred": "Bài tập 2 yêu cầu điền từ \"the sand a the states\" (tức là từ trái sang trong các từ đã cho).",
+   "cer": 1.0579710144927537,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 29.30960658749973
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "Bài tập số 3 trong phần \"GÓC ÂM NHẠC\" yêu cầu xác định số cung giữa hai bậc âm trong các mẫu nhạc được cho (gồm 3 ví dụ a, b, c).",
+   "pred": "Bài tập số 3 trong phần \"Góc âu Nhạc\" yêu cầu đọc nội dung chính của bài tập \"Các câu trả lời câu hỏi\" (theo thông tin ghi r�",
+   "cer": 0.5426356589147286,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 29.30960658749973
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "Bài tập cuối cùng yêu cầu quan sát và kể tên những cảnh vật được vẽ trong tranh.",
+   "pred": "Bài tập cuối cùng yêu cầu của bài tập thể dục được cung cấp trong SGK (Sách Giáo khoa).",
+   "cer": 0.575,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 29.30960658749973
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "Số được in ở góc dưới bên phải của trang giấy là 35.",
+   "pred": "Số được in ở góc dưới bên phải của trang giấy là 10.",
+   "cer": 0.038461538461538464,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 29.30960658749973
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "Hai mê cung trong ảnh có màu xanh dương (đường viền và các lối đi được vẽ bằng màu xanh dương).",
+   "pred": "Hai mùa trong ảnh có mã mô tả như sau: - Các bạn cùng các bạn cùng các bạn cùng lớp (có nghĩa là chỉ có một chữ số có thể",
+   "cer": 0.8631578947368421,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 29.30960658749973
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "Số \"128\" ở cuối trang là số trang của tài liệu, chỉ vị trí cụ thể của nội dung này trong toàn bộ sách hoặc giáo trình.",
+   "pred": "Số \"126\" ở cuối trang là số trang của tài liệu này, giúp người đọc xác định vị trí của trang này trong cuốn sách hoặc tài",
+   "cer": 0.4322033898305085,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 29.6756660500032
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "Giai đoạn TRƯỚC HOẠT ĐỘNG bao gồm các công việc chuẩn bị sau: 1.",
+   "pred": "Theo đoạn Trường 1, các câu hỏi được đề cập trong chương trình học tập (cột \"Thực hành với các câu hỏi\" (Bài 1).",
+   "cer": 1.28125,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 29.6756660500032
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "Các biểu tượng nhỏ ở phía dưới trang giấy có thể mang các chức năng sau trong bối cảnh giao diện kỹ thuật số (ví dụ: ứng dụng học tập, sách điện tử): 1.",
+   "pred": "Các biểu tượng nhỏ ở phía dưới trang giấy có chủ đề chính là \"Thực hành đọc các chữ cái \"Chúng ta sử dụng\".",
+   "cer": 0.5328947368421053,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 29.6756660500032
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "Ảnh này, với nền trắng trơn và không có chi tiết nào khác, có thể được sử dụng cho các mục đích sau: 1.",
+   "pred": "Ảnh này có thể được sử dụng cho mục đích giúp học sinh (HS) trong mục \"Thực hành đọc theo mẫu đã cho\" (theo mục \"Tiến hành",
+   "cer": 0.8446601941747572,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 29.6756660500032
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "Bảng danh mục sách mẫu trong Bài tập 1 có 5 cột thông tin chính, bao gồm: 1.",
+   "pred": "Bảng danh mục số 1 trong bài tập 1 là các công việc sau: - Các câu hỏi: Bạn có thể thực hiện các bước sau: 1.",
+   "cer": 0.8026315789473685,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 29.6756660500032
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "Theo hình ảnh, tế bào động vật có các thành phần cấu trúc chính sau: 1.",
+   "pred": "Theo tài liệu, các thông tin có các thành phần chính: 1.",
+   "cer": 0.4647887323943662,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 29.6756660500032
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "Theo giáo án, giáo viên cần chuẩn bị các đồ dùng dạy học sau: - Máy chiếu, 6 bản giấy trong, bảng phụ, phấn màu.",
+   "pred": "Theo tài liệu, giáo viên cần chuẩn bị các động tác dụng cụ thể sau: 1.",
+   "cer": 0.5625,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 29.6756660500032
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "GV dặn dò HS về nhà: 1.",
+   "pred": "GV dặn dò HS hai góc đều có những đặc điểm nổi bật sau: 1.",
+   "cer": 1.608695652173913,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 29.6756660500032
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "Mục tiêu của bài học Chuyện Quả Bầu được nêu rõ trong phần I.",
+   "pred": "Mục tiêu của bài học Chuyện Quản lí thuyết và thực hiện các bước sau: 1.",
+   "cer": 0.5245901639344263,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 31.7586554624977
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "31 giờ",
+   "pred": "Tập 124.viết giả định nghĩa tương ứng với 100 giờ 20 phút.",
+   "cer": 8.833333333333334,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 31.7586554624977
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "Câu hỏi trắc nghiệm trong ảnh yêu cầu xác định cách kết thúc của câu chuyện (được ghi rõ ở phần \"c.",
+   "pred": "Câu hỏi trắc nghiệm trong ảnh yêu cầu viết câu về câu chuyện \"Cây càng có các chất dinh dưỡng trong câu chuyện\" (theo thông tin",
+   "cer": 0.6565656565656566,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 31.7586554624977
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "Tiêu đề của bài học là \"Chuyện cây, chuyện người\" và nó thuộc Bài 22 trong sách.",
+   "pred": "Bài học này có tiêu đề là \"Bài 1 THỰC HÀNH VẬT VÀ BẢN TỰ HÀNH (được ghi rõ ở góc trên bên trái của trang).",
+   "cer": 1.0,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 31.7586554624977
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "Hai tàu gặp nhau lúc 8 giờ 15 phút.",
+   "pred": "Theo thông tin trong ảnh, mỗi hình chữ nhật là $\\frac{1}{2}$ và $\\frac{1}{2}$ và $\\frac{1}{2}$ và $\\frac{1}{2}$ và $\\frac{1}{2}$.",
+   "cer": 3.2285714285714286,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 31.7586554624977
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "CZARDAS là tên gọi của một vũ điệu dân gian Hungary.",
+   "pred": "Con ví dụ về cột A và B là A.",
+   "cer": 0.7307692307692307,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 31.7586554624977
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "Yêu cầu thứ hai của bài tập là đặt câu hỏi cho các từ ngữ in đậm trong hai câu mẫu đã cho.",
+   "pred": "Yêu cầu thứ hai của bài tập là \"Đọc thêm một cách thực hiện phép chia cộng đồng thời của mình và thể hiện động tác c�",
+   "cer": 0.6777777777777778,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 31.7586554624977
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "Trong hoạt động khám phá, học sinh rút ra nhận xét: Số 16 và 19 cùng có 1 chục, nhưng 6 đơn vị < 9 đơn vị, do đó 16 < 19.",
+   "pred": "Trong hoạt động khám phá, học sinh rút ra nhận xét về sự khác biệt giữa hai số trên cùng của hình vuông (theo mục \"1.",
+   "cer": 0.45454545454545453,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 31.7586554624977
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "Theo tài liệu, cần tránh đánh đồng thơ với thơ trữ tình.",
+   "pred": "Theo tài liệu, cần tránh tiền không thể thực hiện thí nghiệm trong trường hợp cho học sinh thực hiện các bước sau: 1.",
+   "cer": 1.3035714285714286,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 31.803823199999897
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "Kết quả của phép tính 54 + 29 - 8 được tính như sau: 1. Cộng trước: $ 54 + 29 = 83 $ 2. Trừ sau: $ 83 - 8 = 75 $ → Đáp án: 75",
+   "pred": "Kết quả của các phép tính trong phần 2 là 5. Giải thích: - Từ đáp án (2 tiết) - 2 × 6 = 14 (2 tiết).",
+   "cer": 0.648,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 31.803823199999897
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "Trong Ví dụ 1, phần c) yêu cầu khai triển biểu thức $(x^2 - 4y)^2$.",
+   "pred": "Trong Ví dụ 1, kết quả khí triển của biểu thức $ \\frac{1}{2} \\cdot \\frac{3}{1} $.",
+   "cer": 0.7014925373134329,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 31.803823199999897
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "Trang sách này thuộc chủ đề \"Ôn tập về câu\" trong môn Tiếng Việt.",
+   "pred": "Trang sách này thuộc chủ đề ôn tập Tiếng Việt 1, tập một số thực với các mục tiêu cụ thể sau: 1.",
+   "cer": 0.8153846153846154,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 31.803823199999897
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "Bài học này có tiêu đề là \"CÔNG DÂN NƯỚC CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM\" (Bài 10).",
+   "pred": "Bài học này có tiêu đề là \"CÁC MÔI TRƯỜNG HỌC VÀ ĐO LƯỜNG\" (được ghi rõ ở phần đầu trang: \"Bài 1: CÁC CHỦ ĐỀ TRƯỜNG",
+   "cer": 0.813953488372093,
+   "exact": false,
+   "contains": false,
+   "stopped": false,
+   "sec": 31.803823199999897
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "Theo bảng thống kê trong phần 32.5, lợi ích của giun đất được ghi là \"Làm đất tơi xốp\".",
+   "pred": "Theo bảng thống kê, lựa chọn tác giả của gia đình đã cho là giúp học sinh (HS) như sau: 1.",
+   "cer": 0.6206896551724138,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 31.803823199999897
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "Michael Jackson sinh ngày 29 tháng 8 năm 1958 tại Gary, Indiana, Hoa Kỳ. Ông qua đời tại Los Angeles, California, Hoa Kỳ vào ngày 26 tháng 6 năm 2009.",
+   "pred": "Theo trang sách, những người thân thông được đề cập trong tài liệu này là: 1.",
+   "cer": 0.7733333333333333,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 31.803823199999897
+  },
+  {
+   "tier": "B_doc_real",
+   "ref": "Theo trang sách, mục đích chính của Bài 6: TRUYỀN THỐNG TRƯỜNG EM là giúp học sinh tìm hiểu và chia sẻ thông tin về truyền thống của nhà trường.",
+   "pred": "Theo trang sách, mục đích chính của Bài 6 là giúp học sinh (HS) như sau: 1.",
+   "cer": 0.5416666666666666,
+   "exact": false,
+   "contains": false,
+   "stopped": true,
+   "sec": 31.803823199999897
+  }
+ ]
+}

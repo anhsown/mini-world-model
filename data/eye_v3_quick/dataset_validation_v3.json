@@ -1,0 +1,90 @@
+{
+  "sources": {
+    "train:procedural": {
+      "valid": true,
+      "source": "train:procedural",
+      "hypotheses": {
+        "H_camera_contract_parseable": true,
+        "H_intrinsics_per_frame_finite": true,
+        "H_intrinsics_pinhole_plausible": true,
+        "H_camera_rays_finite": true,
+        "H_timestamp_strictly_increasing": true,
+        "H_rgb_finite_nonconstant": true,
+        "H_metric_depth_available": true,
+        "H_pose_is_SE3": true,
+        "H_static_flow_coverage": true,
+        "H_rigid_reprojection_finite": true,
+        "H_intrinsics_counterfactual_effective": true
+      },
+      "errors": [],
+      "metrics": {
+        "windows_total": 64,
+        "windows_checked": 8,
+        "depth_valid_fraction": 1.0,
+        "static_flow_coverage": 0.9543472528457642,
+        "camera_ray_counterfactual_delta": 0.09846669435501099,
+        "pose_so3_max_error": 2.384185791015625e-07,
+        "pose_det_max_error": 3.5762786865234375e-07
+      }
+    },
+    "validation:procedural": {
+      "valid": true,
+      "source": "validation:procedural",
+      "hypotheses": {
+        "H_camera_contract_parseable": true,
+        "H_intrinsics_per_frame_finite": true,
+        "H_intrinsics_pinhole_plausible": true,
+        "H_camera_rays_finite": true,
+        "H_timestamp_strictly_increasing": true,
+        "H_rgb_finite_nonconstant": true,
+        "H_metric_depth_available": true,
+        "H_pose_is_SE3": true,
+        "H_static_flow_coverage": true,
+        "H_rigid_reprojection_finite": true,
+        "H_intrinsics_counterfactual_effective": true
+      },
+      "errors": [],
+      "metrics": {
+        "windows_total": 64,
+        "windows_checked": 8,
+        "depth_valid_fraction": 1.0,
+        "static_flow_coverage": 0.9575645327568054,
+        "camera_ray_counterfactual_delta": 0.09846669435501099,
+        "pose_so3_max_error": 2.384185791015625e-07,
+        "pose_det_max_error": 1.7881393432617188e-07
+      }
+    },
+    "test:procedural": {
+      "valid": true,
+      "source": "test:procedural",
+      "hypotheses": {
+        "H_camera_contract_parseable": true,
+        "H_intrinsics_per_frame_finite": true,
+        "H_intrinsics_pinhole_plausible": true,
+        "H_camera_rays_finite": true,
+        "H_timestamp_strictly_increasing": true,
+        "H_rgb_finite_nonconstant": true,
+        "H_metric_depth_available": true,
+        "H_pose_is_SE3": true,
+        "H_static_flow_coverage": true,
+        "H_rigid_reprojection_finite": true,
+        "H_intrinsics_counterfactual_effective": true
+      },
+      "errors": [],
+      "metrics": {
+        "windows_total": 64,
+        "windows_checked": 8,
+        "depth_valid_fraction": 1.0,
+        "static_flow_coverage": 0.9591800570487976,
+        "camera_ray_counterfactual_delta": 0.09846669435501099,
+        "pose_so3_max_error": 2.384185791015625e-07,
+        "pose_det_max_error": 2.384185791015625e-07
+      }
+    }
+  },
+  "scene_leaks": {
+    "procedural": []
+  },
+  "valid": true,
+  "failures": {}
+}

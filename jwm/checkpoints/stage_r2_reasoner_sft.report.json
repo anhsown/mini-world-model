@@ -1,0 +1,16 @@
+{
+ "stage": "r2_reasoner_sft",
+ "finished_at": "2026-07-17T00:52:30",
+ "params_M": 31.01,
+ "steps": 800,
+ "lr": 0.00012,
+ "pretrain_mix": 0.2,
+ "val_qa_acc": 0.572,
+ "val_qa_per_kind": {
+  "what_held": 0.5555555555555556,
+  "what": 0.21153846153846154,
+  "where": 0.8,
+  "exist": 0.8095238095238095,
+  "count": 0.625
+ }
+}

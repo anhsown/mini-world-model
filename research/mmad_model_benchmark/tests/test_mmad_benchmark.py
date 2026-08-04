@@ -7,7 +7,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from common.mmad import CANONICAL_TYPES, build_full, evaluate_records, parse_prediction
+from common.mmad import (
+    CANONICAL_TYPES,
+    build_full,
+    evaluate_records,
+    image_input_profile,
+    parse_prediction,
+    split_reasoning_response,
+)
 
 
 def test_strict_answer_parser():
@@ -16,6 +23,29 @@ def test_strict_answer_parser():
     assert parse_prediction("The answer is D.") == "D"
     assert parse_prediction("A or B") is None
     assert parse_prediction("") is None
+
+
+def test_reasoning_response_parser():
+    tagged = split_reasoning_response("<think>Visible scratch.</think>\nA")
+    assert tagged == {
+        "reasoning": "Visible scratch.",
+        "response": "A",
+        "parse_format": "think_tags",
+    }
+    wrapped = split_reasoning_response(
+        "Reasoning Complete\n\nBelow is the entire thinking process the model went through "
+        "to arrive at its response.\n\nCollapse\n\nVisible scratch.\n\nReasoning Complete\n\nResponse\n\nA\n\nTerms of Use"
+    )
+    assert wrapped["reasoning"] == "Visible scratch."
+    assert wrapped["response"] == "A"
+    assert wrapped["parse_format"] == "nvidia_ui"
+
+
+def test_image_profile_contract():
+    profile = image_input_profile(ROOT / "data" / "images" / "image_0001.png")
+    assert profile["width"] > 0 and profile["height"] > 0
+    assert 0.0 <= profile["foreground_occupancy_proxy"] <= 1.0
+    assert isinstance(profile["close_up_proxy"], bool)
 
 
 def test_frozen_manifest_contract():

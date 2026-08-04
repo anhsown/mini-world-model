@@ -10,6 +10,8 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Iterable
 
+from PIL import Image
+
 
 MMAD_JSON_URL = "https://huggingface.co/datasets/jiang-cc/MMAD/resolve/main/mmad.json"
 ARCHIVE_URLS = {
@@ -76,6 +78,106 @@ def parse_prediction(text: str) -> str | None:
     for pattern in patterns:
         matches.extend(re.findall(pattern, cleaned, flags=re.I))
     return matches[-1].upper() if matches else None
+
+
+def _strip_ui_footer(text: str) -> str:
+    """Remove NVIDIA Build navigation/footer text captured with the output pane."""
+    cleaned = text.replace("\r\n", "\n").strip()
+    footer = re.search(
+        r"\n(?:Terms of Use|Privacy Policy|Your Privacy Choices|Contact|Copyright ©)(?:\n|$)",
+        cleaned,
+        flags=re.I,
+    )
+    if footer:
+        cleaned = cleaned[: footer.start()].rstrip()
+    return cleaned
+
+
+def split_reasoning_response(text: str) -> dict[str, str | None]:
+    """Split Cosmos/Qwen-style output into reasoning and final response.
+
+    NVIDIA Build currently renders either the literal ``<think>`` format or a
+    UI wrapper containing ``Reasoning Complete`` and ``Response``.  Keeping the
+    two fields separate is required for answer scoring and grounding audits.
+    """
+    cleaned = _strip_ui_footer(text)
+    if not cleaned:
+        return {"reasoning": "", "response": "", "parse_format": "empty"}
+
+    tagged = re.search(r"<think>\s*(.*?)\s*</think>\s*(.*)", cleaned, re.I | re.S)
+    if tagged:
+        return {
+            "reasoning": tagged.group(1).strip(),
+            "response": tagged.group(2).strip(),
+            "parse_format": "think_tags",
+        }
+
+    response_marker = re.search(r"\nResponse\s*\n", cleaned, re.I)
+    if response_marker:
+        left = cleaned[: response_marker.start()].strip()
+        right = cleaned[response_marker.end() :].strip()
+        # Remove static explanatory UI labels while preserving generated text.
+        left = re.sub(
+            r"^Reasoning Complete\s*\n+Below is the entire thinking process.*?\n+Collapse\s*\n+",
+            "",
+            left,
+            flags=re.I | re.S,
+        ).strip()
+        left = re.sub(r"\nReasoning Complete\s*$", "", left, flags=re.I).strip()
+        return {"reasoning": left, "response": right, "parse_format": "nvidia_ui"}
+
+    prediction = parse_prediction(cleaned)
+    return {
+        "reasoning": "",
+        "response": prediction or cleaned,
+        "parse_format": "answer_only" if prediction else "unstructured",
+    }
+
+
+def image_input_profile(path: Path) -> dict:
+    """Create a reproducible close-up proxy without using private labels.
+
+    ``foreground_occupancy_proxy`` compares a low-resolution image against its
+    border-colour median.  It is an analysis feature, not a semantic ground
+    truth label.  Occupancy >= 0.60 is provisionally tagged as close-up.
+    """
+    with Image.open(path) as source:
+        width, height = source.size
+        image_format = source.format
+        mode = source.mode
+        image = source.convert("RGB")
+        image.thumbnail((128, 128))
+        pixels = image.load()
+        w, h = image.size
+        border = []
+        border_width = max(1, min(w, h) // 20)
+        for y in range(h):
+            for x in range(w):
+                if x < border_width or x >= w - border_width or y < border_width or y >= h - border_width:
+                    border.append(pixels[x, y])
+        reference = tuple(float(statistics.median(channel)) for channel in zip(*border))
+        threshold_sq = 35.0 ** 2
+        foreground = 0
+        total = w * h
+        for y in range(h):
+            for x in range(w):
+                pixel = pixels[x, y]
+                distance_sq = sum((pixel[i] - reference[i]) ** 2 for i in range(3))
+                foreground += distance_sq > threshold_sq
+        occupancy = foreground / total if total else 0.0
+
+    return {
+        "width": width,
+        "height": height,
+        "aspect_ratio": round(width / height, 4) if height else None,
+        "format": image_format,
+        "mode": mode,
+        "file_bytes": path.stat().st_size,
+        "foreground_occupancy_proxy": round(occupancy, 4),
+        "close_up_proxy": occupancy >= 0.60,
+        "close_up_proxy_threshold": 0.60,
+        "close_up_proxy_method": "border_colour_distance_v1",
+    }
 
 
 def _stable_key(seed: int, value: str) -> str:

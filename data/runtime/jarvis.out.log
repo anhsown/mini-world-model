@@ -1,0 +1,44 @@
+
+     ██╗ █████╗ ██████╗ ██╗   ██╗██╗███████╗
+     ██║██╔══██╗██╔══██╗██║   ██║██║██╔════╝
+     ██║███████║██████╔╝██║   ██║██║███████╗
+██   ██║██╔══██║██╔══██╗╚██╗ ██╔╝██║╚════██║
+╚█████╔╝██║  ██║██║  ██║ ╚████╔╝ ██║███████║
+ ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝  ╚═══╝  ╚═╝╚══════╝
+      "Hey Jarvis" — At your service, sir.
+
+🎧 ASR ready — large-v3-turbo on cpu; mic: Microphone Array (Realtek(R) Au
+
+🤖 Jarvis: Good evening, sir. JARVIS at your service.
+
+💤 Chế độ chờ — nói 'Hey Jarvis' để gọi tôi dậy (engine chuyên dụng offline, Ctrl+C để thoát)
+
+🤖 Jarvis: Yes, sir?
+
+🎚️  Calibrating near-field microphone: Microphone Array (Realtek(R) Au
+🎙️  Đang nghe... (nói gần microphone)
+🎙️  Đang nghe... (nói gần microphone)
+🛡️  ASR rejected audio: signal_too_quiet
+💤 Chế độ chờ — nói 'Hey Jarvis' để gọi tôi dậy (engine chuyên dụng offline, Ctrl+C để thoát)
+
+🤖 Jarvis: Yes, sir?
+
+🎙️  Đang nghe... (nói gần microphone)
+🛡️  ASR rejected transcript (low_word_probability): 'Trợ lý JARVIS, truy cập camera, nhìn xung quanh, mở hình thường dùng tắt camera, mấy giờ rồi, mảnh nhở, ngủ đi, ghi chú, nhắc nhở.'
+🎙️  Đang nghe... (nói gần microphone)
+🛡️  ASR rejected audio: signal_too_quiet
+💤 Chế độ chờ — nói 'Hey Jarvis' để gọi tôi dậy (engine chuyên dụng offline, Ctrl+C để thoát)
+
+🤖 Jarvis: Yes, sir?
+
+🎙️  Đang nghe... (nói gần microphone)
+✅ ASR accepted [vi 1.00; logp -0.48; 21235 ms]: Truy cập vào camera.
+🗣️  Bạn: Truy cập vào camera.
+
+🤖 Jarvis: Vision systems are online, sir. You may ask me about what I can see.
+
+🎙️  Đang nghe... (nói gần microphone)
+🛡️  ASR rejected audio: signal_too_quiet
+🎙️  Đang nghe... (nói gần microphone)
+🛡️  ASR rejected transcript (unsupported_language:zh): 'Các bạn hãy subscribe cho kênh Ghiền Mì Gõ Để không bỏ lỡ những video hấp dẫn'
+💤 Chế độ chờ — nói 'Hey Jarvis' để gọi tôi dậy (engine chuyên dụng offline, Ctrl+C để thoát)
