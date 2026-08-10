@@ -1,0 +1,106 @@
+{
+  "dataset": "Ducdata1808/GoodsAD_benchmark",
+  "model": "Qwen/Qwen2-VL-2B-Instruct",
+  "setting": "zero_shot_full",
+  "manifest_sha256": "c7fb58e89c1d7df05158cb34a8b677bcd269764b1425774972c654d16f66c4f3",
+  "seed": 20260807,
+  "selected_questions": 24273,
+  "completed": 24273,
+  "coverage": 0.8823795987311004,
+  "accuracy_parsed": 0.6287235035951069,
+  "accuracy_all_selected": 0.554772792815062,
+  "median_latency_seconds": 0.6574,
+  "task_accuracy": [
+    {
+      "question_type": "Complex Decision",
+      "count": 3046,
+      "mean": 0.3470124753775443
+    },
+    {
+      "question_type": "Anomaly Localization",
+      "count": 1418,
+      "mean": 0.35825105782792666
+    },
+    {
+      "question_type": "Anomaly Classification",
+      "count": 1419,
+      "mean": 0.3608174770965469
+    },
+    {
+      "question_type": "Structural Reasoning",
+      "count": 2503,
+      "mean": 0.36715940870954855
+    },
+    {
+      "question_type": "Anomaly Detection",
+      "count": 4873,
+      "mean": 0.7494356659142212
+    },
+    {
+      "question_type": "Attribute QA",
+      "count": 8159,
+      "mean": 0.8356416227478858
+    }
+  ],
+  "category_accuracy": [
+    {
+      "category": "food_box",
+      "count": 3486,
+      "mean": 0.5900745840504876
+    },
+    {
+      "category": "cigarette_box",
+      "count": 2595,
+      "mean": 0.626204238921002
+    },
+    {
+      "category": "food_package",
+      "count": 4549,
+      "mean": 0.6300285777093867
+    },
+    {
+      "category": "drink_bottle",
+      "count": 6856,
+      "mean": 0.641044340723454
+    },
+    {
+      "category": "food_bottle",
+      "count": 1585,
+      "mean": 0.6416403785488959
+    },
+    {
+      "category": "drink_can",
+      "count": 2347,
+      "mean": 0.6416702172986791
+    }
+  ],
+  "normality_accuracy": [
+    {
+      "is_normal": false,
+      "count": 7065,
+      "mean": 0.4294409058740269
+    },
+    {
+      "is_normal": true,
+      "count": 14353,
+      "mean": 0.7268166933742075
+    }
+  ],
+  "split_accuracy": [
+    {
+      "split": "test",
+      "count": 12570,
+      "mean": 0.5587907716785998
+    },
+    {
+      "split": "train",
+      "count": 8848,
+      "mean": 0.7280741410488246
+    }
+  ],
+  "caveats": [
+    "VQA labels/explanations are model-generated weak labels.",
+    "Qwen-family caption generation may bias evaluation toward Qwen.",
+    "This smoke sample is not a replacement for the full held-out benchmark."
+  ]
+}
